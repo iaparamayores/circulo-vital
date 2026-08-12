@@ -1,0 +1,24 @@
+{
+  "name": "Círculo Vital",
+  "short_name": "CirculoVital",
+  "description": "Tu espacio seguro de salud y bienestar familiar.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme-color": "#059669",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://i.ibb.co/tT1XWFSc/1786424889452.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://i.ibb.co/gZRjR0Kx/1786424762915.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}

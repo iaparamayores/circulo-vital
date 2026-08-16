@@ -2,10 +2,17 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Círculo Vital - Versión Integral</title>
-    <link rel="manifest" href="manifest.json">
+    <meta name="description" content="Tu espacio seguro de salud, memoria y bienestar familiar. Gestiona medicamentos, tareas y presupuesto desde tu celular.">
     <meta name="theme-color" content="#059669">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Círculo Vital">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="https://i.ibb.co/tT1XWFSc/1786424889452.png">
+    <link rel="apple-touch-icon" href="https://i.ibb.co/gZRjR0Kx/1786424762915.png">
+
     <style>
         :root {
             --primary: #059669;
@@ -17,346 +24,248 @@
             --budget-color: #2563eb;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
 
-        body {
-            background-color: var(--bg-light);
-            color: var(--text-dark);
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
+        body { background-color: var(--bg-light); color: var(--text-dark); display: flex; flex-direction: column; min-height: 100vh; }
 
         /* --- PANTALLA DE BIENVENIDA --- */
         #pantalla-bienvenida {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #111827;
-            z-index: 200;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            text-align: center;
-            padding: 2rem;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #111827; z-index: 200;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center; padding: 2rem;
         }
 
         .welcome-logo-box {
-            background: rgba(5, 150, 105, 0.1);
-            border: 2px solid var(--primary);
-            padding: 2rem;
-            border-radius: 2rem;
-            margin-bottom: 1.5rem;
+            background: rgba(5, 150, 105, 0.1); border: 2px solid var(--primary);
+            padding: 2rem; border-radius: 2rem; margin-bottom: 1.5rem;
         }
-
-        .welcome-logo-box svg {
-            width: 80px;
-            height: 80px;
-            fill: var(--primary);
-        }
-
+        .welcome-logo-box svg { width: 80px; height: 80px; fill: var(--primary); }
         .btn-enter {
-            background-color: #0c9c6e;
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 30px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 2rem;
+            background-color: #0c9c6e; color: white; border: none;
+            padding: 1rem 2rem; border-radius: 30px; font-size: 1.1rem; font-weight: bold;
+            cursor: pointer; margin-top: 2rem;
             box-shadow: 0 4px 10px rgba(5, 150, 105, 0.3);
         }
 
+        /* --- PANTALLA DE ALARMA FULLSCREEN --- */
+        #pantalla-alarma {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            z-index: 300; display: none; flex-direction: column;
+            align-items: center; justify-content: center;
+            color: white; text-align: center; padding: 2rem;
+        }
+        #pantalla-alarma.activa { display: flex; }
+
+        .alarma-icono {
+            font-size: 5rem; margin-bottom: 1rem;
+            animation: alarma-pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes alarma-pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.15); opacity: 0.8; }
+        }
+
+        .alarma-botones {
+            display: flex; flex-direction: column; gap: 1rem;
+            margin-top: 2rem; width: 100%; max-width: 300px;
+        }
+
+        .btn-alarma-tomar {
+            background: white; color: #059669; border: none;
+            padding: 1.25rem; border-radius: 1rem; font-size: 1.2rem;
+            font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .btn-alarma-tomar:active { transform: scale(0.97); }
+
+        .btn-alarma-posponer {
+            background: rgba(255,255,255,0.15); color: white;
+            border: 2px solid rgba(255,255,255,0.4);
+            padding: 1rem; border-radius: 1rem; font-size: 1rem; cursor: pointer;
+        }
+        .btn-alarma-posponer:active { background: rgba(255,255,255,0.25); }
+
         /* --- INTERFAZ PRINCIPAL --- */
         header {
-            background-color: #111827;
-            color: white;
-            padding: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 10;
+            background-color: #111827; color: white; padding: 1rem;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 10;
         }
-
-        .logo-container {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .logo-icon {
-            width: 32px;
-            height: 32px;
-            fill: var(--primary);
-        }
-
-        header h1 {
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-
-        .nav-buttons {
-            display: flex;
-            gap: 0.4rem;
-        }
-
+        .logo-container { display: flex; align-items: center; gap: 0.5rem; }
+        header h1 { font-size: 1.2rem; font-weight: 600; }
+        .nav-buttons { display: flex; gap: 0.4rem; }
         .btn-nav {
-            background: #374151;
-            color: white;
-            border: none;
-            padding: 0.4rem 0.7rem;
-            border-radius: 0.375rem;
-            cursor: pointer;
-            font-size: 0.85rem;
+            background: #374151; color: white; border: none;
+            padding: 0.4rem 0.7rem; border-radius: 0.375rem; cursor: pointer; font-size: 0.85rem;
         }
-
-        .btn-install {
-            background: var(--primary);
-            color: white;
-            font-weight: bold;
-            display: none;
-        }
+        .btn-install { background: var(--primary); color: white; font-weight: bold; display: none; }
 
         main {
-            flex: 1;
-            padding: 1rem;
-            max-width: 600px;
-            width: 100%;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
+            flex: 1; padding: 1rem; max-width: 600px; width: 100%; margin: 0 auto;
+            display: flex; flex-direction: column; gap: 1rem;
         }
 
         /* --- SELECTOR DE SOLAPAS --- */
-        .solapas-container {
-            display: flex;
-            gap: 0.35rem;
-            margin-bottom: 0.5rem;
-        }
-
+        .solapas-container { display: flex; gap: 0.35rem; margin-bottom: 0.5rem; }
         .btn-solapa {
-            flex: 1;
-            background: #e5e7eb;
-            color: #4b5563;
-            border: none;
-            padding: 0.85rem 0.5rem;
-            border-radius: 0.75rem;
-            font-weight: bold;
-            font-size: 0.95rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            white-space: nowrap;
+            flex: 1; background: #e5e7eb; color: #4b5563; border: none;
+            padding: 0.85rem 0.5rem; border-radius: 0.75rem; font-weight: bold;
+            font-size: 0.95rem; cursor: pointer; transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); white-space: nowrap;
         }
-
-        .btn-solapa.active {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 6px rgba(5, 150, 105, 0.2);
-        }
-
-        .vista-solapa {
-            display: none;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .vista-solapa.active {
-            display: flex;
-        }
+        .btn-solapa.active { background: var(--primary); color: white; box-shadow: 0 4px 6px rgba(5, 150, 105, 0.2); }
+        .vista-solapa { display: none; flex-direction: column; gap: 1rem; }
+        .vista-solapa.active { display: flex; }
 
         .section-card {
-            background: white;
-            padding: 1.25rem;
-            border-radius: 1rem;
+            background: white; padding: 1.25rem; border-radius: 1rem;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-
         .section-card h2 {
-            font-size: 1.1rem;
-            margin-bottom: 0.75rem;
-            color: #111827;
-            border-bottom: 2px solid #f3f4f6;
-            padding-bottom: 0.25rem;
+            font-size: 1.1rem; margin-bottom: 0.75rem; color: #111827;
+            border-bottom: 2px solid #f3f4f6; padding-bottom: 0.25rem;
         }
 
         .btn-sos {
-            background-color: var(--danger);
-            color: white;
-            width: 85px;
-            height: 85px;
-            border-radius: 50%;
-            border: 4px solid #fecaca;
-            font-size: 1.2rem;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-            user-select: none;
-            -webkit-user-select: none;
+            background-color: var(--danger); color: white;
+            width: 85px; height: 85px; border-radius: 50%;
+            border: 4px solid #fecaca; font-size: 1.2rem; font-weight: bold;
+            cursor: pointer; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.2);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto; user-select: none; -webkit-user-select: none;
         }
 
-        /* --- BOLSILLO INDICADORES --- */
-        .wallet-display {
-            text-align: center;
-            padding: 1rem 0;
-        }
-        .wallet-monto {
-            font-size: 2.25rem;
-            font-weight: 800;
-            color: #111827;
-            margin: 0.25rem 0;
-        }
+        /* --- BOLSILLO --- */
+        .wallet-display { text-align: center; padding: 1rem 0; }
+        .wallet-monto { font-size: 2.25rem; font-weight: 800; color: #111827; margin: 0.25rem 0; }
         .progress-bar-container {
-            background-color: #e5e7eb;
-            border-radius: 1rem;
-            height: 16px;
-            width: 100%;
-            overflow: hidden;
-            margin-top: 0.75rem;
+            background-color: #e5e7eb; border-radius: 1rem;
+            height: 16px; width: 100%; overflow: hidden; margin-top: 0.75rem;
         }
         .progress-bar-fill {
-            background-color: #10b981;
-            height: 100%;
-            width: 100%;
+            background-color: #10b981; height: 100%; width: 100%;
             transition: width 0.4s ease, background-color 0.4s ease;
         }
 
-        /* --- NOTIFICACIÓN TOAST --- */
+        /* --- TOAST --- */
         #toast-notification {
-            position: fixed;
-            bottom: 5rem;
-            left: 50%;
+            position: fixed; bottom: 5rem; left: 50%;
             transform: translateX(-50%) translateY(100px);
-            background: #111827;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 2rem;
-            font-size: 0.95rem;
-            font-weight: 600;
-            z-index: 1000;
-            opacity: 0;
+            background: #111827; color: white; padding: 0.75rem 1.5rem;
+            border-radius: 2rem; font-size: 0.95rem; font-weight: 600;
+            z-index: 1000; opacity: 0;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
-            pointer-events: none;
-            white-space: nowrap;
+            pointer-events: none; white-space: nowrap;
         }
-
-        #toast-notification.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
+        #toast-notification.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
         .med-warning-card {
-            background-color: #fff1f2;
-            border: 2px solid #fecdd3;
-            padding: 1rem;
-            border-radius: 0.75rem;
-            margin-bottom: 0.5rem;
-            display: none;
+            background-color: #fff1f2; border: 2px solid #fecdd3;
+            padding: 1rem; border-radius: 0.75rem; margin-bottom: 0.5rem; display: none;
         }
-
         .btn-whatsapp {
-            background-color: #25d366;
-            color: white;
-            border: none;
-            padding: 0.6rem 1rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-            text-decoration: none;
-            font-size: 0.9rem;
+            background-color: #25d366; color: white; border: none;
+            padding: 0.6rem 1rem; border-radius: 0.5rem; font-weight: 600;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;
+            margin-top: 0.5rem; text-decoration: none; font-size: 0.9rem;
         }
 
         .form-group { margin-bottom: 1rem; }
         .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem; color: #4b5563; }
         .form-group input, .form-group select { width: 100%; padding: 0.6rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; }
         .btn-submit { background-color: var(--primary); color: white; border: none; width: 100%; padding: 0.75rem; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; }
-              
-      .overlay-screen { 
-            position: fixed; 
-            top: 60px; 
-            left: 0; 
-            width: 100%; 
-            height: calc(100% - 60px); 
-            background-color: white; 
-            z-index: 100; 
-            display: none; 
-            flex-direction:  column;  padding: 1rem; overflow-y: auto; 
-        }
-              .overlay-screen.activa { display: flex; }
 
-        .espacio-publicitario {
-            width: 100%;
-            height: 70px; /* Tus 70px exactos y bien controlados */
-            background-color: transparent;
-            display: block;
-            margin: 0;
-            padding: 0;
+        .overlay-screen {
+            position: fixed; top: 60px; left: 0; width: 100%; height: calc(100% - 60px);
+            background-color: white; z-index: 100; display: none;
+            flex-direction: column; padding: 1rem; overflow-y: auto;
         }
-        
+        .overlay-screen.activa { display: flex; }
+
+        .espacio-publicitario { width: 100%; height: 70px; background-color: transparent; display: block; margin: 0; padding: 0; }
+
         .agenda-card { background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid #4dabf7; display: flex; justify-content: space-between; align-items: center; }
         .med-card { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid #0ca678; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .expense-card { background: #fff; padding: 12px; border-radius: 10px; margin-bottom: 8px; border-left: 5px solid #f59e0b; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        
+
         .btn-action { background: #0ca678; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .btn-delete { background: #fee2e2; color: #dc2626; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; }
 
         .voice-btn-container { text-align: center; margin-bottom: 0.25rem; }
         .btn-voice { background-color: #3b82f6; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 2rem; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 1.05rem; }
-        .btn-voice.listening { background-color: var(--danger); animation: pulse-blue 1.5s infinite; }
+        .btn-voice.listening { background-color: var(--danger); animation: pulse-red 1.5s infinite; }
 
         footer {
-            text-align: center;
-            padding: 1.5rem 1rem;
-            background-color: #111827;
-            color: #9ca3af;
-            font-size: 0.85rem;
+            text-align: center; padding: 1.5rem 1rem;
+            background-color: #111827; color: #9ca3af; font-size: 0.85rem;
             border-top: 3px solid var(--primary);
         }
         footer a { color: var(--primary); text-decoration: none; font-weight: 600; }
-        footer a:hover { color: white; text-underline-position: under; text-decoration: underline; }
+        footer a:hover { color: white; text-decoration: underline; }
 
         .backup-container {
-            background-color: #f3f4f6;
-            border: 1px dashed #d1d5db;
-            padding: 1rem;
-            border-radius: 0.75rem;
-            margin-top: 1.5rem;
+            background-color: #f3f4f6; border: 1px dashed #d1d5db;
+            padding: 1rem; border-radius: 0.75rem; margin-top: 1.5rem;
         }
 
-        @keyframes pulse-blue {
+        @keyframes pulse-red {
             0% { transform: scale(1); }
-            50% { transform: scale(1.03); }
-            100% { transform: scale(1); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
         }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 500;
+            display: none; align-items: center; justify-content: center; padding: 1rem;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: white; border-radius: 1rem; padding: 1.5rem;
+            max-width: 320px; width: 100%; text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        .modal-box p { color: #1f2937; font-size: 1rem; margin-bottom: 1.25rem; line-height: 1.5; }
+        .modal-botones { display: flex; gap: 0.75rem; }
+        .modal-botones button {
+            flex: 1; padding: 0.75rem; border: none; border-radius: 0.5rem;
+            font-weight: 600; cursor: pointer; font-size: 0.95rem;
+        }
+        .modal-botones .btn-cancelar { background: #e5e7eb; color: #4b5563; }
+        .modal-botones .btn-confirmar { background: var(--danger); color: white; }
     </style>
 </head>
 <body>
 
     <div id="toast-notification">¡Acción registrada!</div>
 
-   <!-- PANTALLA DE BIENVENIDA -->
+    <!-- MODAL DE CONFIRMACIÓN -->
+    <div id="modal-confirmacion" class="modal-overlay">
+        <div class="modal-box">
+            <p id="modal-mensaje"></p>
+            <div class="modal-botones">
+                <button class="btn-cancelar" onclick="cerrarModal(false)">Cancelar</button>
+                <button class="btn-confirmar" onclick="cerrarModal(true)">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✅ NUEVO: PANTALLA DE ALARMA FULLSCREEN -->
+    <div id="pantalla-alarma">
+        <div class="alarma-icono" id="alarma-emoji">⏰</div>
+        <h2 id="alarma-titulo" style="font-size: 2rem; margin-bottom: 0.5rem;">Medicamento</h2>
+        <p id="alarma-detalle" style="font-size: 1.3rem; opacity: 0.9;">Enalapril 10mg - 08:00</p>
+        <div class="alarma-botones">
+            <button class="btn-alarma-tomar" onclick="alarmaConfirmar()">✅ Ya lo tomé / Listo</button>
+            <button class="btn-alarma-posponer" onclick="alarmaPosponer()">⏰ Posponer 5 minutos</button>
+        </div>
+    </div>
+
+    <!-- PANTALLA DE BIENVENIDA -->
     <div id="pantalla-bienvenida">
         <div class="welcome-logo-box" style="padding: 0; border: none; background: transparent;">
             <img src="https://i.ibb.co/gZRjR0Kx/1786424762915.png" alt="Logo Círculo Vital" style="width: 120px; height: 120px; border-radius: 24px;">
@@ -380,7 +289,7 @@
         </div>
     </header>
 
-    <!-- CONTENEDOR DE INICIO PRINCIPAL -->
+    <!-- CONTENEDOR DE INICIO -->
     <div id="pantalla-inicio" style="display: block; width: 100%;">
         <main>
             <!-- ALERTA SEGURO FAMILIAR -->
@@ -390,14 +299,14 @@
                 <a href="#" id="link-wa-olvido" class="btn-whatsapp" target="_blank" onclick="gestionarCierreAlertaAlEnviar()">Enviar Aviso a Familiar</a>
             </div>
 
-            <!-- SOS BLINDADO -->
+            <!-- SOS -->
             <div class="section-card" style="text-align:center; padding: 0.4rem;">
-                <button class="btn-sos" id="boton-sos" onclick="solicitarConfirmacionSOS()">SOS</button>
+                <button class="btn-sos" id="boton-sos" onclick="solicitarConfirmacionSOS()" aria-label="Botón de Emergencia">SOS</button>
             </div>
 
             <!-- VOZ -->
             <div class="voice-btn-container">
-                <button class="btn-voice" id="btn-hablar" onclick="activarMicrofono()">
+                <button class="btn-voice" id="btn-hablar" onclick="activarMicrofono()" aria-label="Activar dictado por voz">
                     🎙️ Hablar con la App
                 </button>
             </div>
@@ -447,28 +356,28 @@
     <!-- PANTALLA: AJUSTES -->
     <div id="pantalla-ajustes" class="overlay-screen">
         <h2 style="margin-bottom: 1.5rem; color: #111827;">Configuración del Sistema</h2>
-        
         <div class="section-card" style="box-shadow: none; padding: 0; margin-bottom: 1.5rem;">
             <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">Ajustes de Alertas</h3>
             <div class="form-group">
                 <label>Sonido para Medicamentos</label>
                 <select id="sonido-salud">
-                    <option value="chicharra">🚨 Chicharra Médica</option>
-                    <option value="digital">⏱️ Timbre Digital</option>
-                    <option value="zen">🎵 Melodía Zen</option>
+                    <option value="zen">🎵 Melodía Zen (suave)</option>
+                    <option value="aves">🐦 Pajaritos (alegre)</option>
+                    <option value="digital">🔔 Timbre Digital (clásico)</option>
+                    <option value="chicharra">🚨 Chicharra Suave (urgente)</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>Sonido para Actividades</label>
                 <select id="sonido-tareas">
-                    <option value="zen">🎵 Melodía Zen</option>
-                    <option value="digital">⏱️ Timbre Digital</option>
-                    <option value="aves">🐦 Sonido Naturaleza</option>
+                    <option value="zen">🎵 Melodía Zen (suave)</option>
+                    <option value="aves">🐦 Pajaritos (alegre)</option>
+                    <option value="digital">🔔 Timbre Digital (clásico)</option>
+                    <option value="chicharra">🚨 Chicharra Suave (urgente)</option>
                 </select>
             </div>
             <button class="btn-submit" onclick="probarSonidoSeleccionado()">🎵 Probar Sonido</button>
         </div>
-
         <div class="section-card" style="box-shadow: none; padding: 0; margin-bottom: 1.5rem;">
             <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">Configuración de Mi Bolsillo</h3>
             <div class="form-group">
@@ -484,7 +393,6 @@
             </div>
             <button class="btn-submit" style="background-color: var(--budget-color);" onclick="actualizarParametrosBolsillo()">Guardar Configuración de Bolsillo</button>
         </div>
-
         <div class="section-card" style="box-shadow: none; padding: 0;">
             <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">Agregar Manualmente</h3>
             <div class="form-group">
@@ -504,54 +412,43 @@
                 </select>
             </div>
             <button class="btn-submit" onclick="guardarEntradaManual()">Agregar Registro</button>
-            
-            <!-- CONTENEDOR NUEVO DE RESPALDO/BACKUP -->
             <div class="backup-container">
                 <h4 style="font-size:0.9rem; margin-bottom:0.5rem; color:#374151;">💾 Copia de Seguridad</h4>
                 <button type="button" class="btn-submit" style="background-color:#4b5563; margin-bottom:0.5rem; padding:0.5rem;" onclick="exportarCopiaSeguridad()">Descargar Copia de Datos</button>
                 <label style="display:block; font-size:0.8rem; font-weight:bold; color:#6b7280; margin-bottom:0.25rem;">Restaurar desde archivo:</label>
                 <input type="file" id="file-backup" accept=".json" onchange="importarCopiaSeguridad(event)" style="padding:0.25rem; font-size:0.85rem;">
             </div>
-
             <button type="button" class="btn-submit" style="background-color:#6b7280; margin-top:1.25rem;" onclick="cerrarPantalla('pantalla-ajustes')">Volver al Inicio</button>
         </div>
     </div>
 
-    <!-- PANTALLA HERRAMIENTAS (MITAD Y MITAD) -->
+    <!-- PANTALLA HERRAMIENTAS -->
     <div id="pantalla-herramientas" class="overlay-screen">
         <div style="display: grid; grid-template-columns: 1fr; gap: 16px; max-width: 100%;">
-            
-            <!-- MEDIO BLOC DE NOTAS -->
             <div class="section-card" style="margin-bottom: 0;">
                 <h2>📝 Mi Bloc de Notas</h2>
                 <textarea id="bloc-notas" style="width: 100%; height: 100px; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.5rem; margin-bottom: 0.5rem;" placeholder="Escribí acá tus recordatorios..."></textarea>
                 <button class="btn-submit" style="background-color: #3b82f6; width: 100%; padding: 8px;" onclick="guardarNotaBloc()">💾 Guardar Nota</button>
             </div>
-
-            <!-- MEDIO CALCULADORA VITAL -->
             <div class="section-card" style="margin-bottom: 0; padding: 12px;">
                 <h2>🧮 Calculadora Rápida</h2>
                 <input type="text" id="calc-pantalla" readonly style="width: 100%; height: 40px; background-color: #f3f4f6; color: #1f2937; text-align: right; padding: 8px; font-size: 1.3rem; font-weight: bold; border-radius: 8px; border: 1px solid #d1d5db; margin-bottom: 8px;">
                 <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
                     <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #ef4444;" onclick="limpiarCalc()">C</button>
                     <button class="btn-nav" style="height: 38px; font-size: 1rem;" onclick="presionarCalc('/')">/</button>
-                    <button class="btn-nav" style="height: 38px; font-size: 1rem;" onclick="presionarCalc('*')">*</button>
+                    <button class="btn-nav" style="height: 38px; font-size: 1rem;" onclick="presionarCalc('*')">×</button>
                     <button class="btn-nav" style="height: 38px; font-size: 1rem;" onclick="presionarCalc('-')">-</button>
-                    
                     <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #4b5563;" onclick="presionarCalc('7')">7</button>
                     <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #4b5563;" onclick="presionarCalc('8')">8</button>
                     <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #4b5563;" onclick="presionarCalc('9')">9</button>
                     <button class="btn-nav" style="height: 38px; font-size: 1rem;" onclick="presionarCalc('+')">+</button>
-                    
                     <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #4b5563;" onclick="presionarCalc('4')">4</button>
                     <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #4b5563;" onclick="presionarCalc('5')">5</button>
                     <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #4b5563;" onclick="presionarCalc('6')">6</button>
-                    <button class="btn-nav" style="height: 38px; font-size: 1rem; grid-row: span 2; height: 82px; background-color: #10b981;" onclick="calcularResultado()">=</button>
-                    
+                    <button class="btn-nav" style="height: 82px; font-size: 1.2rem; background-color: #10b981; grid-row: span 2;" onclick="calcularResultado()">=</button>
                     <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #4b5563;" onclick="presionarCalc('1')">1</button>
                     <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #4b5563;" onclick="presionarCalc('2')">2</button>
                     <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #4b5563;" onclick="presionarCalc('3')">3</button>
-                    
                     <button class="btn-nav" style="height: 38px; font-size: 1rem; grid-column: span 2; background-color: #4b5563;" onclick="presionarCalc('0')">0</button>
                     <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #4b5563;" onclick="presionarCalc('.')">.</button>
                 </div>
@@ -577,7 +474,6 @@
                 <label for="f-patologia">Patologías de Base</label>
                 <input type="text" id="f-patologia">
             </div>
-            
             <h3 style="font-size:1rem; margin-top:1.5rem; margin-bottom:0.5rem; color:var(--primary);">Contactos de Emergencia</h3>
             <div class="form-group">
                 <label for="c1-tel">1. Celular Familiar Responsable</label>
@@ -588,7 +484,7 @@
                 <input type="tel" id="c2-tel" placeholder="Ej: 5491198765432">
             </div>
             <button type="submit" class="btn-submit">Guardar Ficha</button>
-            <button type="button" class="btn-submit" style="background-color:#6b7280; margin-top:0.5rem;" onclick="cerrarPantalla('pantalla-ficha')">Volver</button>
+            <button type="button" class="btn-submit" style="background-color:#6b7280; margin-top:0.5rem;" onclick="abrirPantalla('pantalla-ajustes')">Volver a Ajustes</button>
         </form>
     </div>
 
@@ -602,6 +498,7 @@
     <div class="espacio-publicitario"></div>
 
 <script>
+    // --- SERVICE WORKER ---
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('service-worker.js')
@@ -610,565 +507,42 @@
         });
     }
 
-    // --- NUEVO MOTOR DE NAVEGACIÓN CORREGIDO ---
-    function abrirPantalla(idPantalla) {
-        // 1. Ocultar todas las pantallas flotantes activas
-        document.querySelectorAll('.overlay-screen').forEach(p => {
-            p.classList.remove('activa');
-        });
-
-        // 2. Controlar si vamos a "Inicio" o a una flotante
-        if (idPantalla === 'pantalla-inicio') {
-            document.getElementById('pantalla-inicio').style.display = 'block';
-        } else {
-            // Ocultamos el contenedor de inicio para que no moleste abajo
-            document.getElementById('pantalla-inicio').style.display = 'none';
-            const pantallaDestino = document.getElementById(idPantalla);
-            if (pantallaDestino) {
-                pantallaDestino.classList.add('activa');
-            }
-        }
+    // --- HELPERS ---
+    function escapeHTML(str) {
+        if (typeof str !== 'string') return str;
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
     }
 
-    function cerrarPantalla(idPantalla) {
-        const pantalla = document.getElementById(idPantalla);
-        if (pantalla) {
-            pantalla.classList.remove('activa');
-        }
-        // Al cerrar cualquier pantalla flotante, reaparece el Inicio de fondo
-        document.getElementById('pantalla-inicio').style.display = 'block';
+    let modalCallback = null;
+    function mostrarConfirmacion(mensaje, callback) {
+        document.getElementById('modal-mensaje').textContent = mensaje;
+        document.getElementById('modal-confirmacion').classList.add('show');
+        modalCallback = callback;
+    }
+    function cerrarModal(confirmado) {
+        document.getElementById('modal-confirmacion').classList.remove('show');
+        if (modalCallback) { modalCallback(confirmado); modalCallback = null; }
     }
 
+    // --- ESTADO ---
     let registroTomas = JSON.parse(localStorage.getItem('circulo_tomas')) || {};
     let listaActividades = JSON.parse(localStorage.getItem('circulo_actividades')) || [];
     let datosFicha = JSON.parse(localStorage.getItem('circulo_ficha')) || {};
-    let configSonidos = JSON.parse(localStorage.getItem('circulo_sonidos')) || { salud: 'chicharra', tareas: 'zen' };
-    
+    let configSonidos = JSON.parse(localStorage.getItem('circulo_sonidos')) || { salud: 'zen', tareas: 'aves' };
+
     let bolsilloPresupuesto = parseFloat(localStorage.getItem('bolsillo_total')) || 30000;
     let bolsilloCiclo = localStorage.getItem('bolsillo_ciclo') || 'semanal';
     let listaGastos = JSON.parse(localStorage.getItem('bolsillo_gastos')) || [];
     let fechaUltimoReset = localStorage.getItem('bolsillo_reset_date') || new Date().toISOString();
     let alertaForzadaOcultaHoy = false;
     let deferredPrompt;
-    let alertasEjecutadas = {}; 
+    let alertasEjecutadas = JSON.parse(localStorage.getItem('circulo_alertas_ejecutadas')) || {};
+
+    let idCounter = Date.now();
+    function generarId() { return ++idCounter; }
 
     const medicamentosBase = [
         { id: 1, nombre: "Enalapril 10mg", hora: "08:00", tipo: 'med' },
-        { id: 2, nombre: "Almuerzo y Vitamina D", hora: "13:00", tipo: 'med' }
-    ];
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        const btnInstalar = document.getElementById('btn-instalar-app');
-        if (btnInstalar) btnInstalar.style.display = 'inline-block';
-    });
-
-    function instalarPWA() {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((choiceResult) => {
-                if (choiceResult.outcome === 'accepted') {
-                    mostrarToast('¡App instalada con éxito!');
-                }
-                deferredPrompt = null;
-                document.getElementById('btn-instalar-app').style.display = 'none';
-            });
-        }
-    }
-
-    function decir(texto) {
-        const mensaje = new SpeechSynthesisUtterance(texto);
-        mensaje.lang = 'es-ES';
-        window.speechSynthesis.speak(mensaje);
-    }
-
-    function mostrarToast(mensaje) {
-        const toast = document.getElementById('toast-notification');
-        toast.innerText = mensaje;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3500);
-    }
-
-    function ingresarApp() {
-        document.getElementById('pantalla-bienvenida').style.display = 'none';
-        verificarYDepurarBolsillo();
-        decir("Bienvenido a Círculo Vital");
-    }
-
-    function cambiarSolapa(solapa) {
-        document.getElementById('tab-salud').classList.remove('active');
-        document.getElementById('tab-tareas').classList.remove('active');
-        document.getElementById('tab-bolsillo').classList.remove('active');
-        
-        document.getElementById('vista-salud').classList.remove('active');
-        document.getElementById('vista-tareas').classList.remove('active');
-        document.getElementById('vista-bolsillo').classList.remove('active');
-
-        if(solapa === 'salud') {
-            document.getElementById('tab-salud').classList.add('active');
-            document.getElementById('vista-salud').classList.add('active');
-        } else if (solapa === 'tareas') {
-            document.getElementById('tab-tareas').classList.add('active');
-            document.getElementById('vista-tareas').classList.add('active');
-        } else {
-            document.getElementById('tab-bolsillo').classList.add('active');
-            document.getElementById('vista-bolsillo').classList.add('active');
-        }
-    }
-
-    function activarMicrofono() {
-        const btn = document.getElementById('btn-hablar');
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        
-        if (!SpeechRecognition) {
-            decir("El dictado por voz no es soportado.");
-            return;
-        }
-
-        const recognition = new SpeechRecognition();
-        recognition.lang = 'es-ES';
-        recognition.interimResults = false;
-
-        recognition.onstart = () => { btn.classList.add('listening'); btn.innerHTML = "🛑 Escuchando..."; };
-        recognition.onerror = () => { btn.classList.remove('listening'); btn.innerHTML = "🎙️ Hablar con la App"; };
-        recognition.onend = () => { btn.classList.remove('listening'); btn.innerHTML = "🎙️ Hablar con la App"; };
-
-        recognition.onresult = (event) => {
-            const frase = event.results[0][0].transcript.toLowerCase();
-            procesarDictadoIntegral(frase);
-        };
-        recognition.start();
-    }
-
-    function procesarDictadoIntegral(frase) {
-        if(frase.includes("gasté") || frase.includes("gaste") || frase.includes("pesos") || frase.includes("plata")) {
-            let numeros = frase.match(/\d+/g);
-            let monto = numeros ? parseFloat(numeros[0]) : 0;
-            let concepto = frase.replace(/gasté|gaste|pesos|plata|en/g, "").replace(/\d+/g, "").trim();
-            if(concepto.length < 2) concepto = "Gasto dictado";
-
-            if(monto > 0) {
-                listaGastos.push({ id: Date.now(), nombre: concepto.charAt(0).toUpperCase() + concepto.slice(1), monto: monto });
-                localStorage.setItem('bolsillo_gastos', JSON.stringify(listaGastos));
-                renderizar();
-                cambiarSolapa('bolsillo');
-                
-                let restante = calcularRestanteBolsillo();
-                mostrarToast(`Gasto de $${monto} registrado`);
-                decir(`Registrado gasto de ${monto} pesos. Te quedan ${restante} pesos.`);
-            } else {
-                mostrarToast("No entendí el monto");
-            }
-            return;
-        }
-
-        let horaExtraida = frase.match(/(\d{1,2}):(\d{2})/);
-        let horaStr = "";
-        if(horaExtraida) {
-            horaStr = `${horaExtraida[1].padStart(2,'0')}:${horaExtraida[2]}`;
-        } else {
-            const prox = new Date(Date.now() + 15*60000);
-            horaStr = `${String(prox.getHours()).padStart(2,'0')}:${String(prox.getMinutes()).padStart(2,'0')}`;
-        }
-
-        let nombreActividad = frase.replace(/agendar|agregar|a las|las/g, "").replace(/\d{1,2}:\d{2}/, "").trim();
-        if(nombreActividad.length < 2) nombreActividad = "Actividad Dictada";
-
-        let tipo = 'tarea';
-        if(frase.includes("pastilla") || frase.includes("remedio") || frase.includes("presión") || frase.includes("médico")) {
-            tipo = 'med';
-        }
-
-        listaActividades.push({ id: Date.now(), nombre: nombreActividad.charAt(0).toUpperCase() + nombreActividad.slice(1), hora: horaStr, tipo: tipo });
-        localStorage.setItem('circulo_actividades', JSON.stringify(listaActividades));
-        renderizar();
-        
-        cambiarSolapa(tipo === 'med' ? 'salud' : 'tareas');
-        mostrarToast(`Agendado a las ${horaStr}`);
-        decir(`Agendado`);
-    }
-
-    function calcularRestanteBolsillo() {
-        let totalGastado = listaGastos.reduce((sum, g) => sum + g.monto, 0);
-        return bolsilloPresupuesto - totalGastado;
-    }
-
-    function actualizarParametrosBolsillo() {
-        bolsilloPresupuesto = parseFloat(document.getElementById('box-presupuesto-total').value) || 30000;
-        bolsilloCiclo = document.getElementById('box-presupuesto-ciclo').value;
-        localStorage.setItem('bolsillo_total', bolsilloPresupuesto);
-        localStorage.setItem('bolsillo_ciclo', bolsilloCiclo);
-        renderizar();
-        mostrarToast("Bolsillo configurado");
-        cerrarPantalla('pantalla-ajustes');
-    }
-
-    function verificarYDepurarBolsillo() {
-        const ahora = new Date();
-        const inicio = new Date(fechaUltimoReset);
-        const difTiempo = ahora.getTime() - inicio.getTime();
-        const difDias = Math.floor(difTiempo / (1000 * 60 * 60 * 24));
-        let limiteDias = bolsilloCiclo === 'semanal' ? 7 : 15;
-
-        if (difDias >= limiteDias) {
-            listaGastos = [];
-            fechaUltimoReset = ahora.toISOString();
-            localStorage.setItem('bolsillo_gastos', JSON.stringify(listaGastos));
-            localStorage.setItem('bolsillo_reset_date', fechaUltimoReset);
-            mostrarToast("¡Ciclo limpio iniciado!");
-            decir("Tu billetera vuelve a iniciar desde cero.");
-            renderizar();
-        }
-    }
-
-    function guardarEntradaManual() {
-        const nombre = document.getElementById('act-nombre').value;
-        const variable = document.getElementById('act-variable').value;
-        const tipo = document.getElementById('act-tipo').value;
-
-        if(!nombre || !variable) {
-            mostrarToast("Completa los datos necesarios");
-            return;
-        }
-
-        if(tipo === 'bolsillo') {
-            let monto = parseFloat(variable) || 0;
-            listaGastos.push({ id: Date.now(), nombre, monto });
-            localStorage.setItem('bolsillo_gastos', JSON.stringify(listaGastos));
-        } else {
-            listaActividades.push({ id: Date.now(), nombre, hora: variable, tipo });
-            localStorage.setItem('circulo_actividades', JSON.stringify(listaActividades));
-        }
-
-        configSonidos.salud = document.getElementById('sonido-salud').value;
-        configSonidos.tareas = document.getElementById('sonido-tareas').value;
-        localStorage.setItem('circulo_sonidos', JSON.stringify(configSonidos));
-
-        document.getElementById('act-nombre').value = '';
-        document.getElementById('act-variable').value = '';
-        
-        renderizar();
-        mostrarToast("Guardado con éxito");
-        cerrarPantalla('pantalla-ajustes');
-        cambiarSolapa(tipo === 'bolsillo' ? 'bolsillo' : (tipo === 'med' ? 'salud' : 'tareas'));
-    }
-
-    function borrarGasto(id) {
-        if(confirm("¿Estás seguro de que querés borrar este gasto?")) {
-            listaGastos = listaGastos.filter(g => g.id !== id);
-            localStorage.setItem('bolsillo_gastos', JSON.stringify(listaGastos));
-            renderizar();
-            mostrarToast("Gasto eliminado");
-        }
-    }
-
-    function borrarActividad(id) {
-        if(confirm("¿Estás seguro de que querés borrar esta actividad?")) {
-            listaActividades = listaActividades.filter(a => a.id !== id);
-            localStorage.setItem('circulo_actividades', JSON.stringify(listaActividades));
-            renderizar();
-            mostrarToast("Actividad eliminada");
-        }
-    }
-
-    function marcarToma(id, nombre) {
-        const hoy = new Date().toISOString().split('T')[0];
-        registroTomas[`${hoy}_${id}`] = true;
-        localStorage.setItem('circulo_tomas', JSON.stringify(registroTomas));
-        mostrarToast(`Registrado: ${nombre}`);
-        decir(`${nombre} completado`);
-        renderizar(); 
-    }
-
-    function gestionarCierreAlertaAlEnviar() {
-        alertaForzadaOcultaHoy = true;
-        document.getElementById('alerta-olvido').style.display = 'none';
-        mostrarToast("Aviso enviado. Alerta silenciada.");
-    }
-
-    function controlarOlvidosConsecutivos() {
-        if (alertaForzadaOcultaHoy) {
-            document.getElementById('alerta-olvido').style.display = 'none';
-            return;
-        }
-
-        const hoy = new Date().toISOString().split('T')[0];
-        const ahora = new Date();
-        const horaActualStr = `${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`;
-        
-        const todosLosMeds = [...medicamentosBase, ...listaActividades.filter(a => a.tipo === 'med')];
-        const pasados = todosLosMeds.filter(m => m.hora <= horaActualStr);
-        
-        let noTomados = 0;
-        pasados.forEach(m => {
-            if (!registroTomas[`${hoy}_${m.id}`]) noTomados++;
-        });
-
-        const alertaBox = document.getElementById('alerta-olvido');
-        if (noTomados >= 2) {
-            alertaBox.style.display = 'block';
-            if (datosFicha.familiar) {
-                const mensajeWa = encodeURIComponent(`Hola, Círculo Vital detectó que no se reportaron las últimas tomas de medicación.`);
-                document.getElementById('link-wa-olvido').href = `https://wa.me/${datosFicha.familiar}?text=${mensajeWa}`;
-            } else {
-                document.getElementById('link-wa-olvido').href = "#";
-            }
-        } else {
-            alertaBox.style.display = 'none';
-        }
-    }
-
-    function renderizar() {
-        const contSalud = document.getElementById('lista-salud');
-        const contTareas = document.getElementById('lista-tareas');
-        const contGastos = document.getElementById('lista-gastos');
-        const hoy = new Date().toISOString().split('T')[0];
-
-        contSalud.innerHTML = ''; contTareas.innerHTML = '';
-        
-        medicamentosBase.forEach(m => {
-            if (!registroTomas[`${hoy}_${m.id}`]) {
-                contSalud.innerHTML += `
-                    <div class="med-card">
-                        <div><strong>💊 ${m.nombre}</strong><br><small style="color:#6b7280;">Hora: ${m.hora}</small></div>
-                        <button class="btn-action" onclick="marcarToma(${m.id}, '${m.nombre}')">Ya lo tomé</button>
-                    </div>`;
-            }
-        });
-
-        listaActividades.forEach(a => {
-            if (a.tipo === 'med') {
-                if (!registroTomas[`${hoy}_${a.id}`]) {
-                    contSalud.innerHTML += `
-                        <div class="med-card">
-                            <div><strong>💊 ${a.nombre}</strong><br><small style="color:#6b7280;">Hora: ${a.hora}</small></div>
-                            <button class="btn-action" onclick="marcarToma(${a.id}, '${a.nombre}')">Ya lo tomé</button>
-                        </div>`;
-                }
-            } else if (a.tipo === 'tarea') {
-                contTareas.innerHTML += `
-                    <div class="agenda-card">
-                        <div><strong>🗓️ ${a.nombre}</strong><br><small style="color:#6b7280;">Hora: ${a.hora}</small></div>
-                        <button class="btn-delete" onclick="borrarActividad(${a.id})">✕</button>
-                    </div>`;
-            }
-        });
-
-        contGastos.innerHTML = '';
-        listaGastos.forEach(g => {
-            contGastos.innerHTML += `
-                <div class="expense-card">
-                    <div><strong>🛍️ ${g.nombre}</strong><br><small style="color:#dc2626; font-weight:bold;">-$${g.monto}</small></div>
-                    <button class="btn-delete" onclick="borrarGasto(${g.id})">✕</button>
-                </div>`;
-        });
-
-        let restante = calcularRestanteBolsillo();
-        document.getElementById('wallet-restante').innerText = `$${restante}`;
-        document.getElementById('wallet-total').innerText = `$${bolsilloPresupuesto}`;
-        document.getElementById('txt-periodo-actual').innerText = `Ciclo ${bolsilloCiclo.charAt(0).toUpperCase() + bolsilloCiclo.slice(1)}`;
-
-        let porcentaje = (restante / bolsilloPresupuesto) * 100;
-        if(porcentaje < 0) porcentaje = 0;
-        const barra = document.getElementById('wallet-barra');
-        barra.style.width = `${porcentaje}%`;
-        
-        if(porcentaje > 50) barra.style.backgroundColor = '#10b981';
-        else if(porcentaje > 15) barra.style.backgroundColor = '#f59e0b';
-        else barra.style.backgroundColor = '#dc2626';
-
-        if(contSalud.innerHTML === '') contSalud.innerHTML = '<p style="color:#6b7280; text-align:center; padding:1rem;">Todo tomado por hoy.</p>';
-        if(contTareas.innerHTML === '') contTareas.innerHTML = '<p style="color:#6b7280; text-align:center; padding:1rem;">Sin tareas pendientes.</p>';
-        if(contGastos.innerHTML === '') contGastos.innerHTML = '<p style="color:#6b7280; text-align:center; padding:1rem;">No registraste gastos.</p>';
-
-        controlarOlvidosConsecutivos();
-    }
-
-    function solicitarConfirmacionSOS() {
-        if(confirm("⚠️ ¿Desea activar la alerta SOS y enviar mensaje de emergencia a su familiar?")) {
-            ejecutarSOS();
-        }
-    }
-
-    function ejecutarSOS() {
-        reproducirTono('chicharra');
-        decir("Alerta SOS activada");
-        
-        if (datosFicha.familiar) {
-            const msjWa = encodeURIComponent(`¡ALERTA SOS! Se presionó el botón de emergencia en Círculo Vital.`);
-            window.open(`https://wa.me/${datosFicha.familiar}?text=${msjWa}`, '_blank');
-        } else {
-            alert("⚠️ SOS Activado. Registrá un contacto de emergencia en la Ficha Médica para enviar WhatsApp automáticamente.");
-        }
-    }
-
-    function exportarCopiaSeguridad() {
-        const backupData = {
-            circulo_tomas: localStorage.getItem('circulo_tomas'),
-            circulo_actividades: localStorage.getItem('circulo_actividades'),
-            circulo_ficha: localStorage.getItem('circulo_ficha'),
-            circulo_sonidos: localStorage.getItem('circulo_sonidos'),
-            bolsillo_total: localStorage.getItem('bolsillo_total'),
-            bolsillo_ciclo: localStorage.getItem('bolsillo_ciclo'),
-            bolsillo_gastos: localStorage.getItem('bolsillo_gastos'),
-            bolsillo_reset_date: localStorage.getItem('bolsillo_reset_date')
-        };
-        
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", "backup_circulo_vital.json");
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
-        mostrarToast("Copia de seguridad descargada");
-    }
-
-    function importarCopiaSeguridad(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const importedData = JSON.parse(e.target.result);
-                Object.keys(importedData).forEach(key => {
-                    if(importedData[key] !== null) {
-                        localStorage.setItem(key, importedData[key]);
-                    }
-                });
-                
-                registroTomas = JSON.parse(localStorage.getItem('circulo_tomas')) || {};
-                listaActividades = JSON.parse(localStorage.getItem('circulo_actividades')) || [];
-                datosFicha = JSON.parse(localStorage.getItem('circulo_ficha')) || {};
-                configSonidos = JSON.parse(localStorage.getItem('circulo_sonidos')) || { salud: 'chicharra', tareas: 'zen' };
-                bolsilloPresupuesto = parseFloat(localStorage.getItem('bolsillo_total')) || 30000;
-                bolsilloCiclo = localStorage.getItem('bolsillo_ciclo') || 'semanal';
-                listaGastos = JSON.parse(localStorage.getItem('bolsillo_gastos')) || [];
-                fechaUltimoReset = localStorage.getItem('bolsillo_reset_date') || new Date().toISOString();
-
-                document.getElementById('sonido-salud').value = configSonidos.salud;
-                document.getElementById('sonido-tareas').value = configSonidos.tareas;
-                document.getElementById('box-presupuesto-total').value = bolsilloPresupuesto;
-                document.getElementById('box-presupuesto-ciclo').value = bolsilloCiclo;
-                
-                if(datosFicha.nombre) document.getElementById('f-nombre').value = datosFicha.nombre;
-                if(datosFicha.sangre) document.getElementById('f-sangre').value = datosFicha.sangre;
-                if(datosFicha.patologia) document.getElementById('f-patologia').value = datosFicha.patologia;
-                if(datosFicha.familiar) document.getElementById('c1-tel').value = datosFicha.familiar;
-                if(datosFicha.secundario) document.getElementById('c2-tel').value = datosFicha.secundario;
-
-                renderizar();
-                mostrarToast("¡Datos restaurados con éxito!");
-                decir("Copia de seguridad restaurada correctamente.");
-            } catch (err) {
-                alert("Error: El archivo cargado no es una copia válida.");
-            }
-        };
-        reader.readAsText(file);
-    }
-
-    function reproducirTono(tipoSonido) {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        if (tipoSonido === 'chicharra') {
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.3, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.5);
-        } else if (tipoSonido === 'digital') {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(2000, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.15);
-        } else if (tipoSonido === 'zen') {
-            osc.type = 'sine'; osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime); osc.start(); osc.stop(audioCtx.currentTime + 0.4);
-        }
-    }
-
-    function probarSonidoSeleccionado() { reproducirTono(document.getElementById('sonido-salud').value); }
-
-    function guardarDatosFicha(e) {
-        e.preventDefault();
-        datosFicha.nombre = document.getElementById('f-nombre').value;
-        datosFicha.sangre = document.getElementById('f-sangre').value;
-        datosFicha.patologia = document.getElementById('f-patologia').value;
-        datosFicha.familiar = document.getElementById('c1-tel').value;
-        datosFicha.secundario = document.getElementById('c2-tel').value;
-        localStorage.setItem('circulo_ficha', JSON.stringify(datosFicha));
-        mostrarToast("Ficha médica actualizada");
-        cerrarPantalla('pantalla-ficha');
-        renderizar();
-    }
-
-    setInterval(() => {
-        const ahora = new Date();
-        const enCincoMin = new Date(ahora.getTime() + 5 * 60000);
-        const horaObjetivo = `${String(enCincoMin.getHours()).padStart(2,'0')}:${String(enCincoMin.getMinutes()).padStart(2,'0')}`;
-        const hoy = new Date().toISOString().split('T')[0];
-        
-        verificarYDepurarBolsillo();
-
-        const todosLosElementos = [...medicamentosBase, ...listaActividades.filter(a => a.tipo !== 'bolsillo')];
-
-        todosLosElementos.forEach(item => {
-            if (item.hora === horaObjetivo) {
-                if (item.tipo === 'med' && registroTomas[`${hoy}_${item.id}`]) return;
-                const claveAlerta = `${hoy}_${item.id}_${item.hora}`;
-                if (alertasEjecutadas[claveAlerta]) return;
-
-                alertasEjecutadas[claveAlerta] = true;
-
-                if (item.tipo === 'med') {
-                    reproducirTono(configSonidos.salud);
-                    decir(`En 5 minutos corresponde tomar: ${item.nombre}`);
-                    cambiarSolapa('salud');
-                } else {
-                    reproducirTono(configSonidos.tareas);
-                    decir(`Recordatorio en 5 minutos: ${item.nombre}`);
-                    cambiarSolapa('tareas');
-                }
-                mostrarToast(`Próximo en 5 min: ${item.nombre}`);
-            }
-        });
-    }, 20000);
-
-    window.onload = () => {
-        renderizar();
-        document.getElementById('sonido-salud').value = configSonidos.salud;
-        document.getElementById('sonido-tareas').value = configSonidos.tareas;
-        document.getElementById('box-presupuesto-total').value = bolsilloPresupuesto;
-        document.getElementById('box-presupuesto-ciclo').value = bolsilloCiclo;
-        
-        if(datosFicha.nombre) document.getElementById('f-nombre').value = datosFicha.nombre;
-        if(datosFicha.sangre) document.getElementById('f-sangre').value = datosFicha.sangre;
-        if(datosFicha.patologia) document.getElementById('f-patologia').value = datosFicha.patologia;
-        if(datosFicha.familiar) document.getElementById('c1-tel').value = datosFicha.familiar;
-        if(datosFicha.secundario) document.getElementById('c2-tel').value = datosFicha.secundario;
-    };
-
-    document.addEventListener("DOMContentLoaded", () => {
-        const notaGuardada = localStorage.getItem('circulo_nota_bloc') || "";
-        const textarea = document.getElementById('bloc-notas');
-        if(textarea) textarea.value = notaGuardada;
-    });
-
-    function guardarNotaBloc() {
-        const texto = document.getElementById('bloc-notas').value;
-        localStorage.setItem('circulo_nota_bloc', texto);
-        if (typeof mostrarToast === "function") mostrarToast("📝 Nota guardada en el teléfono");
-    }
-
-    function presionarCalc(valor) { document.getElementById('calc-pantalla').value += valor; }
-    function limpiarCalc() { document.getElementById('calc-pantalla').value = ''; }
-    function calcularResultado() {
-        try {
-            const pantalla = document.getElementById('calc-pantalla');
-            if(pantalla.value) pantalla.value = eval(pantalla.value);
-        } catch (error) {
-            document.getElementById('calc-pantalla').value = 'Error';
-        }
-    }
-</script>
-</body>
-</html>
+        { id: 2, nombre:

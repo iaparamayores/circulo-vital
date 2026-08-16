@@ -1,6 +1,6 @@
 // service-worker.js — Círculo Vital
 // 👇 IMPORTANTE: cambialo cada vez que actualices archivos
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CACHE_NAME = `circulo-vital-${VERSION}`;
 
 // Archivos básicos para funcionar offline

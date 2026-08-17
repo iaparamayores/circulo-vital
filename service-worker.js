@@ -1,74 +1,29 @@
-// service-worker.js — Círculo Vital
-// 👇 IMPORTANTE: cambialo cada vez que actualices archivos
-const VERSION = 'v4';
+const VERSION = 'v6';
 const CACHE_NAME = `circulo-vital-${VERSION}`;
+const APP_SHELL = ['./', './index.html', './manifest.json'];
 
-// Archivos básicos para funcionar offline
-const APP_SHELL = [
-  './',
-  './index.html',
-  './manifest.json'
-];
-
-// ===== INSTALACIÓN =====
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
-  );
-  self.skipWaiting(); // ✅ Fuerza activación inmediata del SW nuevo
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(APP_SHELL)));
+  self.skipWaiting();
 });
 
-// ===== ACTIVACIÓN (borra cachés viejas) =====
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      )
-    ).then(() => self.clients.claim())
-  );
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 
-// ===== PETICIONES =====
-self.addEventListener('fetch', (event) => {
-  const req = event.request;
-
-  // Ignorar peticiones no-GET y no-http
-  if (req.method !== 'GET' || !req.url.startsWith('http')) return;
-
-  // ✅ ESTRATEGIA NETWORK-FIRST para NAVEGACIÓN (index.html)
-  // Siempre intenta traer la versión fresca; solo usa caché si no hay internet
-  if (req.mode === 'navigate' || req.destination === 'document') {
-    event.respondWith(
-      fetch(req)
-        .then((response) => {
-          // Si descargó bien, actualizar caché con la nueva versión
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put('./index.html', responseClone);
-          });
-          return response;
-        })
-        .catch(() => {
-          // Si no hay internet, servir la versión guardada
-          return caches.match('./index.html');
-        })
-    );
+self.addEventListener('fetch', e => {
+  const r = e.request;
+  if (r.method !== 'GET' || !r.url.startsWith('http')) return;
+  if (r.mode === 'navigate' || r.destination === 'document') {
+    e.respondWith(fetch(r).then(res => {
+      const c = res.clone();
+      caches.open(CACHE_NAME).then(cache => cache.put('./index.html', c));
+      return res;
+    }).catch(() => caches.match('./index.html')));
     return;
   }
-
-  // ✅ ESTRATEGIA CACHE-FIRST para ASSETS (imágenes, manifest, etc)
-  event.respondWith(
-    caches.match(req).then((cached) => {
-      if (cached) return cached;
-      return fetch(req).then((response) => {
-        // Guardar en caché para la próxima
-        if (response.ok) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, responseClone));
-        }
-        return response;
-      });
-    })
-  );
+  e.respondWith(caches.match(r).then(c => c || fetch(r).then(res => {
+    if (res.ok) { const c = res.clone(); caches.open(CACHE_NAME).then(cache => cache.put(r, c)); }
+    return res;
+  })));
 });

@@ -3,227 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Círculo Vital - Versión Integral</title>
-    <meta name="description" content="Tu espacio seguro de salud, memoria y bienestar familiar.">
+    <title>Círculo Vital</title>
     <meta name="theme-color" content="#059669">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Círculo Vital">
     <link rel="manifest" href="./manifest.json">
     <link rel="icon" type="image/png" href="./icon-192.png">
     <link rel="apple-touch-icon" href="./icon-512.png">
 
     <style>
-        :root {
-            --primary: #059669;
-            --primary-dark: #047857;
-            --bg-light: #f0fdf4;
-            --text-dark: #1f2937;
-            --danger: #dc2626;
-            --danger-dark: #b91c1c;
-            --budget-color: #2563eb;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
+        :root { --primary: #059669; --bg-light: #f0fdf4; --text-dark: #1f2937; --danger: #dc2626; --budget-color: #2563eb; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
         body { background-color: var(--bg-light); color: var(--text-dark); display: flex; flex-direction: column; min-height: 100vh; }
 
-        /* --- PANTALLA DE BIENVENIDA --- */
-        #pantalla-bienvenida {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #111827; z-index: 200;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: white; text-align: center; padding: 2rem;
-        }
-        .welcome-logo-box { padding: 0; border: none; background: transparent; }
-        .btn-enter {
-            background-color: #0c9c6e; color: white; border: none;
-            padding: 1rem 2rem; border-radius: 30px; font-size: 1.1rem; font-weight: bold;
-            cursor: pointer; margin-top: 2rem;
-            box-shadow: 0 4px 10px rgba(5, 150, 105, 0.3);
-        }
-
-        /* --- PANTALLA DE ALARMA FULLSCREEN --- */
         #pantalla-alarma {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, #059669 0%, #047857 100%);
             z-index: 300; display: none; flex-direction: column;
-            align-items: center; justify-content: center;
-            color: white; text-align: center; padding: 2rem;
+            align-items: center; justify-content: center; color: white;
+            text-align: center; padding: 2rem;
         }
         #pantalla-alarma.activa { display: flex; }
-        .alarma-icono { font-size: 5rem; margin-bottom: 1rem; animation: alarma-pulse 1s ease-in-out infinite; }
-        @keyframes alarma-pulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.15); opacity: 0.8; }
-        }
-        .alarma-botones {
-            display: flex; flex-direction: column; gap: 1rem;
-            margin-top: 2rem; width: 100%; max-width: 300px;
-        }
-        .btn-alarma-tomar {
-            background: white; color: #059669; border: none;
-            padding: 1.25rem; border-radius: 1rem; font-size: 1.2rem;
-            font-weight: bold; cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        .btn-alarma-tomar:active { transform: scale(0.97); }
-        .btn-alarma-posponer {
-            background: rgba(255,255,255,0.15); color: white;
-            border: 2px solid rgba(255,255,255,0.4);
-            padding: 1rem; border-radius: 1rem; font-size: 1rem; cursor: pointer;
-        }
+        .alarma-icono { font-size: 5rem; margin-bottom: 1rem; animation: pulse 1s ease-in-out infinite; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+        .alarma-botones { display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem; width: 100%; max-width: 300px; }
+        .btn-alarma-tomar { background: white; color: #059669; border: none; padding: 1.25rem; border-radius: 1rem; font-size: 1.2rem; font-weight: bold; cursor: pointer; }
+        .btn-alarma-posponer { background: rgba(255,255,255,0.15); color: white; border: 2px solid rgba(255,255,255,0.4); padding: 1rem; border-radius: 1rem; font-size: 1rem; cursor: pointer; }
 
-        /* --- HEADER Y MAIN --- */
-        header {
-            background-color: #111827; color: white; padding: 1rem;
-            display: flex; justify-content: space-between; align-items: center;
-            position: sticky; top: 0; z-index: 10;
-        }
+        header { background-color: #111827; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
         .logo-container { display: flex; align-items: center; gap: 0.5rem; }
         header h1 { font-size: 1.2rem; font-weight: 600; }
         .nav-buttons { display: flex; gap: 0.4rem; }
-        .btn-nav {
-            background: #374151; color: white; border: none;
-            padding: 0.4rem 0.7rem; border-radius: 0.375rem; cursor: pointer; font-size: 0.85rem;
-        }
+        .btn-nav { background: #374151; color: white; border: none; padding: 0.4rem 0.7rem; border-radius: 0.375rem; cursor: pointer; font-size: 0.85rem; }
         .btn-install { background: var(--primary); color: white; font-weight: bold; display: none; }
 
-        main {
-            flex: 1; padding: 1rem; max-width: 600px; width: 100%; margin: 0 auto;
-            display: flex; flex-direction: column; gap: 1rem;
-        }
-
+        main { flex: 1; padding: 1rem; max-width: 600px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 1rem; }
         .solapas-container { display: flex; gap: 0.35rem; margin-bottom: 0.5rem; }
-        .btn-solapa {
-            flex: 1; background: #e5e7eb; color: #4b5563; border: none;
-            padding: 0.85rem 0.5rem; border-radius: 0.75rem; font-weight: bold;
-            font-size: 0.95rem; cursor: pointer; transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); white-space: nowrap;
-        }
-        .btn-solapa.active { background: var(--primary); color: white; box-shadow: 0 4px 6px rgba(5, 150, 105, 0.2); }
+        .btn-solapa { flex: 1; background: #e5e7eb; color: #4b5563; border: none; padding: 0.85rem 0.5rem; border-radius: 0.75rem; font-weight: bold; font-size: 0.95rem; cursor: pointer; }
+        .btn-solapa.active { background: var(--primary); color: white; }
         .vista-solapa { display: none; flex-direction: column; gap: 1rem; }
         .vista-solapa.active { display: flex; }
 
-        .section-card {
-            background: white; padding: 1.25rem; border-radius: 1rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .section-card h2 {
-            font-size: 1.1rem; margin-bottom: 0.75rem; color: #111827;
-            border-bottom: 2px solid #f3f4f6; padding-bottom: 0.25rem;
-        }
+        .section-card { background: white; padding: 1.25rem; border-radius: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .section-card h2 { font-size: 1.1rem; margin-bottom: 0.75rem; color: #111827; border-bottom: 2px solid #f3f4f6; padding-bottom: 0.25rem; }
 
-        .btn-sos {
-            background-color: var(--danger); color: white;
-            width: 85px; height: 85px; border-radius: 50%;
-            border: 4px solid #fecaca; font-size: 1.2rem; font-weight: bold;
-            cursor: pointer; box-shadow: 0 4px 6px -1px rgba(220, 38, 38, 0.2);
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto; user-select: none; -webkit-user-select: none;
-        }
+        .btn-sos { background-color: var(--danger); color: white; width: 85px; height: 85px; border-radius: 50%; border: 4px solid #fecaca; font-size: 1.2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
 
         .wallet-display { text-align: center; padding: 1rem 0; }
         .wallet-monto { font-size: 2.25rem; font-weight: 800; color: #111827; margin: 0.25rem 0; }
-        .progress-bar-container {
-            background-color: #e5e7eb; border-radius: 1rem;
-            height: 16px; width: 100%; overflow: hidden; margin-top: 0.75rem;
-        }
-        .progress-bar-fill {
-            background-color: #10b981; height: 100%; width: 100%;
-            transition: width 0.4s ease, background-color 0.4s ease;
-        }
+        .progress-bar-container { background-color: #e5e7eb; border-radius: 1rem; height: 16px; width: 100%; overflow: hidden; margin-top: 0.75rem; }
+        .progress-bar-fill { background-color: #10b981; height: 100%; width: 100%; transition: width 0.4s, background-color 0.4s; }
 
-        #toast-notification {
-            position: fixed; bottom: 5rem; left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: #111827; color: white; padding: 0.75rem 1.5rem;
-            border-radius: 2rem; font-size: 0.95rem; font-weight: 600;
-            z-index: 1000; opacity: 0;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
-            pointer-events: none; white-space: nowrap;
-        }
+        #toast-notification { position: fixed; bottom: 5rem; left: 50%; transform: translateX(-50%) translateY(100px); background: #111827; color: white; padding: 0.75rem 1.5rem; border-radius: 2rem; font-size: 0.95rem; font-weight: 600; z-index: 1000; opacity: 0; transition: all 0.4s; white-space: nowrap; }
         #toast-notification.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-        .med-warning-card {
-            background-color: #fff1f2; border: 2px solid #fecdd3;
-            padding: 1rem; border-radius: 0.75rem; margin-bottom: 0.5rem; display: none;
-        }
-        .btn-whatsapp {
-            background-color: #25d366; color: white; border: none;
-            padding: 0.6rem 1rem; border-radius: 0.5rem; font-weight: 600;
-            cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem;
-            margin-top: 0.5rem; text-decoration: none; font-size: 0.9rem;
-        }
+        .med-warning-card { background-color: #fff1f2; border: 2px solid #fecdd3; padding: 1rem; border-radius: 0.75rem; margin-bottom: 0.5rem; display: none; }
+        .btn-whatsapp { background-color: #25d366; color: white; border: none; padding: 0.6rem 1rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; text-decoration: none; font-size: 0.9rem; }
 
         .form-group { margin-bottom: 1rem; }
         .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem; color: #4b5563; }
         .form-group input, .form-group select { width: 100%; padding: 0.6rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 1rem; }
         .btn-submit { background-color: var(--primary); color: white; border: none; width: 100%; padding: 0.75rem; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; }
 
-        .overlay-screen {
-            position: fixed; top: 60px; left: 0; width: 100%; height: calc(100% - 60px);
-            background-color: white; z-index: 100; display: none;
-            flex-direction: column; padding: 1rem; overflow-y: auto;
-        }
+        .overlay-screen { position: fixed; top: 60px; left: 0; width: 100%; height: calc(100% - 60px); background-color: white; z-index: 100; display: none; flex-direction: column; padding: 1rem; overflow-y: auto; }
         .overlay-screen.activa { display: flex; }
-
-        .espacio-publicitario { width: 100%; height: 70px; background-color: transparent; display: block; margin: 0; padding: 0; }
 
         .agenda-card { background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid #4dabf7; display: flex; justify-content: space-between; align-items: center; }
         .med-card { background: #fff; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid #0ca678; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .expense-card { background: #fff; padding: 12px; border-radius: 10px; margin-bottom: 8px; border-left: 5px solid #f59e0b; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-
+        .expense-card { background: #fff; padding: 12px; border-radius: 10px; margin-bottom: 8px; border-left: 5px solid #f59e0b; display: flex; justify-content: space-between; align-items: center; }
         .btn-action { background: #0ca678; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .btn-delete { background: #fee2e2; color: #dc2626; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; }
 
         .voice-btn-container { text-align: center; margin-bottom: 0.25rem; }
         .btn-voice { background-color: #3b82f6; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 2rem; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 1.05rem; }
-        .btn-voice.listening { background-color: var(--danger); animation: pulse-red 1.5s infinite; }
+        .btn-voice.listening { background-color: var(--danger); }
 
-        footer {
-            text-align: center; padding: 1.5rem 1rem;
-            background-color: #111827; color: #9ca3af; font-size: 0.85rem;
-            border-top: 3px solid var(--primary);
-        }
+        footer { text-align: center; padding: 1.5rem 1rem; background-color: #111827; color: #9ca3af; font-size: 0.85rem; border-top: 3px solid var(--primary); }
         footer a { color: var(--primary); text-decoration: none; font-weight: 600; }
-        footer a:hover { color: white; text-decoration: underline; }
 
-        .backup-container {
-            background-color: #f3f4f6; border: 1px dashed #d1d5db;
-            padding: 1rem; border-radius: 0.75rem; margin-top: 1.5rem;
-        }
+        .backup-container { background-color: #f3f4f6; border: 1px dashed #d1d5db; padding: 1rem; border-radius: 0.75rem; margin-top: 1.5rem; }
 
-        @keyframes pulse-red {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
-        }
-
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 500;
-            display: none; align-items: center; justify-content: center; padding: 1rem;
-        }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 500; display: none; align-items: center; justify-content: center; padding: 1rem; }
         .modal-overlay.show { display: flex; }
-        .modal-box {
-            background: white; border-radius: 1rem; padding: 1.5rem;
-            max-width: 320px; width: 100%; text-align: center;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-        }
-        .modal-box p { color: #1f2937; font-size: 1rem; margin-bottom: 1.25rem; line-height: 1.5; }
+        .modal-box { background: white; border-radius: 1rem; padding: 1.5rem; max-width: 320px; width: 100%; text-align: center; }
+        .modal-box p { color: #1f2937; font-size: 1rem; margin-bottom: 1.25rem; }
         .modal-botones { display: flex; gap: 0.75rem; }
-        .modal-botones button {
-            flex: 1; padding: 0.75rem; border: none; border-radius: 0.5rem;
-            font-weight: 600; cursor: pointer; font-size: 0.95rem;
-        }
+        .modal-botones button { flex: 1; padding: 0.75rem; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; }
         .modal-botones .btn-cancelar { background: #e5e7eb; color: #4b5563; }
         .modal-botones .btn-confirmar { background: var(--danger); color: white; }
     </style>
 </head>
 <body>
 
-    <div id="toast-notification">¡Acción registrada!</div>
+    <div id="toast-notification"></div>
 
     <div id="modal-confirmacion" class="modal-overlay">
         <div class="modal-box">
@@ -235,65 +107,62 @@
         </div>
     </div>
 
-    <!-- ✅ PANTALLA DE ALARMA FULLSCREEN -->
     <div id="pantalla-alarma">
         <div class="alarma-icono" id="alarma-emoji">⏰</div>
         <h2 id="alarma-titulo" style="font-size: 2rem; margin-bottom: 0.5rem;">Medicamento</h2>
-        <p id="alarma-detalle" style="font-size: 1.3rem; opacity: 0.9;">Enalapril 10mg - 08:00</p>
+        <p id="alarma-detalle" style="font-size: 1.3rem; opacity: 0.9;"></p>
         <div class="alarma-botones">
             <button class="btn-alarma-tomar" onclick="alarmaConfirmar()">✅ Ya lo tomé / Listo</button>
-            <button class="btn-alarma-posponer" onclick="alarmaPosponer()">⏰ Posponer 5 minutos</button>
+            <button class="btn-alarma-posponer" onclick="alarmaPosponer()">⏰ Posponer 5 min</button>
         </div>
     </div>
 
     <header>
         <div class="logo-container">
-            <img src="./icon-192.png" alt="Mini Logo" style="width: 28px; height: 28px; border-radius: 6px; object-fit: cover;">
+            <img src="./icon-192.png" alt="Logo" style="width: 28px; height: 28px; border-radius: 6px; object-fit: cover;">
             <h1 style="font-size: 1.1rem;">Círculo Vital</h1>
         </div>
-        <div class="nav-buttons" style="gap: 4px;">
+        <div class="nav-buttons">
             <button class="btn-nav btn-install" id="btn-instalar-app" onclick="instalarPWA()">📲 Instalar</button>
-            <button class="btn-nav" style="font-size: 0.75rem; padding: 6px 8px;" onclick="abrirPantalla('pantalla-inicio')">Inicio</button>
-            <button class="btn-nav" style="font-size: 0.75rem; padding: 6px 8px;" onclick="abrirPantalla('pantalla-herramientas')">🛠️ Útiles</button>
-            <button class="btn-nav" style="font-size: 0.75rem; padding: 6px 8px;" onclick="abrirPantalla('pantalla-ajustes')">Ajustes</button>
+            <button class="btn-nav" style="font-size: 0.75rem;" onclick="abrirPantalla('pantalla-inicio')">Inicio</button>
+            <button class="btn-nav" style="font-size: 0.75rem;" onclick="abrirPantalla('pantalla-herramientas')">🛠️</button>
+            <button class="btn-nav" style="font-size: 0.75rem;" onclick="abrirPantalla('pantalla-ajustes')">Ajustes</button>
         </div>
     </header>
 
     <div id="pantalla-inicio" style="display: block; width: 100%;">
         <main>
             <div class="med-warning-card" id="alerta-olvido">
-                <h3 style="color:var(--danger); font-size:1.05rem; margin-bottom:0.25rem;">⚠️ Alerta de Salud Continua</h3>
-                <p style="font-size:0.9rem; color:#4b5563;">Se detectaron dos o más medicamentos seguidos sin reportar toma.</p>
+                <h3 style="color:var(--danger); font-size:1.05rem;">⚠️ Alerta de Salud Continua</h3>
+                <p style="font-size:0.9rem; color:#4b5563;">Dos o más medicamentos sin tomar.</p>
                 <a href="#" id="link-wa-olvido" class="btn-whatsapp" target="_blank" onclick="gestionarCierreAlertaAlEnviar()">Enviar Aviso a Familiar</a>
             </div>
 
             <div class="section-card" style="text-align:center; padding: 0.4rem;">
-                <button class="btn-sos" id="boton-sos" onclick="solicitarConfirmacionSOS()" aria-label="Botón de Emergencia">SOS</button>
+                <button class="btn-sos" onclick="solicitarConfirmacionSOS()">SOS</button>
             </div>
 
             <div class="voice-btn-container">
-                <button class="btn-voice" id="btn-hablar" onclick="activarMicrofono()" aria-label="Activar dictado por voz">
-                    🎙️ Hablar con la App
-                </button>
+                <button class="btn-voice" id="btn-hablar" onclick="activarMicrofono()">🎙️ Hablar con la App</button>
             </div>
 
             <div class="solapas-container">
-                <button class="btn-solapa active" id="tab-salud" onclick="cambiarSolapa('salud')">💊 Mi Salud</button>
-                <button class="btn-solapa" id="tab-tareas" onclick="cambiarSolapa('tareas')">🗓️ Mis Tareas</button>
-                <button class="btn-solapa" id="tab-bolsillo" onclick="cambiarSolapa('bolsillo')">💰 Mi Bolsillo</button>
+                <button class="btn-solapa active" id="tab-salud" onclick="cambiarSolapa('salud')">💊 Salud</button>
+                <button class="btn-solapa" id="tab-tareas" onclick="cambiarSolapa('tareas')">🗓️ Tareas</button>
+                <button class="btn-solapa" id="tab-bolsillo" onclick="cambiarSolapa('bolsillo')">💰 Monedero</button>
             </div>
 
             <div class="vista-solapa active" id="vista-salud">
                 <div class="section-card">
                     <h2>Medicaciones de Hoy</h2>
-                    <div id="lista-salud" style="margin-top: 0.5rem;"></div>
+                    <div id="lista-salud"></div>
                 </div>
             </div>
 
             <div class="vista-solapa" id="vista-tareas">
                 <div class="section-card">
                     <h2>Actividades Planificadas</h2>
-                    <div id="lista-tareas" style="margin-top: 0.5rem;"></div>
+                    <div id="lista-tareas"></div>
                 </div>
             </div>
 
@@ -301,909 +170,555 @@
                 <div class="section-card">
                     <h2>Estado de mi Dinero</h2>
                     <div class="wallet-display">
-                        <p id="txt-periodo-actual" style="font-size:0.9rem; color:#4b5563; font-weight:600;">Ciclo Semanal</p>
+                        <p id="txt-periodo-actual" style="font-size:0.9rem; color:#4b5563; font-weight:600;"></p>
                         <div class="wallet-monto" id="wallet-restante">$0</div>
-                        <p style="font-size:0.85rem; color:#6b7280;">Disponible de un pozo total de <span id="wallet-total">$0</span></p>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar-fill" id="wallet-barra"></div>
-                        </div>
+                        <p style="font-size:0.85rem; color:#6b7280;">De un pozo de <span id="wallet-total">$0</span></p>
+                        <div class="progress-bar-container"><div class="progress-bar-fill" id="wallet-barra"></div></div>
                     </div>
                 </div>
                 <div class="section-card">
                     <h2>Gastos del Período</h2>
-                    <div id="lista-gastos" style="margin-top: 0.5rem;"></div>
+                    <div id="lista-gastos"></div>
                 </div>
             </div>
         </main>
     </div>
 
     <div id="pantalla-ajustes" class="overlay-screen">
-        <h2 style="margin-bottom: 1.5rem; color: #111827;">Configuración del Sistema</h2>
-        <div class="section-card" style="box-shadow: none; padding: 0; margin-bottom: 1.5rem;">
+        <h2 style="margin-bottom: 1.5rem;">Configuración</h2>
+        <div class="section-card" style="box-shadow:none; padding:0; margin-bottom:1.5rem;">
             <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">Ajustes de Alertas</h3>
             <div class="form-group">
                 <label>Sonido para Medicamentos</label>
                 <select id="sonido-salud">
-                    <option value="zen">🎵 Melodía Zen (suave)</option>
-                    <option value="aves">🐦 Pajaritos (alegre)</option>
-                    <option value="digital">🔔 Timbre Digital (clásico)</option>
-                    <option value="chicharra">🚨 Chicharra Suave (urgente)</option>
+                    <option value="zen">🎵 Melodía Zen</option>
+                    <option value="aves">🐦 Pajaritos</option>
+                    <option value="digital">🔔 Timbre Digital</option>
+                    <option value="chicharra">🚨 Chicharra Suave</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>Sonido para Actividades</label>
                 <select id="sonido-tareas">
-                    <option value="zen">🎵 Melodía Zen (suave)</option>
-                    <option value="aves">🐦 Pajaritos (alegre)</option>
-                    <option value="digital">🔔 Timbre Digital (clásico)</option>
-                    <option value="chicharra">🚨 Chicharra Suave (urgente)</option>
+                    <option value="zen">🎵 Melodía Zen</option>
+                    <option value="aves">🐦 Pajaritos</option>
+                    <option value="digital">🔔 Timbre Digital</option>
+                    <option value="chicharra">🚨 Chicharra Suave</option>
                 </select>
             </div>
             <button class="btn-submit" onclick="probarSonidoSeleccionado()">🎵 Probar Sonido</button>
         </div>
-        <div class="section-card" style="box-shadow: none; padding: 0; margin-bottom: 1.5rem;">
-            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">Configuración de Mi Bolsillo</h3>
+        <div class="section-card" style="box-shadow:none; padding:0; margin-bottom:1.5rem;">
+            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">Configuración de Monedero</h3>
             <div class="form-group">
-                <label>Monto Límite / Pozo Inicial ($)</label>
+                <label>Monto Límite ($)</label>
                 <input type="number" id="box-presupuesto-total" value="30000">
             </div>
             <div class="form-group">
-                <label>Frecuencia de Limpieza Automática</label>
+                <label>Ciclo</label>
                 <select id="box-presupuesto-ciclo">
-                    <option value="semanal">Semanal (Limpia cada 7 días)</option>
-                    <option value="quincenal">Quincenal (Limpia cada 15 días)</option>
+                    <option value="semanal">Semanal</option>
+                    <option value="quincenal">Quincenal</option>
                 </select>
             </div>
-            <button class="btn-submit" style="background-color: var(--budget-color);" onclick="actualizarParametrosBolsillo()">Guardar Configuración de Bolsillo</button>
+            <button class="btn-submit" style="background-color: var(--budget-color);" onclick="actualizarParametrosBolsillo()">Guardar</button>
         </div>
-        <div class="section-card" style="box-shadow: none; padding: 0;">
+        <div class="section-card" style="box-shadow:none; padding:0;">
             <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">Agregar Manualmente</h3>
             <div class="form-group">
-                <label>Nombre / Concepto / Gasto</label>
-                <input type="text" id="act-nombre" placeholder="Ej: Carnicería / Caminata">
+                <label>Nombre</label>
+                <input type="text" id="act-nombre">
             </div>
             <div class="form-group">
-                <label>Hora o Monto ($)</label>
-                <input type="text" id="act-variable" placeholder="Ej: 18:30 o 4500">
+                <label>Hora (HH:MM) o Monto ($)</label>
+                <input type="text" id="act-variable">
             </div>
             <div class="form-group">
-                <label>Tipo de Entrada</label>
+                <label>Tipo</label>
                 <select id="act-tipo">
-                    <option value="tarea">Actividad (Mis Tareas)</option>
-                    <option value="med">Medicamento (Mi Salud)</option>
-                    <option value="bolsillo">Gasto Directo (Mi Bolsillo)</option>
+                    <option value="tarea">Actividad</option>
+                    <option value="med">Medicamento</option>
+                    <option value="bolsillo">Gasto</option>
                 </select>
             </div>
-            <button class="btn-submit" onclick="guardarEntradaManual()">Agregar Registro</button>
+            <button class="btn-submit" onclick="guardarEntradaManual()">Agregar</button>
             <div class="backup-container">
-                <h4 style="font-size:0.9rem; margin-bottom:0.5rem; color:#374151;">💾 Copia de Seguridad</h4>
-                <button type="button" class="btn-submit" style="background-color:#4b5563; margin-bottom:0.5rem; padding:0.5rem;" onclick="exportarCopiaSeguridad()">Descargar Copia de Datos</button>
-                <label style="display:block; font-size:0.8rem; font-weight:bold; color:#6b7280; margin-bottom:0.25rem;">Restaurar desde archivo:</label>
-                <input type="file" id="file-backup" accept=".json" onchange="importarCopiaSeguridad(event)" style="padding:0.25rem; font-size:0.85rem;">
+                <h4>💾 Copia de Seguridad</h4>
+                <button type="button" class="btn-submit" style="background-color:#4b5563; margin:0.5rem 0;" onclick="exportarCopiaSeguridad()">Descargar</button>
+                <input type="file" id="file-backup" accept=".json" onchange="importarCopiaSeguridad(event)">
             </div>
-            <button type="button" class="btn-submit" style="background-color:#6b7280; margin-top:1.25rem;" onclick="cerrarPantalla('pantalla-ajustes')">Volver al Inicio</button>
+            <button type="button" class="btn-submit" style="background-color:#6b7280; margin-top:1rem;" onclick="cerrarPantalla('pantalla-ajustes')">Volver</button>
         </div>
     </div>
 
     <div id="pantalla-herramientas" class="overlay-screen">
-        <div style="display: grid; grid-template-columns: 1fr; gap: 16px; max-width: 100%;">
-            <div class="section-card" style="margin-bottom: 0;">
-                <h2>📝 Mi Bloc de Notas</h2>
-                <textarea id="bloc-notas" style="width: 100%; height: 100px; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.5rem; margin-bottom: 0.5rem;" placeholder="Escribí acá tus recordatorios..."></textarea>
-                <button class="btn-submit" style="background-color: #3b82f6; width: 100%; padding: 8px;" onclick="guardarNotaBloc()">💾 Guardar Nota</button>
+        <div style="display: grid; gap: 16px;">
+            <div class="section-card">
+                <h2>📝 Bloc de Notas</h2>
+                <textarea id="bloc-notas" style="width:100%; height:100px; padding:0.5rem; border:1px solid #d1d5db; border-radius:0.5rem;" placeholder="Escribí con el teclado o tocá Dictar..."></textarea>
+                <button class="btn-submit" style="background-color:#7c3aed; margin-top:0.5rem;" onclick="dictarAlBloc()">🎙️ Dictar nota</button>
+                <button class="btn-submit" style="background-color:#3b82f6; margin-top:0.5rem;" onclick="guardarNotaBloc()">💾 Guardar</button>
             </div>
-            <div class="section-card" style="margin-bottom: 0; padding: 12px;">
-                <h2>🧮 Calculadora Rápida</h2>
-                <input type="text" id="calc-pantalla" readonly style="width: 100%; height: 40px; background-color: #f3f4f6; color: #1f2937; text-align: right; padding: 8px; font-size: 1.3rem; font-weight: bold; border-radius: 8px; border: 1px solid #d1d5db; margin-bottom: 8px;">
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
-                    <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #ef4444;" onclick="limpiarCalc()">C</button>
-                    <button class="btn-nav" style="height: 38px; font-size: 1rem;" onclick="presionarCalc('/')">/</button>
-                    <button class="btn-nav" style="height: 38px; font-size: 1rem;" onclick="presionarCalc('*')">×</button>
-                    <button class="btn-nav" style="height: 38px; font-size: 1rem;" onclick="presionarCalc('-')">-</button>
-                    <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #4b5563;" onclick="presionarCalc('7')">7</button>
-                    <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #4b5563;" onclick="presionarCalc('8')">8</button>
-                    <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #4b5563;" onclick="presionarCalc('9')">9</button>
-                    <button class="btn-nav" style="height: 38px; font-size: 1rem;" onclick="presionarCalc('+')">+</button>
-                    <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #4b5563;" onclick="presionarCalc('4')">4</button>
-                    <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #4b5563;" onclick="presionarCalc('5')">5</button>
-                    <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #4b5563;" onclick="presionarCalc('6')">6</button>
-                    <button class="btn-nav" style="height: 82px; font-size: 1.2rem; background-color: #10b981; grid-row: span 2;" onclick="calcularResultado()">=</button>
-                    <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #4b5563;" onclick="presionarCalc('1')">1</button>
-                    <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #4b5563;" onclick="presionarCalc('2')">2</button>
-                    <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #4b5563;" onclick="presionarCalc('3')">3</button>
-                    <button class="btn-nav" style="height: 38px; font-size: 1rem; grid-column: span 2; background-color: #4b5563;" onclick="presionarCalc('0')">0</button>
-                    <button class="btn-nav" style="height: 38px; font-size: 1rem; background-color: #4b5563;" onclick="presionarCalc('.')">.</button>
+            <div class="section-card">
+                <h2>🧮 Calculadora</h2>
+                <input type="text" id="calc-pantalla" readonly style="width:100%; height:40px; background:#f3f4f6; text-align:right; padding:8px; font-size:1.3rem; border-radius:8px; border:1px solid #d1d5db; margin-bottom:8px;">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap:6px;">
+                    <button class="btn-nav" style="height:38px; background:#ef4444;" onclick="limpiarCalc()">C</button>
+                    <button class="btn-nav" style="height:38px;" onclick="presionarCalc('/')">/</button>
+                    <button class="btn-nav" style="height:38px;" onclick="presionarCalc('*')">×</button>
+                    <button class="btn-nav" style="height:38px;" onclick="presionarCalc('-')">-</button>
+                    <button class="btn-nav" style="height:38px; background:#4b5563;" onclick="presionarCalc('7')">7</button>
+                    <button class="btn-nav" style="height:38px; background:#4b5563;" onclick="presionarCalc('8')">8</button>
+                    <button class="btn-nav" style="height:38px; background:#4b5563;" onclick="presionarCalc('9')">9</button>
+                    <button class="btn-nav" style="height:38px;" onclick="presionarCalc('+')">+</button>
+                    <button class="btn-nav" style="height:38px; background:#4b5563;" onclick="presionarCalc('4')">4</button>
+                    <button class="btn-nav" style="height:38px; background:#4b5563;" onclick="presionarCalc('5')">5</button>
+                    <button class="btn-nav" style="height:38px; background:#4b5563;" onclick="presionarCalc('6')">6</button>
+                    <button class="btn-nav" style="height:82px; background:#10b981; grid-row:span 2;" onclick="calcularResultado()">=</button>
+                    <button class="btn-nav" style="height:38px; background:#4b5563;" onclick="presionarCalc('1')">1</button>
+                    <button class="btn-nav" style="height:38px; background:#4b5563;" onclick="presionarCalc('2')">2</button>
+                    <button class="btn-nav" style="height:38px; background:#4b5563;" onclick="presionarCalc('3')">3</button>
+                    <button class="btn-nav" style="height:38px; grid-column:span 2; background:#4b5563;" onclick="presionarCalc('0')">0</button>
+                    <button class="btn-nav" style="height:38px; background:#4b5563;" onclick="presionarCalc('.')">.</button>
                 </div>
             </div>
         </div>
-        <button type="button" class="btn-submit" style="background-color:#6b7280; margin-top:1.25rem;" onclick="cerrarPantalla('pantalla-herramientas')">Volver al Inicio</button>
+        <button type="button" class="btn-submit" style="background-color:#6b7280; margin-top:1rem;" onclick="cerrarPantalla('pantalla-herramientas')">Volver</button>
     </div>
 
     <div id="pantalla-ficha" class="overlay-screen">
-        <h2 style="margin-bottom: 1.5rem; color: #111827;">Ficha Médica y Contactos</h2>
+        <h2 style="margin-bottom: 1.5rem;">Ficha Médica</h2>
         <form onsubmit="guardarDatosFicha(event)">
-            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">Datos Personales</h3>
             <div class="form-group">
-                <label for="f-nombre">Nombre Completo</label>
+                <label>Nombre</label>
                 <input type="text" id="f-nombre" required>
             </div>
             <div class="form-group">
-                <label for="f-sangre">Grupo Sanguíneo y Factor</label>
-                <input type="text" id="f-sangre" placeholder="Ej: 0 Positivo (0+)">
+                <label>Sangre</label>
+                <input type="text" id="f-sangre">
             </div>
             <div class="form-group">
-                <label for="f-patologia">Patologías de Base</label>
+                <label>Patologías</label>
                 <input type="text" id="f-patologia">
             </div>
-            <h3 style="font-size:1rem; margin-top:1.5rem; margin-bottom:0.5rem; color:var(--primary);">Contactos de Emergencia</h3>
             <div class="form-group">
-                <label for="c1-tel">1. Celular Familiar Responsable</label>
-                <input type="tel" id="c1-tel" required placeholder="Ej: 5491123456789">
+                <label>Celular Familiar</label>
+                <input type="tel" id="c1-tel" required>
             </div>
             <div class="form-group">
-                <label for="c2-tel">2. Celular Secundario / Vecino</label>
-                <input type="tel" id="c2-tel" placeholder="Ej: 5491198765432">
+                <label>Celular Secundario</label>
+                <input type="tel" id="c2-tel">
             </div>
             <button type="submit" class="btn-submit">Guardar Ficha</button>
-            <button type="button" class="btn-submit" style="background-color:#6b7280; margin-top:0.5rem;" onclick="abrirPantalla('pantalla-ajustes')">Volver a Ajustes</button>
+            <button type="button" class="btn-submit" style="background:#6b7280; margin-top:0.5rem;" onclick="abrirPantalla('pantalla-ajustes')">Volver</button>
         </form>
     </div>
 
     <footer>
-        <p>¿Tenés dudas o sugerencias para mejorar la app?</p>
-        <p style="margin-top: 0.25rem;">
-            Escribinos a: <a href="mailto:iaparamayoresapp@gmail.com">iaparamayoresapp@gmail.com</a>
-        </p>
+        <p>¿Dudas o sugerencias?</p>
+        <p><a href="mailto:iaparamayoresapp@gmail.com">iaparamayoresapp@gmail.com</a></p>
     </footer>
-
-    <div class="espacio-publicitario"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
 <script>eruda.init();</script>
 
 <script>
-    // PROTECCIÓN PARA EDITORES ONLINE
-    const storageDisponible = (() => {
-        try {
-            const test = '__test__';
-            localStorage.setItem(test, test);
-            localStorage.removeItem(test);
-            return true;
-        } catch (e) { return false; }
-    })();
+const storageOK = (() => { try { const t='__t__'; localStorage.setItem(t,t); localStorage.removeItem(t); return true; } catch(e){return false;} })();
+function guardarD(k,v){ if(storageOK) try{localStorage.setItem(k,v);}catch(e){} }
+function obtenerD(k,d=null){ if(storageOK) try{return localStorage.getItem(k)||d;}catch(e){return d;} return d; }
 
-    function guardarDato(clave, valor) {
-        if (storageDisponible) {
-            try { localStorage.setItem(clave, valor); } catch(e) {}
-        }
+if('serviceWorker' in navigator && location.protocol === 'https:'){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('./service-worker.js')
+      .then(r=>console.log('SW ok',r))
+      .catch(e=>console.log('SW error',e));
+  });
+}
+
+function escapeHTML(s){ if(typeof s !== 'string') return s; const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+let modalCB=null;
+function mostrarConfirmacion(msg,cb){ document.getElementById('modal-mensaje').textContent=msg; document.getElementById('modal-confirmacion').classList.add('show'); modalCB=cb; }
+function cerrarModal(ok){ document.getElementById('modal-confirmacion').classList.remove('show'); if(modalCB){modalCB(ok); modalCB=null;} }
+
+let registroTomas = {};
+let listaActividades = [];
+let datosFicha = {};
+let configSonidos = {salud:'zen', tareas:'aves'};
+let bolsilloPresupuesto = 30000;
+let bolsilloCiclo = 'semanal';
+let listaGastos = [];
+let fechaUltimoReset = new Date().toISOString();
+let alertaForzadaOcultaHoy = false;
+let deferredPrompt;
+let alertasEjecutadas = {};
+let medsOcultos = JSON.parse(obtenerD('circulo_meds_ocultos','[]'))||[];
+
+try {
+  registroTomas = JSON.parse(obtenerD('circulo_tomas','{}')) || {};
+  listaActividades = JSON.parse(obtenerD('circulo_actividades','[]')) || [];
+  datosFicha = JSON.parse(obtenerD('circulo_ficha','{}')) || {};
+  configSonidos = JSON.parse(obtenerD('circulo_sonidos','{"salud":"zen","tareas":"aves"}')) || {salud:'zen', tareas:'aves'};
+  bolsilloPresupuesto = parseFloat(obtenerD('bolsillo_total','30000')) || 30000;
+  bolsilloCiclo = obtenerD('bolsillo_ciclo','semanal') || 'semanal';
+  listaGastos = JSON.parse(obtenerD('bolsillo_gastos','[]')) || [];
+  fechaUltimoReset = obtenerD('bolsillo_reset_date', new Date().toISOString()) || new Date().toISOString();
+  alertasEjecutadas = JSON.parse(obtenerD('circulo_alertas_ejecutadas','{}')) || {};
+} catch(e){}
+
+let idCounter = Date.now();
+function generarId(){ return ++idCounter; }
+
+const medicamentosBase = [
+  {id:1, nombre:"Enalapril 10mg", hora:"08:00", tipo:'med'},
+  {id:2, nombre:"Almuerzo y Vitamina D", hora:"13:00", tipo:'med'}
+];
+
+function medsActivos(){ return medicamentosBase.filter(m=>!medsOcultos.includes(m.id)); }
+function borrarMedBase(id){
+  mostrarConfirmacion("¿Quitar este medicamento de la lista?", ok=>{
+    if(!ok) return;
+    medsOcultos.push(id);
+    guardarD('circulo_meds_ocultos', JSON.stringify(medsOcultos));
+    renderizar(); mostrarToast("Medicamento quitado");
+  });
+}
+
+let audioCtx = null;
+function obtenerAudio(){
+  try {
+    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended') audioCtx.resume();
+    return audioCtx;
+  } catch(e){return null;}
+}
+document.addEventListener('click', obtenerAudio, {once:true});
+document.addEventListener('touchstart', obtenerAudio, {once:true});
+
+function sonidoZen(ctx){
+  if(!ctx) return;
+  [523.25,659.25,783.99,1046.50].forEach((f,i)=>{
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type='sine'; o.frequency.value=f;
+    const t=ctx.currentTime+i*0.35;
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(0.5,t+0.05);
+    g.gain.exponentialRampToValueAtTime(0.001,t+1.8);
+    o.start(t); o.stop(t+1.8);
+  });
+}
+function sonidoPajaros(ctx){
+  if(!ctx) return;
+  for(let i=0;i<5;i++){
+    const t=ctx.currentTime+i*0.25+Math.random()*0.1;
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type='sine';
+    const b=2200+Math.random()*1200;
+    o.frequency.setValueAtTime(b,t);
+    o.frequency.linearRampToValueAtTime(b+800+Math.random()*600,t+0.08);
+    o.frequency.linearRampToValueAtTime(b+200,t+0.18);
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(0.4,t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001,t+0.25);
+    o.start(t); o.stop(t+0.25);
+  }
+}
+function sonidoDigital(ctx){
+  if(!ctx) return;
+  const t=ctx.currentTime;
+  const o1=ctx.createOscillator(), g1=ctx.createGain();
+  o1.connect(g1); g1.connect(ctx.destination);
+  o1.type='sine'; o1.frequency.value=880;
+  g1.gain.setValueAtTime(0.5,t);
+  g1.gain.exponentialRampToValueAtTime(0.001,t+0.6);
+  o1.start(t); o1.stop(t+0.6);
+  const o2=ctx.createOscillator(), g2=ctx.createGain();
+  o2.connect(g2); g2.connect(ctx.destination);
+  o2.type='sine'; o2.frequency.value=659.25;
+  g2.gain.setValueAtTime(0,t+0.35);
+  g2.gain.linearRampToValueAtTime(0.5,t+0.4);
+  g2.gain.exponentialRampToValueAtTime(0.001,t+1.0);
+  o2.start(t+0.35); o2.stop(t+1.0);
+}
+function sonidoChicharra(ctx){
+  if(!ctx) return;
+  const t=ctx.currentTime;
+  for(let i=0;i<3;i++){
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    const lfo=ctx.createOscillator(), lfoG=ctx.createGain();
+    lfo.frequency.value=6; lfoG.gain.value=30;
+    lfo.connect(lfoG);
+    o.type='square'; o.frequency.value=440;
+    lfoG.connect(o.frequency);
+    o.connect(g); g.connect(ctx.destination);
+    g.gain.value=0.3;
+    const s=t+i*0.35;
+    o.start(s); lfo.start(s);
+    o.stop(s+0.25); lfo.stop(s+0.25);
+  }
+}
+function reproducirSonido(ctx,tipo){
+  if(!ctx) return;
+  switch(tipo){
+    case 'zen': sonidoZen(ctx); break;
+    case 'aves': sonidoPajaros(ctx); break;
+    case 'digital': sonidoDigital(ctx); break;
+    case 'chicharra': sonidoChicharra(ctx); break;
+    default: sonidoZen(ctx);
+  }
+}
+function probarSonidoSeleccionado(){ reproducirSonido(obtenerAudio(), document.getElementById('sonido-salud').value); }
+
+let alarmaItem=null, bucleAlarm=null;
+function verificarAlarmas(){
+  const ahora=new Date();
+  const hoy=ahora.toISOString().split('T')[0];
+  const minAhora=ahora.getHours()*60+ahora.getMinutes();
+  [...medsActivos(),...listaActividades].forEach(item=>{
+    if(!item.hora||!item.hora.includes(':')) return;
+    const p=item.hora.split(':');
+    const h=parseInt(p[0]), m=parseInt(p[1]);
+    if(isNaN(h)||isNaN(m)) return;
+    const minAl=h*60+m, dif=minAl-minAhora;
+    if(dif>=0 && dif<=2){
+      const k=`${hoy}_${item.id}_${item.hora}`;
+      if(alertasEjecutadas[k]) return;
+      if(item.tipo==='med' && registroTomas[`${hoy}_${item.id}`]) return;
+      alertasEjecutadas[k]=true;
+      guardarD('circulo_alertas_ejecutadas', JSON.stringify(alertasEjecutadas));
+      dispararAlarma(item);
     }
-
-    function obtenerDato(clave, porDefecto = null) {
-        if (storageDisponible) {
-            try { return localStorage.getItem(clave) || porDefecto; } catch(e) { return porDefecto; }
-        }
-        return porDefecto;
-    }
-
-    if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./service-worker.js')
-                .then(reg => console.log('SW registrado', reg))
-                .catch(err => console.log('SW no disponible', err));
-        });
-    }
-
-    function escapeHTML(str) {
-        if (typeof str !== 'string') return str;
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
-
-    let modalCallback = null;
-    function mostrarConfirmacion(mensaje, callback) {
-        document.getElementById('modal-mensaje').textContent = mensaje;
-        document.getElementById('modal-confirmacion').classList.add('show');
-        modalCallback = callback;
-    }
-    function cerrarModal(confirmado) {
-        document.getElementById('modal-confirmacion').classList.remove('show');
-        if (modalCallback) { modalCallback(confirmado); modalCallback = null; }
-    }
-
-    let registroTomas = {};
-    let listaActividades = [];
-    let datosFicha = {};
-    let configSonidos = { salud: 'zen', tareas: 'aves' };
-    let bolsilloPresupuesto = 30000;
-    let bolsilloCiclo = 'semanal';
-    let listaGastos = [];
-    let fechaUltimoReset = new Date().toISOString();
-    let alertaForzadaOcultaHoy = false;
-    let deferredPrompt;
-    let alertasEjecutadas = {};
-
-    try {
-        registroTomas = JSON.parse(obtenerDato('circulo_tomas', '{}')) || {};
-        listaActividades = JSON.parse(obtenerDato('circulo_actividades', '[]')) || [];
-        datosFicha = JSON.parse(obtenerDato('circulo_ficha', '{}')) || {};
-        configSonidos = JSON.parse(obtenerDato('circulo_sonidos', '{"salud":"zen","tareas":"aves"}')) || { salud: 'zen', tareas: 'aves' };
-        bolsilloPresupuesto = parseFloat(obtenerDato('bolsillo_total', '30000')) || 30000;
-        bolsilloCiclo = obtenerDato('bolsillo_ciclo', 'semanal') || 'semanal';
-        listaGastos = JSON.parse(obtenerDato('bolsillo_gastos', '[]')) || [];
-        fechaUltimoReset = obtenerDato('bolsillo_reset_date', new Date().toISOString()) || new Date().toISOString();
-        alertasEjecutadas = JSON.parse(obtenerDato('circulo_alertas_ejecutadas', '{}')) || {};
-    } catch(e) { console.log('No se pudieron cargar datos'); }
-
-    let idCounter = Date.now();
-    function generarId() { return ++idCounter; }
-
-    const medicamentosBase = [
-        { id: 1, nombre: "Enalapril 10mg", hora: "08:00", tipo: 'med' },
-        { id: 2, nombre: "Almuerzo y Vitamina D", hora: "13:00", tipo: 'med' }
-    ];
-
-    let audioCtxGlobal = null;
-    function obtenerAudioContext() {
-        try {
-            if (!audioCtxGlobal) audioCtxGlobal = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtxGlobal.state === 'suspended') audioCtxGlobal.resume();
-            return audioCtxGlobal;
-        } catch(e) { return null; }
-    }
-
-    function desbloquearAudio() { obtenerAudioContext(); }
-    document.addEventListener('click', desbloquearAudio, { once: true });
-    document.addEventListener('touchstart', desbloquearAudio, { once: true });
-
-    function sonidoZen(ctx) {
-        if (!ctx) return;
-        const notas = [523.25, 659.25, 783.99, 1046.50];
-        notas.forEach((freq, i) => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain); gain.connect(ctx.destination);
-            osc.type = 'sine';
-            osc.frequency.value = freq;
-            const t = ctx.currentTime + i * 0.35;
-            gain.gain.setValueAtTime(0, t);
-            gain.gain.linearRampToValueAtTime(0.12, t + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.001, t + 1.8);
-            osc.start(t); osc.stop(t + 1.8);
-        });
-    }
-
-    function sonidoPajaros(ctx) {
-        if (!ctx) return;
-        for (let i = 0; i < 5; i++) {
-            const t = ctx.currentTime + i * 0.25 + Math.random() * 0.1;
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.connect(gain); gain.connect(ctx.destination);
-            osc.type = 'sine';
-            const base = 2200 + Math.random() * 1200;
-            osc.frequency.setValueAtTime(base, t);
-            osc.frequency.linearRampToValueAtTime(base + 800 + Math.random() * 600, t + 0.08);
-            osc.frequency.linearRampToValueAtTime(base + 200, t + 0.18);
-            gain.gain.setValueAtTime(0, t);
-            gain.gain.linearRampToValueAtTime(0.08, t + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-            osc.start(t); osc.stop(t + 0.25);
-        }
-    }
-
-    function sonidoDigital(ctx) {
-        if (!ctx) return;
-        const t = ctx.currentTime;
-        const osc1 = ctx.createOscillator();
-        const gain1 = ctx.createGain();
-        osc1.connect(gain1); gain1.connect(ctx.destination);
-        osc1.type = 'sine'; osc1.frequency.value = 880;
-        gain1.gain.setValueAtTime(0.15, t);
-        gain1.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
-        osc1.start(t); osc1.stop(t + 0.6);
-
-        const osc2 = ctx.createOscillator();
-        const gain2 = ctx.createGain();
-        osc2.connect(gain2); gain2.connect(ctx.destination);
-        osc2.type = 'sine'; osc2.frequency.value = 659.25;
-        gain2.gain.setValueAtTime(0, t + 0.35);
-        gain2.gain.linearRampToValueAtTime(0.15, t + 0.4);
-        gain2.gain.exponentialRampToValueAtTime(0.001, t + 1.0);
-        osc2.start(t + 0.35); osc2.stop(t + 1.0);
-    }
-
-    function sonidoChicharra(ctx) {
-        if (!ctx) return;
-        const t = ctx.currentTime;
-        for (let i = 0; i < 3; i++) {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            const lfo = ctx.createOscillator();
-            const lfoGain = ctx.createGain();
-            lfo.frequency.value = 6;
-            lfoGain.gain.value = 30;
-            lfo.connect(lfoGain);
-            osc.type = 'square';
-            osc.frequency.value = 440;
-            lfoGain.connect(osc.frequency);
-            osc.connect(gain); gain.connect(ctx.destination);
-            gain.gain.value = 0.06;
-            const start = t + i * 0.35;
-            osc.start(start); lfo.start(start);
-            osc.stop(start + 0.25); lfo.stop(start + 0.25);
-        }
-    }
-
-    function reproducirSonidoAlarma(ctx, tipo) {
-        if (!ctx) return;
-        switch(tipo) {
-            case 'zen': sonidoZen(ctx); break;
-            case 'aves': sonidoPajaros(ctx); break;
-            case 'digital': sonidoDigital(ctx); break;
-            case 'chicharra': sonidoChicharra(ctx); break;
-            default: sonidoZen(ctx);
-        }
-    }
-
-    function probarSonidoSeleccionado() {
-        const ctx = obtenerAudioContext();
-        reproducirSonidoAlarma(ctx, document.getElementById('sonido-salud').value);
-    }
-
-    let alarmaActualItem = null;
-    let bucleSonidoInterval = null;
-
-    function verificarAlarmas() {
-        const ahora = new Date();
-        const hoy = ahora.toISOString().split('T')[0];
-        const minutosAhora = ahora.getHours() * 60 + ahora.getMinutes();
-        const todasLasAlarmas = [...medicamentosBase, ...listaActividades];
-
-        todasLasAlarmas.forEach(item => {
-            if (!item.hora || !item.hora.includes(':')) return;
-            const partes = item.hora.split(':');
-            const h = parseInt(partes[0], 10);
-            const m = parseInt(partes[1], 10);
-            if (isNaN(h) || isNaN(m)) return;
-
-            const minutosAlarma = h * 60 + m;
-            const diferencia = minutosAlarma - minutosAhora;
-
-            if (diferencia >= 0 && diferencia <= 2) {
-                const claveAlarma = `${hoy}_${item.id}_${item.hora}`;
-                if (alertasEjecutadas[claveAlarma]) return;
-                if (item.tipo === 'med' && registroTomas[`${hoy}_${item.id}`]) return;
-
-                alertasEjecutadas[claveAlarma] = true;
-                guardarDato('circulo_alertas_ejecutadas', JSON.stringify(alertasEjecutadas));
-                dispararAlarma(item);
-            }
-        });
-    }
-
-    function dispararAlarma(item) {
-        alarmaActualItem = item;
-        document.getElementById('alarma-emoji').textContent = item.tipo === 'med' ? '💊' : '🗓️';
-        document.getElementById('alarma-titulo').textContent = item.tipo === 'med' ? 'Hora del Medicamento' : 'Recordatorio';
-        document.getElementById('alarma-detalle').textContent = `${item.nombre} — ${item.hora}`;
-        document.getElementById('pantalla-alarma').classList.add('activa');
-
-        const tipoSonido = item.tipo === 'med' ? configSonidos.salud : configSonidos.tareas;
-        iniciarBucleAlarma(tipoSonido);
-        decir(`Recordatorio: ${item.nombre}`);
-    }
-
-    function iniciarBucleAlarma(tipoSonido) {
-        detenerBucleAlarma();
-        const ctx = obtenerAudioContext();
-        reproducirSonidoAlarma(ctx, tipoSonido);
-        if (navigator.vibrate) navigator.vibrate([800, 300, 800, 300, 800]);
-
-        bucleSonidoInterval = setInterval(() => {
-            reproducirSonidoAlarma(ctx, tipoSonido);
-            if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
-        }, 6000);
-
-        setTimeout(() => {
-            detenerBucleAlarma();
-            cerrarPantallaAlarma();
-        }, 90000);
-    }
-
-    function detenerBucleAlarma() {
-        if (bucleSonidoInterval) { clearInterval(bucleSonidoInterval); bucleSonidoInterval = null; }
-        if (navigator.vibrate) navigator.vibrate(0);
-    }
-
-    function cerrarPantallaAlarma() {
-        document.getElementById('pantalla-alarma').classList.remove('activa');
-        alarmaActualItem = null;
-    }
-
-    function alarmaConfirmar() {
-        if (alarmaActualItem && alarmaActualItem.tipo === 'med') {
-            const hoy = new Date().toISOString().split('T')[0];
-            registroTomas[`${hoy}_${alarmaActualItem.id}`] = true;
-            guardarDato('circulo_tomas', JSON.stringify(registroTomas));
-        }
-        detenerBucleAlarma();
-        cerrarPantallaAlarma();
-        mostrarToast('¡Registrado correctamente!');
-        renderizar();
-    }
-
-    function alarmaPosponer() {
-        if (!alarmaActualItem) return;
-        const pospuesta = new Date(new Date().getTime() + 5 * 60000);
-        const nuevaHora = `${String(pospuesta.getHours()).padStart(2,'0')}:${String(pospuesta.getMinutes()).padStart(2,'0')}`;
-
-        listaActividades.push({
-            id: generarId(),
-            nombre: alarmaActualItem.nombre + ' (pospuesta)',
-            hora: nuevaHora,
-            tipo: alarmaActualItem.tipo,
-            pospuesta: true
-        });
-        guardarDato('circulo_actividades', JSON.stringify(listaActividades));
-
-        detenerBucleAlarma();
-        cerrarPantallaAlarma();
-        mostrarToast(`Pospuesta hasta las ${nuevaHora}`);
-        renderizar();
-    }
-
-    function abrirPantalla(idPantalla) {
-        document.querySelectorAll('.overlay-screen').forEach(p => p.classList.remove('activa'));
-        if (idPantalla === 'pantalla-inicio') {
-            document.getElementById('pantalla-inicio').style.display = 'block';
-        } else {
-            document.getElementById('pantalla-inicio').style.display = 'none';
-            const p = document.getElementById(idPantalla);
-            if (p) p.classList.add('activa');
-        }
-    }
-
-    function cerrarPantalla(idPantalla) {
-        const p = document.getElementById(idPantalla);
-        if (p) p.classList.remove('activa');
-        document.getElementById('pantalla-inicio').style.display = 'block';
-    }
-
-    function ingresarApp() {
-        try { guardarDato('circulo_ya_ingreso', 'true'); } catch(e) {}
-        obtenerAudioContext();
-        verificarYDepurarBolsillo();
-        decir("Bienvenido a Círculo Vital");
-    }
-
-    function cambiarSolapa(solapa) {
-        ['tab-salud','tab-tareas','tab-bolsillo'].forEach(id => document.getElementById(id).classList.remove('active'));
-        ['vista-salud','vista-tareas','vista-bolsillo'].forEach(id => document.getElementById(id).classList.remove('active'));
-
-        if(solapa === 'salud') {
-            document.getElementById('tab-salud').classList.add('active');
-            document.getElementById('vista-salud').classList.add('active');
-        } else if (solapa === 'tareas') {
-            document.getElementById('tab-tareas').classList.add('active');
-            document.getElementById('vista-tareas').classList.add('active');
-        } else {
-            document.getElementById('tab-bolsillo').classList.add('active');
-            document.getElementById('vista-bolsillo').classList.add('active');
-        }
-    }
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        const b = document.getElementById('btn-instalar-app');
-        if (b) b.style.display = 'inline-block';
-    });
-
-    function instalarPWA() {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((r) => {
-                if (r.outcome === 'accepted') mostrarToast('¡App instalada!');
-                deferredPrompt = null;
-                const b = document.getElementById('btn-instalar-app');
-                if (b) b.style.display = 'none';
-            });
-        }
-    }
-
-    function decir(texto) {
-        try {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const m = new SpeechSynthesisUtterance(texto);
-                m.lang = 'es-ES';
-                window.speechSynthesis.speak(m);
-            }
-        } catch(e) {}
-    }
-
-    function mostrarToast(mensaje) {
-        const t = document.getElementById('toast-notification');
-        if (t) {
-            t.innerText = mensaje;
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 3500);
-        }
-    }
-
-    function activarMicrofono() {
-        const btn = document.getElementById('btn-hablar');
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) { mostrarToast("Dictado no disponible"); return; }
-
-        const r = new SR();
-        r.lang = 'es-ES'; r.interimResults = false;
-
-        r.onstart = () => { btn.classList.add('listening'); btn.innerHTML = "🛑 Escuchando..."; };
-        r.onerror = () => { btn.classList.remove('listening'); btn.innerHTML = "🎙️ Hablar con la App"; };
-        r.onend = () => { btn.classList.remove('listening'); btn.innerHTML = "🎙️ Hablar con la App"; };
-
-        r.onresult = (e) => {
-            const f = e.results[0][0].transcript.toLowerCase();
-            procesarDictadoIntegral(f);
-        };
-        r.start();
-    }
-
-    function procesarDictadoIntegral(frase) {
-        if(frase.includes("gasté") || frase.includes("gaste") || frase.includes("pesos") || frase.includes("plata")) {
-            let nums = frase.match(/\d+/g);
-            let monto = nums ? parseFloat(nums[0]) : 0;
-            let concepto = frase.replace(/gasté|gaste|pesos|plata|en/g, "").replace(/\d+/g, "").trim();
-            if(concepto.length < 2) concepto = "Gasto dictado";
-
-            if(monto > 0) {
-                listaGastos.push({ id: generarId(), nombre: concepto.charAt(0).toUpperCase() + concepto.slice(1), monto });
-                guardarDato('bolsillo_gastos', JSON.stringify(listaGastos));
-                renderizar();
-                cambiarSolapa('bolsillo');
-                mostrarToast(`Gasto de $${monto} registrado`);
-                decir(`Registrado gasto de ${monto} pesos. Te quedan ${calcularRestanteBolsillo()} pesos.`);
-            } else {
-                mostrarToast("No entendí el monto");
-            }
-            return;
-        }
-
-        let horaEx = frase.match(/(\d{1,2}):(\d{2})/);
-        let horaStr = horaEx ? `${horaEx[1].padStart(2,'0')}:${horaEx[2]}` :
-            (() => {
-                const p = new Date(Date.now() + 15*60000);
-                return `${String(p.getHours()).padStart(2,'0')}:${String(p.getMinutes()).padStart(2,'0')}`;
-            })();
-
-        let nombre = frase.replace(/agendar|agregar|a las|las/g, "").replace(/\d{1,2}:\d{2}/, "").trim();
-        if(nombre.length < 2) nombre = "Actividad Dictada";
-
-        let tipo = 'tarea';
-        if(frase.includes("pastilla") || frase.includes("remedio") || frase.includes("presión") || frase.includes("médico")) {
-            tipo = 'med';
-        }
-
-        listaActividades.push({ id: generarId(), nombre: nombre.charAt(0).toUpperCase() + nombre.slice(1), hora: horaStr, tipo });
-        guardarDato('circulo_actividades', JSON.stringify(listaActividades));
-        renderizar();
-        cambiarSolapa(tipo === 'med' ? 'salud' : 'tareas');
-        mostrarToast(`Agendado a las ${horaStr}`);
-        decir(`Agendado`);
-    }
-
-    function calcularRestanteBolsillo() {
-        return bolsilloPresupuesto - listaGastos.reduce((s, g) => s + g.monto, 0);
-    }
-
-    function actualizarParametrosBolsillo() {
-        bolsilloPresupuesto = parseFloat(document.getElementById('box-presupuesto-total').value) || 30000;
-        bolsilloCiclo = document.getElementById('box-presupuesto-ciclo').value;
-        guardarDato('bolsillo_total', bolsilloPresupuesto.toString());
-        guardarDato('bolsillo_ciclo', bolsilloCiclo);
-        renderizar();
-        mostrarToast("Bolsillo configurado");
-        cerrarPantalla('pantalla-ajustes');
-    }
-
-    function verificarYDepurarBolsillo() {
-        try {
-            const ahora = new Date();
-            const inicio = new Date(fechaUltimoReset);
-            const difDias = Math.floor((ahora.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24));
-            const limite = bolsilloCiclo === 'semanal' ? 7 : 15;
-
-            if (difDias >= limite) {
-                listaGastos = [];
-                fechaUltimoReset = ahora.toISOString();
-                guardarDato('bolsillo_gastos', JSON.stringify(listaGastos));
-                guardarDato('bolsillo_reset_date', fechaUltimoReset);
-                mostrarToast("¡Ciclo limpio iniciado!");
-                renderizar();
-            }
-        } catch(e) {}
-    }
-
-    function guardarEntradaManual() {
-        const nombre = document.getElementById('act-nombre').value.trim();
-        const variable = document.getElementById('act-variable').value.trim();
-        const tipo = document.getElementById('act-tipo').value;
-        if(!nombre || !variable) { mostrarToast("Completa los datos"); return; }
-
-        if(tipo === 'bolsillo') {
-            listaGastos.push({ id: generarId(), nombre, monto: parseFloat(variable) || 0 });
-            guardarDato('bolsillo_gastos', JSON.stringify(listaGastos));
-        } else {
-            listaActividades.push({ id: generarId(), nombre, hora: variable, tipo });
-            guardarDato('circulo_actividades', JSON.stringify(listaActividades));
-        }
-
-        configSonidos.salud = document.getElementById('sonido-salud').value;
-        configSonidos.tareas = document.getElementById('sonido-tareas').value;
-        guardarDato('circulo_sonidos', JSON.stringify(configSonidos));
-
-        document.getElementById('act-nombre').value = '';
-        document.getElementById('act-variable').value = '';
-        renderizar();
-        mostrarToast("Guardado con éxito");
-        cerrarPantalla('pantalla-ajustes');
-        cambiarSolapa(tipo === 'bolsillo' ? 'bolsillo' : (tipo === 'med' ? 'salud' : 'tareas'));
-    }
-
-    function borrarGasto(id) {
-        mostrarConfirmacion("¿Borrar este gasto?", (ok) => {
-            if (!ok) return;
-            listaGastos = listaGastos.filter(g => g.id !== id);
-            guardarDato('bolsillo_gastos', JSON.stringify(listaGastos));
-            renderizar();
-            mostrarToast("Gasto eliminado");
-        });
-    }
-
-    function borrarActividad(id) {
-        mostrarConfirmacion("¿Borrar esta actividad?", (ok) => {
-            if (!ok) return;
-            listaActividades = listaActividades.filter(a => a.id !== id);
-            guardarDato('circulo_actividades', JSON.stringify(listaActividades));
-            renderizar();
-            mostrarToast("Actividad eliminada");
-        });
-    }
-
-    function marcarToma(id, nombre) {
-        const hoy = new Date().toISOString().split('T')[0];
-        registroTomas[`${hoy}_${id}`] = true;
-        guardarDato('circulo_tomas', JSON.stringify(registroTomas));
-        mostrarToast(`Registrado: ${nombre}`);
-        decir(`${nombre} completado`);
-        renderizar();
-    }
-
-    function gestionarCierreAlertaAlEnviar() {
-        alertaForzadaOcultaHoy = true;
-        document.getElementById('alerta-olvido').style.display = 'none';
-        mostrarToast("Aviso enviado. Alerta silenciada.");
-    }
-
-    function controlarOlvidosConsecutivos() {
-        if (alertaForzadaOcultaHoy) {
-            document.getElementById('alerta-olvido').style.display = 'none';
-            return;
-        }
-        const hoy = new Date().toISOString().split('T')[0];
-        const ahora = new Date();
-        const horaActual = `${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`;
-
-        const todosLosMeds = [...medicamentosBase, ...listaActividades.filter(a => a.tipo === 'med')];
-        const pasados = todosLosMeds.filter(m => m.hora <= horaActual);
-        let noTomados = 0;
-        pasados.forEach(m => {
-            if (!registroTomas[`${hoy}_${m.id}`]) noTomados++;
-        });
-
-        const box = document.getElementById('alerta-olvido');
-        if (box) {
-            if (noTomados >= 2) {
-                box.style.display = 'block';
-                if (datosFicha.familiar) {
-                    const msj = encodeURIComponent(`Hola, Círculo Vital detectó que no se reportaron las últimas tomas de medicación.`);
-                    document.getElementById('link-wa-olvido').href = `https://wa.me/${datosFicha.familiar}?text=${msj}`;
-                } else {
-                    document.getElementById('link-wa-olvido').href = "#";
-                }
-            } else {
-                box.style.display = 'none';
-            }
-        }
-    }
-
-    function renderizar() {
-        const cS = document.getElementById('lista-salud');
-        const cT = document.getElementById('lista-tareas');
-        const cG = document.getElementById('lista-gastos');
-        if (!cS || !cT || !cG) return;
-
-        const hoy = new Date().toISOString().split('T')[0];
-        let htmlS = '', htmlT = '', htmlG = '';
-
-        medicamentosBase.forEach(m => {
-            if (!registroTomas[`${hoy}_${m.id}`]) {
-                htmlS += `<div class="med-card"><div><strong>💊 ${escapeHTML(m.nombre)}</strong><br><small style="color:#6b7280;">Hora: ${m.hora}</small></div><button class="btn-action" onclick="marcarToma(${m.id}, '${escapeHTML(m.nombre)}')">Ya lo tomé</button></div>`;
-            }
-        });
-
-        listaActividades.forEach(a => {
-            if (a.tipo === 'med') {
-                if (!registroTomas[`${hoy}_${a.id}`]) {
-                    htmlS += `<div class="med-card"><div><strong>💊 ${escapeHTML(a.nombre)}</strong><br><small style="color:#6b7280;">Hora: ${escapeHTML(a.hora)}</small></div><button class="btn-action" onclick="marcarToma(${a.id}, '${escapeHTML(a.nombre)}')">Ya lo tomé</button></div>`;
-                }
-            } else if (a.tipo === 'tarea') {
-                htmlT += `<div class="agenda-card"><div><strong>🗓️ ${escapeHTML(a.nombre)}</strong><br><small style="color:#6b7280;">Hora: ${escapeHTML(a.hora)}</small></div><button class="btn-delete" onclick="borrarActividad(${a.id})">✕</button></div>`;
-            }
-        });
-
-        listaGastos.forEach(g => {
-            htmlG += `<div class="expense-card"><div><strong>🛍️ ${escapeHTML(g.nombre)}</strong><br><small style="color:#dc2626; font-weight:bold;">-$${g.monto}</small></div><button class="btn-delete" onclick="borrarGasto(${g.id})">✕</button></div>`;
-        });
-
-        cS.innerHTML = htmlS;
-        cT.innerHTML = htmlT;
-        cG.innerHTML = htmlG;
-
-        const restante = calcularRestanteBolsillo();
-        const wR = document.getElementById('wallet-restante');
-        const wT = document.getElementById('wallet-total');
-        const tP = document.getElementById('txt-periodo-actual');
-        const barra = document.getElementById('wallet-barra');
-
-        if (wR) wR.innerText = `$${restante}`;
-        if (wT) wT.innerText = `$${bolsilloPresupuesto}`;
-        if (tP) tP.innerText = `Ciclo ${bolsilloCiclo.charAt(0).toUpperCase() + bolsilloCiclo.slice(1)}`;
-
-        let pct = (restante / bolsilloPresupuesto) * 100;
-        if(pct < 0) pct = 0;
-        if (barra) {
-            barra.style.width = `${pct}%`;
-            if(pct > 50) barra.style.backgroundColor = '#10b981';
-            else if(pct > 15) barra.style.backgroundColor = '#f59e0b';
-            else barra.style.backgroundColor = '#dc2626';
-        }
-
-        if(cS.innerHTML === '') cS.innerHTML = '<p style="color:#6b7280; text-align:center; padding:1rem;">Todo tomado por hoy.</p>';
-        if(cT.innerHTML === '') cT.innerHTML = '<p style="color:#6b7280; text-align:center; padding:1rem;">Sin tareas pendientes.</p>';
-        if(cG.innerHTML === '') cG.innerHTML = '<p style="color:#6b7280; text-align:center; padding:1rem;">No registraste gastos.</p>';
-
-        controlarOlvidosConsecutivos();
-    }
-
-    function solicitarConfirmacionSOS() {
-        mostrarConfirmacion("⚠️ ¿Activar alerta SOS?", (ok) => { if (ok) ejecutarSOS(); });
-    }
-
-    function ejecutarSOS() {
-        const ctx = obtenerAudioContext();
-        sonidoChicharra(ctx);
-        decir("Alerta SOS activada");
-        if (datosFicha.familiar) {
-            const msj = encodeURIComponent(`¡ALERTA SOS! Se presionó el botón de emergencia en Círculo Vital.`);
-            window.open(`https://wa.me/${datosFicha.familiar}?text=${msj}`, '_blank');
-        } else {
-            mostrarToast("⚠️ Registrá un contacto en Ficha Médica.");
-            abrirPantalla('pantalla-ficha');
-        }
-    }
-
-    function exportarCopiaSeguridad() {
-        const d = {
-            circulo_tomas: obtenerDato('circulo_tomas'),
-            circulo_actividades: obtenerDato('circulo_actividades'),
-            circulo_ficha: obtenerDato('circulo_ficha'),
-            circulo_sonidos: obtenerDato('circulo_sonidos'),
-            bolsillo_total: obtenerDato('bolsillo_total'),
-            bolsillo_ciclo: obtenerDato('bolsillo_ciclo'),
-            bolsillo_gastos: obtenerDato('bolsillo_gastos'),
-            bolsillo_reset_date: obtenerDato('bolsillo_reset_date'),
-            circulo_nota_bloc: obtenerDato('circulo_nota_bloc')
-        };
-        const s = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(d));
-        const a = document.createElement('a');
-        a.setAttribute("href", s);
-        a.setAttribute("download", "backup_circulo_vital.json");
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        mostrarToast("Copia descargada");
-    }
-
-    function importarCopiaSeguridad(event) {
-        const f = event.target.files[0];
-        if (!f) return;
-        const r = new FileReader();
-        r.onload = function(e) {
-            try {
-                const d = JSON.parse(e.target.result);
-                Object.keys(d).forEach(k => { if(d[k] !== null) guardarDato(k, d[k]); });
-                location.reload();
-            } catch (err) {
-                mostrarToast("Archivo no válido.");
-            }
-        };
-        r.readAsText(f);
-    }
-
-    function guardarDatosFicha(e) {
-        e.preventDefault();
-        datosFicha.nombre = document.getElementById('f-nombre').value;
-        datosFicha.sangre = document.getElementById('f-sangre').value;
-        datosFicha.patologia = document.getElementById('f-patologia').value;
-        datosFicha.familiar = document.getElementById('c1-tel').value;
-        datosFicha.secundario = document.getElementById('c2-tel').value;
-        guardarDato('circulo_ficha', JSON.stringify(datosFicha));
-        mostrarToast("Ficha actualizada");
-        cerrarPantalla('pantalla-ficha');
-        renderizar();
-    }
-
-    setInterval(() => {
-        verificarAlarmas();
-        verificarYDepurarBolsillo();
-        const hoy = new Date().toISOString().split('T')[0];
-        Object.keys(alertasEjecutadas).forEach(k => {
-            if (!k.startsWith(hoy + '_')) delete alertasEjecutadas[k];
-        });
-    }, 10000);
-
-    document.addEventListener("DOMContentLoaded", () => {
-        if(obtenerDato('circulo_ya_ingreso', 'false') === 'true') {
-            const p = document.getElementById('pantalla-bienvenida');
-            if (p) p.style.display = 'none';
-        }
-        renderizar();
-
-        const ss = document.getElementById('sonido-salud');
-        const st = document.getElementById('sonido-tareas');
-        const bp = document.getElementById('box-presupuesto-total');
-        const bc = document.getElementById('box-presupuesto-ciclo');
-        if (ss) ss.value = configSonidos.salud;
-        if (st) st.value = configSonidos.tareas;
-        if (bp) bp.value = bolsilloPresupuesto;
-        if (bc) bc.value = bolsilloCiclo;
-
-        if(datosFicha.nombre) { const e = document.getElementById('f-nombre'); if (e) e.value = datosFicha.nombre; }
-        if(datosFicha.sangre) { const e = document.getElementById('f-sangre'); if (e) e.value = datosFicha.sangre; }
-        if(datosFicha.patologia) { const e = document.getElementById('f-patologia'); if (e) e.value = datosFicha.patologia; }
-        if(datosFicha.familiar) { const e = document.getElementById('c1-tel'); if (e) e.value = datosFicha.familiar; }
-        if(datosFicha.secundario) { const e = document.getElementById('c2-tel'); if (e) e.value = datosFicha.secundario; }
-
-        const ng = obtenerDato('circulo_nota_bloc', '');
-        const ta = document.getElementById('bloc-notas');
-        if(ta) ta.value = ng;
-
-        verificarYDepurarBolsillo();
-    });
-
-    function guardarNotaBloc() {
-        guardarDato('circulo_nota_bloc', document.getElementById('bloc-notas').value);
-        mostrarToast("📝 Nota guardada");
-    }
-
-    function presionarCalc(v) { const p = document.getElementById('calc-pantalla'); if (p) p.value += v; }
-    function limpiarCalc() { const p = document.getElementById('calc-pantalla'); if (p) p.value = ''; }
-    function calcularResultado() {
-        try {
-            const p = document.getElementById('calc-pantalla');
-            if (!p) return;
-            const i = p.value;
-            if (!i) return;
-            if (!/^[\d+\-*/.()\s]+$/.test(i)) { p.value = 'Error'; return; }
-            p.value = new Function('return ' + i)();
-        } catch (e) {
-            const p = document.getElementById('calc-pantalla');
-            if (p) p.value = 'Error';
-        }
-    }
+  });
+}
+function dispararAlarma(item){
+  alarmaItem=item;
+  document.getElementById('alarma-emoji').textContent = item.tipo==='med'?'💊':'🗓️';
+  document.getElementById('alarma-titulo').textContent = item.tipo==='med'?'Hora del Medicamento':'Recordatorio';
+  document.getElementById('alarma-detalle').textContent = `${item.nombre} — ${item.hora}`;
+  document.getElementById('pantalla-alarma').classList.add('activa');
+  iniciarBucle(item.tipo==='med'?configSonidos.salud:configSonidos.tareas);
+  decir(`Recordatorio: ${item.nombre}`);
+}
+function iniciarBucle(tipo){
+  detenerBucle();
+  const ctx=obtenerAudio();
+  reproducirSonido(ctx,tipo);
+  if(navigator.vibrate) navigator.vibrate([800,300,800,300,800]);
+  bucleAlarm = setInterval(()=>{
+    reproducirSonido(ctx,tipo);
+    if(navigator.vibrate) navigator.vibrate([500,200,500]);
+  }, 6000);
+  setTimeout(()=>{detenerBucle(); cerrarPantallaAlarma();}, 90000);
+}
+function detenerBucle(){ if(bucleAlarm){clearInterval(bucleAlarm); bucleAlarm=null;} if(navigator.vibrate) navigator.vibrate(0); }
+function cerrarPantallaAlarma(){ document.getElementById('pantalla-alarma').classList.remove('activa'); alarmaItem=null; }
+function alarmaConfirmar(){
+  if(alarmaItem && alarmaItem.tipo==='med'){
+    const hoy=new Date().toISOString().split('T')[0];
+    registroTomas[`${hoy}_${alarmaItem.id}`]=true;
+    guardarD('circulo_tomas', JSON.stringify(registroTomas));
+  }
+  detenerBucle(); cerrarPantallaAlarma();
+  mostrarToast('¡Registrado!'); renderizar();
+}
+function alarmaPosponer(){
+  if(!alarmaItem) return;
+  const p=new Date(Date.now()+5*60000);
+  const nh=`${String(p.getHours()).padStart(2,'0')}:${String(p.getMinutes()).padStart(2,'0')}`;
+  listaActividades.push({id:generarId(), nombre:alarmaItem.nombre+' (pospuesta)', hora:nh, tipo:alarmaItem.tipo});
+  guardarD('circulo_actividades', JSON.stringify(listaActividades));
+  detenerBucle(); cerrarPantallaAlarma();
+  mostrarToast(`Pospuesta a las ${nh}`); renderizar();
+}
+
+function abrirPantalla(id){
+  document.querySelectorAll('.overlay-screen').forEach(p=>p.classList.remove('activa'));
+  if(id==='pantalla-inicio') document.getElementById('pantalla-inicio').style.display='block';
+  else { document.getElementById('pantalla-inicio').style.display='none'; const p=document.getElementById(id); if(p) p.classList.add('activa'); }
+}
+function cerrarPantalla(id){ const p=document.getElementById(id); if(p) p.classList.remove('activa'); document.getElementById('pantalla-inicio').style.display='block'; }
+
+function cambiarSolapa(s){
+  ['tab-salud','tab-tareas','tab-bolsillo'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  ['vista-salud','vista-tareas','vista-bolsillo'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  if(s==='salud'){ document.getElementById('tab-salud').classList.add('active'); document.getElementById('vista-salud').classList.add('active'); }
+  else if(s==='tareas'){ document.getElementById('tab-tareas').classList.add('active'); document.getElementById('vista-tareas').classList.add('active'); }
+  else { document.getElementById('tab-bolsillo').classList.add('active'); document.getElementById('vista-bolsillo').classList.add('active'); }
+}
+
+window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferredPrompt=e; const b=document.getElementById('btn-instalar-app'); if(b) b.style.display='inline-block'; });
+function instalarPWA(){
+  if(deferredPrompt){ deferredPrompt.prompt(); deferredPrompt.userChoice.then(r=>{ if(r.outcome==='accepted') mostrarToast('¡Instalada!'); deferredPrompt=null; const b=document.getElementById('btn-instalar-app'); if(b) b.style.display='none'; }); }
+}
+
+function decir(t){ try{ if('speechSynthesis' in window){ window.speechSynthesis.cancel(); const m=new SpeechSynthesisUtterance(t); m.lang='es-ES'; window.speechSynthesis.speak(m); } }catch(e){} }
+function mostrarToast(msg){ const t=document.getElementById('toast-notification'); if(t){ t.innerText=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3500);} }
+
+function activarMicrofono(){
+  const btn=document.getElementById('btn-hablar');
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ mostrarToast("Dictado no disponible"); return; }
+  const r=new SR(); r.lang='es-ES'; r.interimResults=false;
+  r.onstart=()=>{ btn.classList.add('listening'); btn.innerHTML="🛑 Escuchando..."; };
+  r.onerror=()=>{ btn.classList.remove('listening'); btn.innerHTML="🎙️ Hablar"; };
+  r.onend=()=>{ btn.classList.remove('listening'); btn.innerHTML="🎙️ Hablar con la App"; };
+  r.onresult=e=>procesarDictadoIntegral(e.results[0][0].transcript.toLowerCase());
+  r.start();
+}
+function procesarDictadoIntegral(f){
+  if(f.includes("gasté")||f.includes("gaste")||f.includes("pesos")||f.includes("plata")){
+    const n=f.match(/\d+/g); const m=n?parseFloat(n[0]):0;
+    let c=f.replace(/gasté|gaste|pesos|plata|en/g,"").replace(/\d+/g,"").trim();
+    if(c.length<2) c="Gasto dictado";
+    if(m>0){ listaGastos.push({id:generarId(), nombre:c.charAt(0).toUpperCase()+c.slice(1), monto:m}); guardarD('bolsillo_gastos',JSON.stringify(listaGastos)); renderizar(); cambiarSolapa('bolsillo'); mostrarToast(`$${m} registrado`); }
+    else mostrarToast("No entendí el monto");
+    return;
+  }
+  const hx=f.match(/(\d{1,2}):(\d{2})/);
+  let h=hx?`${hx[1].padStart(2,'0')}:${hx[2]}`:(()=>{const p=new Date(Date.now()+15*60000); return `${String(p.getHours()).padStart(2,'0')}:${String(p.getMinutes()).padStart(2,'0')}`;})();
+  let n=f.replace(/agendar|agregar|a las|las/g,"").replace(/\d{1,2}:\d{2}/,"").trim();
+  if(n.length<2) n="Actividad";
+  let tipo='tarea';
+  if(f.includes("pastilla")||f.includes("remedio")||f.includes("presión")||f.includes("médico")) tipo='med';
+  listaActividades.push({id:generarId(), nombre:n.charAt(0).toUpperCase()+n.slice(1), hora:h, tipo});
+  guardarD('circulo_actividades',JSON.stringify(listaActividades));
+  renderizar(); cambiarSolapa(tipo==='med'?'salud':'tareas');
+  mostrarToast(`Agendado a las ${h}`);
+}
+
+function calcularRestante(){ return bolsilloPresupuesto - listaGastos.reduce((s,g)=>s+g.monto,0); }
+function actualizarParametrosBolsillo(){
+  bolsilloPresupuesto=parseFloat(document.getElementById('box-presupuesto-total').value)||30000;
+  bolsilloCiclo=document.getElementById('box-presupuesto-ciclo').value;
+  guardarD('bolsillo_total', bolsilloPresupuesto.toString());
+  guardarD('bolsillo_ciclo', bolsilloCiclo);
+  renderizar(); mostrarToast("Monedero actualizado"); cerrarPantalla('pantalla-ajustes');
+}
+function verificarYDepurarBolsillo(){
+  try{
+    const a=new Date(), i=new Date(fechaUltimoReset);
+    const d=Math.floor((a-i)/(1000*60*60*24));
+    const l=bolsilloCiclo==='semanal'?7:15;
+    if(d>=l){ listaGastos=[]; fechaUltimoReset=a.toISOString(); guardarD('bolsillo_gastos',JSON.stringify(listaGastos)); guardarD('bolsillo_reset_date',fechaUltimoReset); mostrarToast("Ciclo limpio"); renderizar(); }
+  }catch(e){}
+}
+
+function guardarEntradaManual(){
+  const n=document.getElementById('act-nombre').value.trim();
+  const v=document.getElementById('act-variable').value.trim();
+  const t=document.getElementById('act-tipo').value;
+  if(!n||!v){ mostrarToast("Completa los datos"); return; }
+  if(t==='bolsillo'){ listaGastos.push({id:generarId(), nombre:n, monto:parseFloat(v)||0}); guardarD('bolsillo_gastos',JSON.stringify(listaGastos)); }
+  else { listaActividades.push({id:generarId(), nombre:n, hora:v, tipo:t}); guardarD('circulo_actividades',JSON.stringify(listaActividades)); }
+  configSonidos.salud=document.getElementById('sonido-salud').value;
+  configSonidos.tareas=document.getElementById('sonido-tareas').value;
+  guardarD('circulo_sonidos',JSON.stringify(configSonidos));
+  document.getElementById('act-nombre').value='';
+  document.getElementById('act-variable').value='';
+  renderizar(); mostrarToast("Guardado"); cerrarPantalla('pantalla-ajustes');
+  cambiarSolapa(t==='bolsillo'?'bolsillo':(t==='med'?'salud':'tareas'));
+}
+function borrarGasto(id){ mostrarConfirmacion("¿Borrar?", ok=>{ if(!ok) return; listaGastos=listaGastos.filter(g=>g.id!==id); guardarD('bolsillo_gastos',JSON.stringify(listaGastos)); renderizar(); mostrarToast("Eliminado"); }); }
+function borrarActividad(id){ mostrarConfirmacion("¿Borrar?", ok=>{ if(!ok) return; listaActividades=listaActividades.filter(a=>a.id!==id); guardarD('circulo_actividades',JSON.stringify(listaActividades)); renderizar(); mostrarToast("Eliminado"); }); }
+function marcarToma(id,nombre){ const h=new Date().toISOString().split('T')[0]; registroTomas[`${h}_${id}`]=true; guardarD('circulo_tomas',JSON.stringify(registroTomas)); mostrarToast(`Registrado: ${nombre}`); decir(`${nombre} completado`); renderizar(); }
+
+function gestionarCierreAlertaAlEnviar(){ alertaForzadaOcultaHoy=true; document.getElementById('alerta-olvido').style.display='none'; mostrarToast("Enviado"); }
+function controlarOlvidosConsecutivos(){
+  if(alertaForzadaOcultaHoy){ document.getElementById('alerta-olvido').style.display='none'; return; }
+  const hoy=new Date().toISOString().split('T')[0];
+  const ahora=new Date();
+  const ha=`${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`;
+  const meds=[...medsActivos(),...listaActividades.filter(a=>a.tipo==='med')];
+  const pas=meds.filter(m=>m.hora<=ha);
+  let nt=0; pas.forEach(m=>{ if(!registroTomas[`${hoy}_${m.id}`]) nt++; });
+  const b=document.getElementById('alerta-olvido');
+  if(b){ if(nt>=2){ b.style.display='block'; if(datosFicha.familiar){ const m=encodeURIComponent(`Hola, Círculo Vital detectó olvidos de medicación.`); document.getElementById('link-wa-olvido').href=`https://wa.me/${datosFicha.familiar}?text=${m}`; } else document.getElementById('link-wa-olvido').href="#"; } else b.style.display='none'; }
+}
+
+function renderizar(){
+  const cS=document.getElementById('lista-salud'), cT=document.getElementById('lista-tareas'), cG=document.getElementById('lista-gastos');
+  if(!cS||!cT||!cG) return;
+  const hoy=new Date().toISOString().split('T')[0];
+  let hS='',hT='',hG='';
+  medsActivos().forEach(m=>{ if(!registroTomas[`${hoy}_${m.id}`]) hS+=`<div class="med-card"><div><strong>💊 ${escapeHTML(m.nombre)}</strong><br><small style="color:#6b7280;">${m.hora}</small></div><div style="display:flex; gap:6px; align-items:center;"><button class="btn-action" onclick="marcarToma(${m.id},'${escapeHTML(m.nombre)}')">Ya lo tomé</button><button class="btn-delete" onclick="borrarMedBase(${m.id})">✕</button></div></div>`; });
+  listaActividades.forEach(a=>{
+    if(a.tipo==='med'){ if(!registroTomas[`${hoy}_${a.id}`]) hS+=`<div class="med-card"><div><strong>💊 ${escapeHTML(a.nombre)}</strong><br><small style="color:#6b7280;">${escapeHTML(a.hora)}</small></div><div style="display:flex; gap:6px; align-items:center;"><button class="btn-action" onclick="marcarToma(${a.id},'${escapeHTML(a.nombre)}')">Ya lo tomé</button><button class="btn-delete" onclick="borrarActividad(${a.id})">✕</button></div></div>`; }
+    else if(a.tipo==='tarea') hT+=`<div class="agenda-card"><div><strong>🗓️ ${escapeHTML(a.nombre)}</strong><br><small style="color:#6b7280;">${escapeHTML(a.hora)}</small></div><button class="btn-delete" onclick="borrarActividad(${a.id})">✕</button></div>`;
+  });
+  listaGastos.forEach(g=>hG+=`<div class="expense-card"><div><strong>🛍️ ${escapeHTML(g.nombre)}</strong><br><small style="color:#dc2626; font-weight:bold;">-$${g.monto}</small></div><button class="btn-delete" onclick="borrarGasto(${g.id})">✕</button></div>`);
+  cS.innerHTML=hS; cT.innerHTML=hT; cG.innerHTML=hG;
+  const r=calcularRestante();
+  document.getElementById('wallet-restante').innerText=`$${r}`;
+  document.getElementById('wallet-total').innerText=`$${bolsilloPresupuesto}`;
+  document.getElementById('txt-periodo-actual').innerText=`Ciclo ${bolsilloCiclo.charAt(0).toUpperCase()+bolsilloCiclo.slice(1)}`;
+  let pct=(r/bolsilloPresupuesto)*100; if(pct<0)pct=0;
+  const b=document.getElementById('wallet-barra');
+  if(b){ b.style.width=`${pct}%`; b.style.backgroundColor=pct>50?'#10b981':(pct>15?'#f59e0b':'#dc2626'); }
+  if(cS.innerHTML==='') cS.innerHTML='<p style="color:#6b7280; text-align:center; padding:1rem;">Todo tomado.</p>';
+  if(cT.innerHTML==='') cT.innerHTML='<p style="color:#6b7280; text-align:center; padding:1rem;">Sin tareas.</p>';
+  if(cG.innerHTML==='') cG.innerHTML='<p style="color:#6b7280; text-align:center; padding:1rem;">Sin gastos.</p>';
+  controlarOlvidosConsecutivos();
+}
+
+function solicitarConfirmacionSOS(){ mostrarConfirmacion("¿Activar alerta SOS?", ok=>{ if(ok) ejecutarSOS(); }); }
+function ejecutarSOS(){
+  sonidoChicharra(obtenerAudio()); decir("SOS activado");
+  if(datosFicha.familiar){ const m=encodeURIComponent(`¡ALERTA SOS! Círculo Vital.`); window.open(`https://wa.me/${datosFicha.familiar}?text=${m}`,'_blank'); }
+  else { mostrarToast("Cargá un contacto en Ficha Médica"); abrirPantalla('pantalla-ficha'); }
+}
+
+function exportarCopiaSeguridad(){
+  const d={circulo_tomas:obtenerD('circulo_tomas'), circulo_actividades:obtenerD('circulo_actividades'), circulo_ficha:obtenerD('circulo_ficha'), circulo_sonidos:obtenerD('circulo_sonidos'), bolsillo_total:obtenerD('bolsillo_total'), bolsillo_ciclo:obtenerD('bolsillo_ciclo'), bolsillo_gastos:obtenerD('bolsillo_gastos'), bolsillo_reset_date:obtenerD('bolsillo_reset_date'), circulo_nota_bloc:obtenerD('circulo_nota_bloc')};
+  const s="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(d));
+  const a=document.createElement('a'); a.setAttribute("href",s); a.setAttribute("download","backup_circulo_vital.json");
+  document.body.appendChild(a); a.click(); a.remove(); mostrarToast("Descargado");
+}
+function importarCopiaSeguridad(e){ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ try{ const d=JSON.parse(ev.target.result); Object.keys(d).forEach(k=>{ if(d[k]!==null) guardarD(k,d[k]); }); location.reload(); }catch(err){ mostrarToast("Archivo inválido"); } }; r.readAsText(f); }
+
+function guardarDatosFicha(e){
+  e.preventDefault();
+  datosFicha.nombre=document.getElementById('f-nombre').value;
+  datosFicha.sangre=document.getElementById('f-sangre').value;
+  datosFicha.patologia=document.getElementById('f-patologia').value;
+  datosFicha.familiar=document.getElementById('c1-tel').value;
+  datosFicha.secundario=document.getElementById('c2-tel').value;
+  guardarD('circulo_ficha',JSON.stringify(datosFicha));
+  mostrarToast("Ficha guardada"); cerrarPantalla('pantalla-ficha'); renderizar();
+}
+
+setInterval(()=>{ verificarAlarmas(); verificarYDepurarBolsillo(); const h=new Date().toISOString().split('T')[0]; Object.keys(alertasEjecutadas).forEach(k=>{ if(!k.startsWith(h+'_')) delete alertasEjecutadas[k]; }); }, 10000);
+
+document.addEventListener("DOMContentLoaded", ()=>{
+  renderizar();
+  const ss=document.getElementById('sonido-salud'), st=document.getElementById('sonido-tareas');
+  if(ss) ss.value=configSonidos.salud;
+  if(st) st.value=configSonidos.tareas;
+  const bp=document.getElementById('box-presupuesto-total'), bc=document.getElementById('box-presupuesto-ciclo');
+  if(bp) bp.value=bolsilloPresupuesto;
+  if(bc) bc.value=bolsilloCiclo;
+  if(datosFicha.nombre){ const e=document.getElementById('f-nombre'); if(e) e.value=datosFicha.nombre; }
+  if(datosFicha.sangre){ const e=document.getElementById('f-sangre'); if(e) e.value=datosFicha.sangre; }
+  if(datosFicha.patologia){ const e=document.getElementById('f-patologia'); if(e) e.value=datosFicha.patologia; }
+  if(datosFicha.familiar){ const e=document.getElementById('c1-tel'); if(e) e.value=datosFicha.familiar; }
+  if(datosFicha.secundario){ const e=document.getElementById('c2-tel'); if(e) e.value=datosFicha.secundario; }
+  const t=document.getElementById('bloc-notas'); if(t) t.value=obtenerD('circulo_nota_bloc','');
+  verificarYDepurarBolsillo();
+});
+
+function dictarAlBloc(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ mostrarToast("Dictado no disponible"); return; }
+  const r=new SR(); r.lang='es-ES'; r.interimResults=false;
+  mostrarToast("🎙️ Escuchando nota...");
+  r.onresult=e=>{ const t=e.results[0][0].transcript; const ta=document.getElementById('bloc-notas'); ta.value=(ta.value? ta.value+' ':'')+t; mostrarToast("Dictado listo, tocá Guardar"); };
+  r.onerror=()=>mostrarToast("No escuché nada");
+  r.start();
+}
+function guardarNotaBloc(){ guardarD('circulo_nota_bloc', document.getElementById('bloc-notas').value); mostrarToast("Nota guardada"); }
+function presionarCalc(v){ const p=document.getElementById('calc-pantalla'); if(p) p.value+=v; }
+function limpiarCalc(){ const p=document.getElementById('calc-pantalla'); if(p) p.value=''; }
+function calcularResultado(){ try{ const p=document.getElementById('calc-pantalla'); if(!p) return; const i=p.value; if(!i) return; if(!/^[\d+\-*/.()\s]+$/.test(i)){p.value='Error';return;} p.value=new Function('return '+i)(); }catch(e){ const p=document.getElementById('calc-pantalla'); if(p) p.value='Error'; } }
 </script>
 </body>
 </html>

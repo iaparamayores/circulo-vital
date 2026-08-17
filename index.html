@@ -137,8 +137,8 @@
         <main>
             <div class="med-warning-card" id="alerta-olvido">
                 <h3 style="color:var(--danger); font-size:1.05rem;">⚠️ Alerta de Salud Continua</h3>
-                <p style="font-size:0.9rem; color:#4b5563;">Dos o más medicamentos sin tomar.</p>
-                <a href="#" id="link-wa-olvido" class="btn-whatsapp" target="_blank" onclick="gestionarCierreAlertaAlEnviar()">Enviar Aviso a Familiar</a>
+                <p style="font-size:0.9rem; color:#4b5563;">Dos o más medicamentos con más de 30 min de atraso. Se envió aviso automático por email al familiar.</p>
+                <a href="#" id="link-wa-olvido" class="btn-whatsapp" target="_blank" onclick="gestionarCierreAlertaAlEnviar()">Enviar Aviso por WhatsApp</a>
             </div>
 
             <div class="section-card" style="text-align:center; padding: 0.4rem;">
@@ -313,14 +313,19 @@
                 <input type="text" id="f-patologia">
             </div>
             <div class="form-group">
-                <label>Celular Familiar</label>
+                <label>Celular Familiar (WhatsApp)</label>
                 <input type="tel" id="c1-tel" required>
             </div>
             <div class="form-group">
                 <label>Celular Secundario</label>
                 <input type="tel" id="c2-tel">
             </div>
+            <div class="form-group">
+                <label>📧 Email del Familiar (avisos automáticos)</label>
+                <input type="email" id="c1-mail" placeholder="Ej: hijo@gmail.com">
+            </div>
             <button type="submit" class="btn-submit">Guardar Ficha</button>
+            <button type="button" class="btn-submit" style="background-color:#7c3aed; margin-top:0.5rem;" onclick="probarAvisoEmail()">📧 Probar envío de aviso</button>
             <button type="button" class="btn-submit" style="background:#6b7280; margin-top:0.5rem;" onclick="abrirPantalla('pantalla-ajustes')">Volver</button>
         </form>
     </div>
@@ -472,7 +477,6 @@ function sonidoChicharra(ctx){
     lfo.frequency.value=6; lfoG.gain.value=30;
     lfo.connect(lfoG);
     o.type='square'; o.frequency.value=440;
-    lfoG.connect(osc => {});
     lfoG.connect(o.frequency);
     o.connect(g); g.connect(ctx.destination);
     g.gain.value=0.3;
@@ -517,7 +521,7 @@ function verificarAlarmas(){
 }
 function dispararAlarma(item){
   alarmaItem=item;
-  document.getElementById('alarma-emoji').textContent = item.tipo==='med'?'💊':'🗓️';
+  document.getElementById('alarma-emoji').textContent = item.tipo==='med'?'💊':'️';
   document.getElementById('alarma-titulo').textContent = item.tipo==='med'?'Hora del Medicamento':'Recordatorio';
   document.getElementById('alarma-detalle').textContent = `${item.nombre} — ${item.hora}`;
   document.getElementById('pantalla-alarma').classList.add('activa');
@@ -702,16 +706,71 @@ function borrarActividad(id){ mostrarConfirmacion("¿Borrar?", ok=>{ if(!ok) ret
 function marcarToma(id,nombre){ const h=hoyStr(); registroTomas[`${h}_${id}`]=true; guardarD('circulo_tomas',JSON.stringify(registroTomas)); mostrarToast(`Registrado: ${nombre}`); decir(`${nombre} completado`); renderizar(); }
 
 function gestionarCierreAlertaAlEnviar(){ alertaForzadaOcultaHoy=true; document.getElementById('alerta-olvido').style.display='none'; mostrarToast("Enviado"); }
+
+// ============================================
+// ✅ NUEVO: AVISO AUTOMÁTICO AL FAMILIAR (EMAIL)
+// ============================================
+function enviarAlertaFamiliar(listaMeds, forzar){
+  const email = datosFicha.email;
+  if(!email) return false;
+  const ahora = Date.now();
+  const ultimo = parseInt(obtenerD('circulo_ultimo_aviso','0'))||0;
+  if(!forzar && (ahora - ultimo) < 2*60*60*1000) return false; // máx 1 cada 2 hs
+  guardarD('circulo_ultimo_aviso', String(ahora));
+
+  const nombres = listaMeds.map(m=>`${m.nombre} (${m.hora})`).join(', ');
+  const cuerpo = {
+    _subject: '🚨 ALERTA Círculo Vital: medicación sin tomar',
+    Paciente: datosFicha.nombre || 'Usuario de Círculo Vital',
+    Detalle: `NO se reportaron las siguientes tomas: ${nombres}.`,
+    Accion: `Si estás cerca, acercate o llamalo al ${datosFicha.familiar || 'celular registrado'}. Este aviso se envió automáticamente porque pasaron más de 30 minutos del horario sin confirmar la toma.`,
+    _template: 'table',
+    _captcha: 'false'
+  };
+
+  fetch('https://formsubmit.co/ajax/' + encodeURIComponent(email), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify(cuerpo)
+  }).then(r=>{
+    if(r.ok) mostrarToast('📧 Aviso automático enviado al familiar');
+    else console.log('Email no enviado', r.status);
+  }).catch(e=>{ console.log('Fallo aviso email', e); });
+  return true;
+}
+
+function probarAvisoEmail(){
+  const email = document.getElementById('c1-mail').value.trim();
+  if(!email){ mostrarToast('Cargá primero el email del familiar'); return; }
+  datosFicha.email = email;
+  guardarD('circulo_ficha', JSON.stringify(datosFicha));
+  enviarAlertaFamiliar([{nombre:'Prueba de alerta (todo funciona)', hora:'--'}], true);
+  mostrarToast('📧 Enviando email de prueba...');
+}
+
 function controlarOlvidosConsecutivos(){
   if(alertaForzadaOcultaHoy){ document.getElementById('alerta-olvido').style.display='none'; return; }
   const hoy=hoyStr();
   const ahora=new Date();
+  const ahoraMin=ahora.getHours()*60+ahora.getMinutes();
   const ha=`${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`;
   const meds=[...medsActivos(),...listaActividades.filter(a=>a.tipo==='med' && fechaDe(a)===hoy)];
   const pas=meds.filter(m=>m.hora<=ha);
-  let nt=0; pas.forEach(m=>{ if(!registroTomas[`${hoy}_${m.id}`]) nt++; });
+  const atrasados=pas.filter(m=>{
+    if(registroTomas[`${hoy}_${m.id}`]) return false;
+    const p=m.hora.split(':');
+    const mm=parseInt(p[0])*60+parseInt(p[1]);
+    return (ahoraMin-mm)>=30;
+  });
   const b=document.getElementById('alerta-olvido');
-  if(b){ if(nt>=2){ b.style.display='block'; if(datosFicha.familiar){ const m=encodeURIComponent(`Hola, Círculo Vital detectó olvidos de medicación.`); document.getElementById('link-wa-olvido').href=`https://wa.me/${datosFicha.familiar}?text=${m}`; } else document.getElementById('link-wa-olvido').href="#"; } else b.style.display='none'; }
+  if(b){
+    if(atrasados.length>=2){
+      b.style.display='block';
+      if(datosFicha.familiar){ const m=encodeURIComponent(`Hola, Círculo Vital detectó que no se reportaron las últimas tomas de medicación.`); document.getElementById('link-wa-olvido').href=`https://wa.me/${datosFicha.familiar}?text=${m}`; }
+      else document.getElementById('link-wa-olvido').href="#";
+      enviarAlertaFamiliar(atrasados, false);
+    } else b.style.display='none';
+  }
 }
 
 function renderizar(){
@@ -756,7 +815,8 @@ function renderizar(){
 function solicitarConfirmacionSOS(){ mostrarConfirmacion("¿Activar alerta SOS?", ok=>{ if(ok) ejecutarSOS(); }); }
 function ejecutarSOS(){
   sonidoChicharra(obtenerAudio()); decir("SOS activado");
-  if(datosFicha.familiar){ const m=encodeURIComponent(`¡ALERTA SOS! Círculo Vital.`); window.open(`https://wa.me/${datosFicha.familiar}?text=${m}`,'_blank'); }
+  if(datosFicha.email) enviarAlertaFamiliar([{nombre:'🆘 BOTÓN SOS PRESIONADO', hora:'--'}], true);
+  if(datosFicha.familiar){ const m=encodeURIComponent(`¡ALERTA SOS! Se presionó el botón de emergencia en Círculo Vital.`); window.open(`https://wa.me/${datosFicha.familiar}?text=${m}`,'_blank'); }
   else { mostrarToast("Cargá un contacto en Ficha Médica"); abrirPantalla('pantalla-ficha'); }
 }
 
@@ -775,6 +835,7 @@ function guardarDatosFicha(e){
   datosFicha.patologia=document.getElementById('f-patologia').value;
   datosFicha.familiar=document.getElementById('c1-tel').value;
   datosFicha.secundario=document.getElementById('c2-tel').value;
+  datosFicha.email=document.getElementById('c1-mail').value.trim();
   guardarD('circulo_ficha',JSON.stringify(datosFicha));
   mostrarToast("Ficha guardada"); cerrarPantalla('pantalla-ficha'); renderizar();
 }
@@ -796,6 +857,7 @@ document.addEventListener("DOMContentLoaded", ()=>{
   if(datosFicha.patologia){ const e=document.getElementById('f-patologia'); if(e) e.value=datosFicha.patologia; }
   if(datosFicha.familiar){ const e=document.getElementById('c1-tel'); if(e) e.value=datosFicha.familiar; }
   if(datosFicha.secundario){ const e=document.getElementById('c2-tel'); if(e) e.value=datosFicha.secundario; }
+  if(datosFicha.email){ const e=document.getElementById('c1-mail'); if(e) e.value=datosFicha.email; }
   const t=document.getElementById('bloc-notas'); if(t) t.value=obtenerD('circulo_nota_bloc','');
   verificarYDepurarBolsillo();
 });

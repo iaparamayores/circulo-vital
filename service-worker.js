@@ -1,4 +1,4 @@
-const VERSION = 'v6';
+const VERSION = 'v7';
 const CACHE_NAME = `circulo-vital-${VERSION}`;
 const APP_SHELL = ['./', './index.html', './manifest.json'];
 

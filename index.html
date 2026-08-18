@@ -260,6 +260,19 @@
                 <input type="time" id="box-checkin-hora" value="20:00">
             </div>
             <button class="btn-submit" style="background-color:#059669;" onclick="guardarCheckin()">💚 Guardar Check-in</button>
+            <div class="form-group" style="margin-top:1rem;">
+                <label>Pantalla despierta sin cargador</label>
+                <select id="box-reloj-sin-carga">
+                    <option value="0">No (recomendado, ahorra batería)</option>
+                    <option value="1">Sí (gasta batería)</option>
+                </select>
+            </div>
+            <button class="btn-submit" style="background-color:#374151;" onclick="guardarPantallaReloj()">🔆 Guardar Pantalla</button>
+        </div>
+        <div class="section-card" style="box-shadow:none; padding:0; margin-bottom:1.5rem;">
+            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">Administrar Medicamentos</h3>
+            <p style="font-size:0.8rem; color:#6b7280; margin-bottom:0.75rem;">Acá se borran remedios y se recarga el stock. En la pantalla principal ya no hay ✕ (para evitar borrones accidentales).</p>
+            <div id="lista-admin-meds"></div>
         </div>
         <div class="section-card" style="box-shadow:none; padding:0; margin-bottom:1.5rem;">
             <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">Configuración de Monedero</h3>
@@ -283,7 +296,7 @@
                 <input type="text" id="act-nombre">
             </div>
             <div class="form-group">
-                <label>Fecha (para tareas y medicamentos)</label>
+                <label>Fecha (para tareas y medicamentos temporales)</label>
                 <input type="date" id="act-fecha">
             </div>
             <div class="form-group">
@@ -292,10 +305,17 @@
             </div>
             <div class="form-group">
                 <label>Tipo</label>
-                <select id="act-tipo">
+                <select id="act-tipo" onchange="actualizarVisibilidadFrecuencia()">
                     <option value="tarea">Actividad</option>
                     <option value="med">Medicamento</option>
                     <option value="bolsillo">Gasto</option>
+                </select>
+            </div>
+            <div class="form-group" id="grp-frecuencia" style="display:none;">
+                <label>Frecuencia del medicamento</label>
+                <select id="act-frecuencia">
+                    <option value="todos">Todos los días (permanente)</option>
+                    <option value="puntual">Solo un día (temporal, ej: antibiótico)</option>
                 </select>
             </div>
             <button class="btn-submit" onclick="guardarEntradaManual()">Agregar</button>
@@ -383,9 +403,6 @@
 
     <div class="espacio-publicitario"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-<script>eruda.init();</script>
-
 <script>
 const storageOK = (() => { try { const t='__t__'; localStorage.setItem(t,t); localStorage.removeItem(t); return true; } catch(e){return false;} })();
 function guardarD(k,v){ if(storageOK) try{localStorage.setItem(k,v);}catch(e){} }
@@ -425,6 +442,7 @@ let alertaForzadaOcultaHoy = false;
 let deferredPrompt;
 let alertasEjecutadas = {};
 let medsOcultos = JSON.parse(obtenerD('circulo_meds_ocultos','[]'))||[];
+let stockMeds = JSON.parse(obtenerD('circulo_stock','{}'))||{};
 let checkinActivo = obtenerD('circulo_checkin_activo','1');
 let checkinHora = obtenerD('circulo_checkin_hora','20:00');
 
@@ -454,15 +472,16 @@ function borrarMedBase(id){
     if(!ok) return;
     medsOcultos.push(id);
     guardarD('circulo_meds_ocultos', JSON.stringify(medsOcultos));
-    renderizar(); mostrarToast("Medicamento quitado");
+    renderizar(); renderAdminMeds(); mostrarToast("Medicamento quitado");
   });
 }
 
 // ============================================
-// MODO MESITA DE LUZ + WAKE LOCK
+// MODO MESITA DE LUZ + BATERÍA INTELIGENTE
 // ============================================
 let relojInterval = null;
 let wakeLockSentinel = null;
+let bateriaCargando = false;
 
 async function pedirWakeLock(){
   try {
@@ -474,9 +493,11 @@ async function pedirWakeLock(){
 function liberarWakeLock(){
   try { if(wakeLockSentinel){ wakeLockSentinel.release(); wakeLockSentinel=null; } } catch(e){}
 }
+function puedeMantenerPantalla(){ return bateriaCargando || obtenerD('reloj_sin_carga','0')==='1'; }
+
 document.addEventListener('visibilitychange', ()=>{
   const mr=document.getElementById('modo-reloj');
-  if(mr && mr.classList.contains('activo') && document.visibilityState==='visible') pedirWakeLock();
+  if(mr && mr.classList.contains('activo') && document.visibilityState==='visible' && puedeMantenerPantalla()) pedirWakeLock();
 });
 
 function iniciarModoReloj(){
@@ -485,7 +506,7 @@ function iniciarModoReloj(){
   mr.classList.add('activo');
   actualizarReloj();
   relojInterval=setInterval(actualizarReloj, 1000);
-  pedirWakeLock();
+  if(puedeMantenerPantalla()) pedirWakeLock();
 }
 function salirModoReloj(){
   document.getElementById('modo-reloj').classList.remove('activo');
@@ -525,10 +546,19 @@ function proximoRecordatorio(){
 
 if(navigator.getBattery){
   navigator.getBattery().then(b=>{
-    const sync=()=>{ if(b.charging) iniciarModoReloj(); };
+    bateriaCargando = b.charging;
+    const sync=()=>{ bateriaCargando=b.charging; if(b.charging) iniciarModoReloj(); };
     b.addEventListener('chargingchange', sync);
     sync();
   }).catch(()=>{});
+}
+
+function guardarPantallaReloj(){
+  guardarD('reloj_sin_carga', document.getElementById('box-reloj-sin-carga').value);
+  mostrarToast('Configuración de pantalla guardada');
+  const mr=document.getElementById('modo-reloj');
+  if(!puedeMantenerPantalla()) liberarWakeLock();
+  else if(mr.classList.contains('activo')) pedirWakeLock();
 }
 
 // ============================================
@@ -648,7 +678,7 @@ function verificarAlarmas(){
 }
 function dispararAlarma(item){
   alarmaItem=item;
-  document.getElementById('alarma-emoji').textContent = item.tipo==='med'?'💊':'🗓️';
+  document.getElementById('alarma-emoji').textContent = item.tipo==='med'?'💊':'️';
   document.getElementById('alarma-titulo').textContent = item.tipo==='med'?'Hora del Medicamento':'Recordatorio';
   document.getElementById('alarma-detalle').textContent = `${item.nombre} — ${item.hora}`;
   document.getElementById('pantalla-alarma').classList.add('activa');
@@ -673,6 +703,7 @@ function alarmaConfirmar(){
     const hoy=hoyStr();
     registroTomas[`${hoy}_${alarmaItem.id}`]=true;
     guardarD('circulo_tomas', JSON.stringify(registroTomas));
+    descontarStock(alarmaItem.id, alarmaItem.nombre);
   }
   detenerBucle(); cerrarPantallaAlarma();
   mostrarToast('¡Registrado!'); renderizar();
@@ -688,12 +719,59 @@ function alarmaPosponer(){
 }
 
 // ============================================
+// CONTADOR DE PASTILLAS
+// ============================================
+function claveStock(id){
+  const esBase = medicamentosBase.some(m=>m.id===id);
+  return esBase ? String(id) : 'a'+id;
+}
+function descontarStock(id, nombre){
+  const key = claveStock(id);
+  if(stockMeds[key]!==undefined && stockMeds[key]>0){
+    stockMeds[key]--;
+    guardarD('circulo_stock', JSON.stringify(stockMeds));
+    if(stockMeds[key]===5) avisarStockBajo(nombre, 5);
+  }
+}
+function avisarStockBajo(nombre, n){
+  mostrarToast(`⚠️ Quedan ${n} de ${nombre}`);
+  decir(`Atención: quedan ${n} comprimidos de ${nombre}`);
+  enviarAlertaFamiliar([{nombre:`Parece que quedan ${n} comprimidos de ${nombre}. Conviene comprar.`, hora:'--'}], true);
+}
+function fijarStock(key){
+  const inp=document.getElementById('stock-'+key);
+  if(!inp) return;
+  const v=parseInt(inp.value);
+  if(isNaN(v)||v<0){ mostrarToast('Poné un número válido'); return; }
+  stockMeds[key]=v;
+  guardarD('circulo_stock', JSON.stringify(stockMeds));
+  mostrarToast('Stock actualizado');
+  renderAdminMeds(); renderizar();
+}
+function renderAdminMeds(){
+  const cont=document.getElementById('lista-admin-meds');
+  if(!cont) return;
+  let html='';
+  medsActivos().forEach(m=>{
+    const key=String(m.id); const st=stockMeds[key];
+    html+=`<div class="med-card"><div><strong>💊 ${escapeHTML(m.nombre)}</strong><br><small style="color:#6b7280;">${st!==undefined?`Quedan ${st}`:'Sin contador'} · Diario</small></div><div style="display:flex; gap:6px; align-items:center;"><input type="number" id="stock-${key}" placeholder="${st!==undefined?st:''}" style="width:70px; padding:4px; border:1px solid #d1d5db; border-radius:6px;"><button class="btn-action" onclick="fijarStock('${key}')">Fijar</button><button class="btn-delete" onclick="borrarMedBase(${m.id})">✕</button></div></div>`;
+  });
+  listaActividades.filter(a=>a.tipo==='med').forEach(a=>{
+    const key='a'+a.id; const st=stockMeds[key];
+    const tipoTxt = a.fecha ? `Temporal · ${formatearFecha(a.fecha)}` : 'Diario';
+    html+=`<div class="med-card"><div><strong>💊 ${escapeHTML(a.nombre)}</strong><br><small style="color:#6b7280;">${st!==undefined?`Quedan ${st}`:'Sin contador'} · ${tipoTxt}</small></div><div style="display:flex; gap:6px; align-items:center;"><input type="number" id="stock-${key}" placeholder="${st!==undefined?st:''}" style="width:70px; padding:4px; border:1px solid #d1d5db; border-radius:6px;"><button class="btn-action" onclick="fijarStock('${key}')">Fijar</button><button class="btn-delete" onclick="borrarActividad(${a.id})">✕</button></div></div>`;
+  });
+  cont.innerHTML = html || '<p style="color:#6b7280; text-align:center; padding:0.5rem;">Sin medicamentos cargados.</p>';
+}
+
+// ============================================
 // NAVEGACIÓN
 // ============================================
 function abrirPantalla(id){
   document.querySelectorAll('.overlay-screen').forEach(p=>p.classList.remove('activa'));
   if(id==='pantalla-inicio') document.getElementById('pantalla-inicio').style.display='block';
   else { document.getElementById('pantalla-inicio').style.display='none'; const p=document.getElementById(id); if(p) p.classList.add('activa'); }
+  if(id==='pantalla-ajustes') renderAdminMeds();
 }
 function cerrarPantalla(id){ const p=document.getElementById(id); if(p) p.classList.remove('activa'); document.getElementById('pantalla-inicio').style.display='block'; }
 
@@ -812,8 +890,14 @@ function verificarYDepurarBolsillo(){
 }
 
 // ============================================
-// ENTRADAS MANUALES
+// ENTRADAS MANUALES (con diarios vs temporales)
 // ============================================
+function actualizarVisibilidadFrecuencia(){
+  const t=document.getElementById('act-tipo').value;
+  const g=document.getElementById('grp-frecuencia');
+  if(g) g.style.display = (t==='med') ? 'block' : 'none';
+}
+
 function guardarEntradaManual(){
   const n=document.getElementById('act-nombre').value.trim();
   const v=document.getElementById('act-variable').value.trim();
@@ -823,7 +907,13 @@ function guardarEntradaManual(){
   if(t==='bolsillo'){ listaGastos.push({id:generarId(), nombre:n, monto:parseFloat(v)||0}); guardarD('bolsillo_gastos',JSON.stringify(listaGastos)); }
   else {
     const act={id:generarId(), nombre:n, hora:v, tipo:t};
-    if(t==='med' && fecha) act.fecha=fecha;
+    if(t==='med'){
+      const frec=document.getElementById('act-frecuencia').value;
+      if(frec==='puntual'){
+        if(!fecha){ mostrarToast('Elegí la fecha del tratamiento'); return; }
+        act.fecha=fecha;
+      }
+    }
     if(t==='tarea') act.fecha=fecha||hoyStr();
     listaActividades.push(act);
     guardarD('circulo_actividades',JSON.stringify(listaActividades));
@@ -841,8 +931,14 @@ function guardarEntradaManual(){
   cambiarSolapa(t==='bolsillo'?'bolsillo':(t==='med'?'salud':'tareas'));
 }
 function borrarGasto(id){ mostrarConfirmacion("¿Borrar?", ok=>{ if(!ok) return; listaGastos=listaGastos.filter(g=>g.id!==id); guardarD('bolsillo_gastos',JSON.stringify(listaGastos)); renderizar(); mostrarToast("Eliminado"); }); }
-function borrarActividad(id){ mostrarConfirmacion("¿Borrar?", ok=>{ if(!ok) return; listaActividades=listaActividades.filter(a=>a.id!==id); guardarD('circulo_actividades',JSON.stringify(listaActividades)); renderizar(); mostrarToast("Eliminado"); }); }
-function marcarToma(id,nombre){ const h=hoyStr(); registroTomas[`${h}_${id}`]=true; guardarD('circulo_tomas',JSON.stringify(registroTomas)); mostrarToast(`Registrado: ${nombre}`); decir(`${nombre} completado`); renderizar(); }
+function borrarActividad(id){ mostrarConfirmacion("¿Borrar?", ok=>{ if(!ok) return; listaActividades=listaActividades.filter(a=>a.id!==id); guardarD('circulo_actividades',JSON.stringify(listaActividades)); renderizar(); renderAdminMeds(); mostrarToast("Eliminado"); }); }
+function marcarToma(id,nombre){
+  const h=hoyStr();
+  registroTomas[`${h}_${id}`]=true;
+  guardarD('circulo_tomas',JSON.stringify(registroTomas));
+  descontarStock(id, nombre);
+  mostrarToast(`Registrado: ${nombre}`); decir(`${nombre} completado`); renderizar();
+}
 
 function gestionarCierreAlertaAlEnviar(){ alertaForzadaOcultaHoy=true; document.getElementById('alerta-olvido').style.display='none'; mostrarToast("Enviado"); }
 
@@ -951,7 +1047,7 @@ function controlarCheckin(){
 }
 
 // ============================================
-// RENDER
+// RENDER (sin ✕ en meds, con stock visible)
 // ============================================
 function renderizar(){
   const cS=document.getElementById('lista-salud'), cT=document.getElementById('lista-tareas'), cG=document.getElementById('lista-gastos');
@@ -959,15 +1055,27 @@ function renderizar(){
   if(!cS||!cT||!cG) return;
   const hoy=hoyStr();
   let hS='',hT='',hG='',hSF='';
-  medsActivos().forEach(m=>{ if(!registroTomas[`${hoy}_${m.id}`]) hS+=`<div class="med-card"><div><strong>💊 ${escapeHTML(m.nombre)}</strong><br><small style="color:#6b7280;">${m.hora}</small></div><div style="display:flex; gap:6px; align-items:center;"><button class="btn-action" onclick="marcarToma(${m.id},'${escapeHTML(m.nombre)}')">Ya lo tomé</button><button class="btn-delete" onclick="borrarMedBase(${m.id})">✕</button></div></div>`; });
+  medsActivos().forEach(m=>{
+    if(!registroTomas[`${hoy}_${m.id}`]){
+      const st=stockMeds[String(m.id)];
+      const stTxt = st!==undefined ? `<br><small style="color:${st<=5?'#dc2626':'#6b7280'};">Quedan ${st}</small>` : '';
+      hS+=`<div class="med-card"><div><strong>💊 ${escapeHTML(m.nombre)}</strong><br><small style="color:#6b7280;">${m.hora}</small>${stTxt}</div><button class="btn-action" onclick="marcarToma(${m.id},'${escapeHTML(m.nombre)}')">Ya lo tomé</button></div>`;
+    }
+  });
   listaActividades.forEach(a=>{
-    if(a.tipo==='med' && fechaDe(a)===hoy){ if(!registroTomas[`${hoy}_${a.id}`]) hS+=`<div class="med-card"><div><strong>💊 ${escapeHTML(a.nombre)}</strong><br><small style="color:#6b7280;">${escapeHTML(a.hora)}</small></div><div style="display:flex; gap:6px; align-items:center;"><button class="btn-action" onclick="marcarToma(${a.id},'${escapeHTML(a.nombre)}')">Ya lo tomé</button><button class="btn-delete" onclick="borrarActividad(${a.id})">✕</button></div></div>`; }
+    if(a.tipo==='med' && fechaDe(a)===hoy){
+      if(!registroTomas[`${hoy}_${a.id}`]){
+        const st=stockMeds['a'+a.id];
+        const stTxt = st!==undefined ? `<br><small style="color:${st<=5?'#dc2626':'#6b7280'};">Quedan ${st}</small>` : '';
+        hS+=`<div class="med-card"><div><strong>💊 ${escapeHTML(a.nombre)}</strong><br><small style="color:#6b7280;">${escapeHTML(a.hora)}</small>${stTxt}</div><button class="btn-action" onclick="marcarToma(${a.id},'${escapeHTML(a.nombre)}')">Ya lo tomé</button></div>`;
+      }
+    }
   });
   listaActividades
     .filter(a=>a.tipo==='med' && fechaDe(a)>hoy)
     .sort((x,y)=>(fechaDe(x)+x.hora).localeCompare(fechaDe(y)+y.hora))
     .forEach(a=>{
-      hSF+=`<div class="med-card"><div><strong>💊 ${escapeHTML(a.nombre)}</strong><br><small style="color:#6b7280;">📅 ${formatearFecha(a.fecha)} — ${escapeHTML(a.hora)}</small></div><button class="btn-delete" onclick="borrarActividad(${a.id})">✕</button></div>`;
+      hSF+=`<div class="med-card"><div><strong>💊 ${escapeHTML(a.nombre)}</strong><br><small style="color:#6b7280;">📅 ${formatearFecha(a.fecha)} — ${escapeHTML(a.hora)} · Temporal</small></div></div>`;
     });
   listaActividades
     .filter(a=>a.tipo==='tarea' && fechaDe(a)>=hoy)
@@ -1010,7 +1118,7 @@ function ejecutarSOS(){
 // BACKUP
 // ============================================
 function exportarCopiaSeguridad(){
-  const d={circulo_tomas:obtenerD('circulo_tomas'), circulo_actividades:obtenerD('circulo_actividades'), circulo_ficha:obtenerD('circulo_ficha'), circulo_sonidos:obtenerD('circulo_sonidos'), bolsillo_total:obtenerD('bolsillo_total'), bolsillo_ciclo:obtenerD('bolsillo_ciclo'), bolsillo_gastos:obtenerD('bolsillo_gastos'), bolsillo_reset_date:obtenerD('bolsillo_reset_date'), circulo_nota_bloc:obtenerD('circulo_nota_bloc')};
+  const d={circulo_tomas:obtenerD('circulo_tomas'), circulo_actividades:obtenerD('circulo_actividades'), circulo_ficha:obtenerD('circulo_ficha'), circulo_sonidos:obtenerD('circulo_sonidos'), bolsillo_total:obtenerD('bolsillo_total'), bolsillo_ciclo:obtenerD('bolsillo_ciclo'), bolsillo_gastos:obtenerD('bolsillo_gastos'), bolsillo_reset_date:obtenerD('bolsillo_reset_date'), circulo_nota_bloc:obtenerD('circulo_nota_bloc'), circulo_stock:obtenerD('circulo_stock')};
   const s="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(d));
   const a=document.createElement('a'); a.setAttribute("href",s); a.setAttribute("download","backup_circulo_vital.json");
   document.body.appendChild(a); a.click(); a.remove(); mostrarToast("Descargado");
@@ -1059,6 +1167,9 @@ document.addEventListener("DOMContentLoaded", ()=>{
   const ca=document.getElementById('box-checkin-activo'), ch=document.getElementById('box-checkin-hora');
   if(ca) ca.value=checkinActivo;
   if(ch) ch.value=checkinHora;
+  const br=document.getElementById('box-reloj-sin-carga');
+  if(br) br.value=obtenerD('reloj_sin_carga','0');
+  actualizarVisibilidadFrecuencia();
   if(datosFicha.nombre){ const e=document.getElementById('f-nombre'); if(e) e.value=datosFicha.nombre; }
   if(datosFicha.sangre){ const e=document.getElementById('f-sangre'); if(e) e.value=datosFicha.sangre; }
   if(datosFicha.patologia){ const e=document.getElementById('f-patologia'); if(e) e.value=datosFicha.patologia; }

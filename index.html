@@ -16,6 +16,19 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
         body { background-color: var(--bg-light); color: var(--text-dark); display: flex; flex-direction: column; min-height: 100vh; }
 
+        #modo-reloj {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 250; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+            color: #e5e7eb; text-align: center; gap: 0.5rem; padding: 1rem;
+        }
+        #modo-reloj.activo { display: flex; }
+        #reloj-hora { font-size: 6rem; font-weight: 800; color: #fff; letter-spacing: 0.05em; line-height: 1; }
+        #reloj-fecha { font-size: 1.3rem; color: #9ca3af; }
+        #reloj-saludo { font-size: 1.1rem; color: #6b7280; }
+        #reloj-proximo { margin-top: 1.5rem; font-size: 1.15rem; color: #34d399; font-weight: 600; }
+        #reloj-salir { margin-top: 2.5rem; background: #1f2937; color: #9ca3af; border: none; padding: 0.9rem 2.5rem; border-radius: 2rem; font-size: 1rem; cursor: pointer; }
+
         #pantalla-alarma {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, #059669 0%, #047857 100%);
@@ -49,6 +62,7 @@
         .section-card h2 { font-size: 1.1rem; margin-bottom: 0.75rem; color: #111827; border-bottom: 2px solid #f3f4f6; padding-bottom: 0.25rem; }
 
         .btn-sos { background-color: var(--danger); color: white; width: 85px; height: 85px; border-radius: 50%; border: 4px solid #fecaca; font-size: 1.2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
+        .btn-llamada { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1rem; border-radius: 0.5rem; font-weight: 600; text-decoration: none; color: white; font-size: 0.9rem; }
 
         .wallet-display { text-align: center; padding: 1rem 0; }
         .wallet-monto { font-size: 2.25rem; font-weight: 800; color: #111827; margin: 0.25rem 0; }
@@ -110,6 +124,14 @@
         </div>
     </div>
 
+    <div id="modo-reloj">
+        <div id="reloj-hora">00:00</div>
+        <div id="reloj-fecha"></div>
+        <div id="reloj-saludo"></div>
+        <div id="reloj-proximo"></div>
+        <button id="reloj-salir" onclick="salirModoReloj()">Salir</button>
+    </div>
+
     <div id="pantalla-alarma">
         <div class="alarma-icono" id="alarma-emoji">⏰</div>
         <h2 id="alarma-titulo" style="font-size: 2rem; margin-bottom: 0.5rem;">Medicamento</h2>
@@ -128,6 +150,7 @@
         <div class="nav-buttons">
             <button class="btn-nav btn-install" id="btn-instalar-app" onclick="instalarPWA()">📲 Instalar</button>
             <button class="btn-nav" style="font-size: 0.75rem;" onclick="abrirPantalla('pantalla-inicio')">Inicio</button>
+            <button class="btn-nav" style="font-size: 0.75rem;" onclick="iniciarModoReloj()">🕐</button>
             <button class="btn-nav" style="font-size: 0.75rem;" onclick="abrirPantalla('pantalla-herramientas')">🛠️</button>
             <button class="btn-nav" style="font-size: 0.75rem;" onclick="abrirPantalla('pantalla-ajustes')">Ajustes</button>
         </div>
@@ -143,6 +166,16 @@
 
             <div class="section-card" style="text-align:center; padding: 0.4rem;">
                 <button class="btn-sos" onclick="solicitarConfirmacionSOS()">SOS</button>
+                <div style="display:flex; gap:0.5rem; justify-content:center; margin-top:0.75rem; flex-wrap:wrap;">
+                    <a id="link-llamar-familiar" href="#" class="btn-llamada" style="background:#0ea5e9;">📞 Llamar Familiar</a>
+                    <a href="tel:911" class="btn-llamada" style="background:#dc2626;">🚑 Emergencias</a>
+                </div>
+            </div>
+
+            <div class="section-card" id="card-checkin" style="display:none; background:#ecfdf5; border:2px solid #34d399; text-align:center;">
+                <h2 style="border-bottom:none; color:#065f46;">¿Cómo estuvo tu día?</h2>
+                <p style="color:#4b5563; font-size:0.9rem; margin-bottom:0.75rem;">Tocá el botón para avisar que estás bien</p>
+                <button class="btn-submit" style="background:#059669; font-size:1.2rem; padding:1.25rem;" onclick="confirmarCheckin()">💚 Estoy bien</button>
             </div>
 
             <div class="voice-btn-container">
@@ -215,6 +248,18 @@
                 </select>
             </div>
             <button class="btn-submit" onclick="probarSonidoSeleccionado()">🎵 Probar Sonido</button>
+            <div class="form-group" style="margin-top:1rem;">
+                <label>Check-in diario "Estoy bien"</label>
+                <select id="box-checkin-activo">
+                    <option value="1">Activado</option>
+                    <option value="0">Desactivado</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Hora del pedido</label>
+                <input type="time" id="box-checkin-hora" value="20:00">
+            </div>
+            <button class="btn-submit" style="background-color:#059669;" onclick="guardarCheckin()">💚 Guardar Check-in</button>
         </div>
         <div class="section-card" style="box-shadow:none; padding:0; margin-bottom:1.5rem;">
             <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">Configuración de Monedero</h3>
@@ -380,6 +425,8 @@ let alertaForzadaOcultaHoy = false;
 let deferredPrompt;
 let alertasEjecutadas = {};
 let medsOcultos = JSON.parse(obtenerD('circulo_meds_ocultos','[]'))||[];
+let checkinActivo = obtenerD('circulo_checkin_activo','1');
+let checkinHora = obtenerD('circulo_checkin_hora','20:00');
 
 try {
   registroTomas = JSON.parse(obtenerD('circulo_tomas','{}')) || {};
@@ -411,6 +458,82 @@ function borrarMedBase(id){
   });
 }
 
+// ============================================
+// MODO MESITA DE LUZ + WAKE LOCK
+// ============================================
+let relojInterval = null;
+let wakeLockSentinel = null;
+
+async function pedirWakeLock(){
+  try {
+    if('wakeLock' in navigator){
+      wakeLockSentinel = await navigator.wakeLock.request('screen');
+    }
+  } catch(e){ console.log('Wake lock no disponible', e); }
+}
+function liberarWakeLock(){
+  try { if(wakeLockSentinel){ wakeLockSentinel.release(); wakeLockSentinel=null; } } catch(e){}
+}
+document.addEventListener('visibilitychange', ()=>{
+  const mr=document.getElementById('modo-reloj');
+  if(mr && mr.classList.contains('activo') && document.visibilityState==='visible') pedirWakeLock();
+});
+
+function iniciarModoReloj(){
+  const mr=document.getElementById('modo-reloj');
+  if(mr.classList.contains('activo')) return;
+  mr.classList.add('activo');
+  actualizarReloj();
+  relojInterval=setInterval(actualizarReloj, 1000);
+  pedirWakeLock();
+}
+function salirModoReloj(){
+  document.getElementById('modo-reloj').classList.remove('activo');
+  if(relojInterval){ clearInterval(relojInterval); relojInterval=null; }
+  liberarWakeLock();
+}
+function actualizarReloj(){
+  const a=new Date();
+  const hh=String(a.getHours()).padStart(2,'0'), mm=String(a.getMinutes()).padStart(2,'0');
+  const eH=document.getElementById('reloj-hora'), eF=document.getElementById('reloj-fecha'), eS=document.getElementById('reloj-saludo'), eP=document.getElementById('reloj-proximo');
+  if(eH) eH.textContent=`${hh}:${mm}`;
+  if(eF) eF.textContent=formatearFechaLarga(a);
+  if(eS) eS.textContent=saludoPorHora(a.getHours());
+  if(eP) eP.textContent=proximoRecordatorio();
+}
+function formatearFechaLarga(a){
+  const dias=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const meses=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  return `${dias[a.getDay()]} ${a.getDate()} de ${meses[a.getMonth()]}`;
+}
+function saludoPorHora(h){
+  if(h>=6&&h<12) return '☀️ Buenos días';
+  if(h>=12&&h<20) return '🌤️ Buenas tardes';
+  return '🌙 Buenas noches';
+}
+function proximoRecordatorio(){
+  const hoy=hoyStr(); const a=new Date(); const minAh=a.getHours()*60+a.getMinutes();
+  const candidatos=[...medsActivos(),...listaActividades.filter(x=>fechaDe(x)===hoy)];
+  const futuros=candidatos.filter(m=>{
+    if(!m.hora||!m.hora.includes(':')) return false;
+    if(m.tipo==='med' && registroTomas[`${hoy}_${m.id}`]) return false;
+    const p=m.hora.split(':'); return (parseInt(p[0])*60+parseInt(p[1]))>minAh;
+  }).sort((x,y)=>x.hora.localeCompare(y.hora));
+  if(futuros.length) return `⏰ Próximo: ${futuros[0].nombre} — ${futuros[0].hora}`;
+  return '✅ Sin recordatorios pendientes hoy';
+}
+
+if(navigator.getBattery){
+  navigator.getBattery().then(b=>{
+    const sync=()=>{ if(b.charging) iniciarModoReloj(); };
+    b.addEventListener('chargingchange', sync);
+    sync();
+  }).catch(()=>{});
+}
+
+// ============================================
+// SONIDOS
+// ============================================
 let audioCtx = null;
 function obtenerAudio(){
   try {
@@ -498,6 +621,9 @@ function reproducirSonido(ctx,tipo){
 }
 function probarSonidoSeleccionado(){ reproducirSonido(obtenerAudio(), document.getElementById('sonido-salud').value); }
 
+// ============================================
+// ALARMAS
+// ============================================
 let alarmaItem=null, bucleAlarm=null;
 function verificarAlarmas(){
   const ahora=new Date();
@@ -522,7 +648,7 @@ function verificarAlarmas(){
 }
 function dispararAlarma(item){
   alarmaItem=item;
-  document.getElementById('alarma-emoji').textContent = item.tipo==='med'?'💊':'️';
+  document.getElementById('alarma-emoji').textContent = item.tipo==='med'?'💊':'🗓️';
   document.getElementById('alarma-titulo').textContent = item.tipo==='med'?'Hora del Medicamento':'Recordatorio';
   document.getElementById('alarma-detalle').textContent = `${item.nombre} — ${item.hora}`;
   document.getElementById('pantalla-alarma').classList.add('activa');
@@ -561,6 +687,9 @@ function alarmaPosponer(){
   mostrarToast(`Pospuesta a las ${nh}`); renderizar();
 }
 
+// ============================================
+// NAVEGACIÓN
+// ============================================
 function abrirPantalla(id){
   document.querySelectorAll('.overlay-screen').forEach(p=>p.classList.remove('activa'));
   if(id==='pantalla-inicio') document.getElementById('pantalla-inicio').style.display='block';
@@ -584,6 +713,9 @@ function instalarPWA(){
 function decir(t){ try{ if('speechSynthesis' in window){ window.speechSynthesis.cancel(); const m=new SpeechSynthesisUtterance(t); m.lang='es-ES'; window.speechSynthesis.speak(m); } }catch(e){} }
 function mostrarToast(msg){ const t=document.getElementById('toast-notification'); if(t){ t.innerText=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3500);} }
 
+// ============================================
+// DICTADO
+// ============================================
 function activarMicrofono(){
   const btn=document.getElementById('btn-hablar');
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -659,6 +791,9 @@ function procesarDictadoIntegral(f){
   mostrarToast((tipo==='med'?'💊 ':'🗓️ ')+(fecha?`${formatearFecha(fecha)} ${h}`:`hoy ${h}`));
 }
 
+// ============================================
+// BOLSILLO
+// ============================================
 function calcularRestante(){ return bolsilloPresupuesto - listaGastos.reduce((s,g)=>s+g.monto,0); }
 function actualizarParametrosBolsillo(){
   bolsilloPresupuesto=parseFloat(document.getElementById('box-presupuesto-total').value)||30000;
@@ -676,6 +811,9 @@ function verificarYDepurarBolsillo(){
   }catch(e){}
 }
 
+// ============================================
+// ENTRADAS MANUALES
+// ============================================
 function guardarEntradaManual(){
   const n=document.getElementById('act-nombre').value.trim();
   const v=document.getElementById('act-variable').value.trim();
@@ -709,14 +847,14 @@ function marcarToma(id,nombre){ const h=hoyStr(); registroTomas[`${h}_${id}`]=tr
 function gestionarCierreAlertaAlEnviar(){ alertaForzadaOcultaHoy=true; document.getElementById('alerta-olvido').style.display='none'; mostrarToast("Enviado"); }
 
 // ============================================
-// ✅ NUEVO: AVISO AUTOMÁTICO AL FAMILIAR (EMAIL)
+// AVISO AUTOMÁTICO AL FAMILIAR (EMAIL)
 // ============================================
 function enviarAlertaFamiliar(listaMeds, forzar){
   const email = datosFicha.email;
   if(!email) return false;
   const ahora = Date.now();
   const ultimo = parseInt(obtenerD('circulo_ultimo_aviso','0'))||0;
-  if(!forzar && (ahora - ultimo) < 2*60*60*1000) return false; // máx 1 cada 2 hs
+  if(!forzar && (ahora - ultimo) < 2*60*60*1000) return false;
   guardarD('circulo_ultimo_aviso', String(ahora));
 
   const nombres = listaMeds.map(m=>`${m.nombre} (${m.hora})`).join(', ');
@@ -774,6 +912,47 @@ function controlarOlvidosConsecutivos(){
   }
 }
 
+// ============================================
+// CHECK-IN "ESTOY BIEN"
+// ============================================
+function guardarCheckin(){
+  checkinActivo=document.getElementById('box-checkin-activo').value;
+  checkinHora=document.getElementById('box-checkin-hora').value||'20:00';
+  guardarD('circulo_checkin_activo', checkinActivo);
+  guardarD('circulo_checkin_hora', checkinHora);
+  mostrarToast('💚 Check-in configurado');
+  controlarCheckin();
+}
+function confirmarCheckin(){
+  const hoy=hoyStr();
+  guardarD(`circulo_checkin_${hoy}`,'1');
+  const card=document.getElementById('card-checkin');
+  if(card) card.style.display='none';
+  mostrarToast('💚 ¡Gracias por avisar!');
+  decir('Gracias por avisar que estás bien');
+}
+function controlarCheckin(){
+  const hoy=hoyStr();
+  const card=document.getElementById('card-checkin');
+  if(!card) return;
+  if(checkinActivo!=='1'){ card.style.display='none'; return; }
+  const a=new Date(); const minAh=a.getHours()*60+a.getMinutes();
+  const p=checkinHora.split(':'); const minCh=(parseInt(p[0])||0)*60+(parseInt(p[1])||0);
+  const ya=obtenerD(`circulo_checkin_${hoy}`,'');
+  if(minAh>=minCh && !ya){
+    card.style.display='block';
+    if((minAh-minCh)>=120 && obtenerD(`circulo_checkin_aviso_${hoy}`,'')!=='1'){
+      guardarD(`circulo_checkin_aviso_${hoy}`,'1');
+      enviarAlertaFamiliar([{nombre:`No respondió al pedido "Estoy bien" de las ${checkinHora}`, hora:checkinHora}], true);
+    }
+  } else {
+    card.style.display='none';
+  }
+}
+
+// ============================================
+// RENDER
+// ============================================
 function renderizar(){
   const cS=document.getElementById('lista-salud'), cT=document.getElementById('lista-tareas'), cG=document.getElementById('lista-gastos');
   const cSF=document.getElementById('lista-salud-futura'), cardSF=document.getElementById('card-salud-futura');
@@ -810,9 +989,15 @@ function renderizar(){
   if(cS.innerHTML==='') cS.innerHTML='<p style="color:#6b7280; text-align:center; padding:1rem;">Todo tomado.</p>';
   if(cT.innerHTML==='') cT.innerHTML='<p style="color:#6b7280; text-align:center; padding:1rem;">Sin tareas.</p>';
   if(cG.innerHTML==='') cG.innerHTML='<p style="color:#6b7280; text-align:center; padding:1rem;">Sin gastos.</p>';
+  const lf=document.getElementById('link-llamar-familiar');
+  if(lf) lf.href = datosFicha.familiar ? `tel:+${datosFicha.familiar}` : '#';
   controlarOlvidosConsecutivos();
+  controlarCheckin();
 }
 
+// ============================================
+// SOS
+// ============================================
 function solicitarConfirmacionSOS(){ mostrarConfirmacion("¿Activar alerta SOS?", ok=>{ if(ok) ejecutarSOS(); }); }
 function ejecutarSOS(){
   sonidoChicharra(obtenerAudio()); decir("SOS activado");
@@ -821,6 +1006,9 @@ function ejecutarSOS(){
   else { mostrarToast("Cargá un contacto en Ficha Médica"); abrirPantalla('pantalla-ficha'); }
 }
 
+// ============================================
+// BACKUP
+// ============================================
 function exportarCopiaSeguridad(){
   const d={circulo_tomas:obtenerD('circulo_tomas'), circulo_actividades:obtenerD('circulo_actividades'), circulo_ficha:obtenerD('circulo_ficha'), circulo_sonidos:obtenerD('circulo_sonidos'), bolsillo_total:obtenerD('bolsillo_total'), bolsillo_ciclo:obtenerD('bolsillo_ciclo'), bolsillo_gastos:obtenerD('bolsillo_gastos'), bolsillo_reset_date:obtenerD('bolsillo_reset_date'), circulo_nota_bloc:obtenerD('circulo_nota_bloc')};
   const s="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(d));
@@ -829,6 +1017,9 @@ function exportarCopiaSeguridad(){
 }
 function importarCopiaSeguridad(e){ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ try{ const d=JSON.parse(ev.target.result); Object.keys(d).forEach(k=>{ if(d[k]!==null) guardarD(k,d[k]); }); location.reload(); }catch(err){ mostrarToast("Archivo inválido"); } }; r.readAsText(f); }
 
+// ============================================
+// FICHA
+// ============================================
 function guardarDatosFicha(e){
   e.preventDefault();
   datosFicha.nombre=document.getElementById('f-nombre').value;
@@ -841,8 +1032,20 @@ function guardarDatosFicha(e){
   mostrarToast("Ficha guardada"); cerrarPantalla('pantalla-ficha'); renderizar();
 }
 
-setInterval(()=>{ verificarAlarmas(); verificarYDepurarBolsillo(); const h=hoyStr(); Object.keys(alertasEjecutadas).forEach(k=>{ if(!k.startsWith(h+'_')) delete alertasEjecutadas[k]; }); }, 10000);
+// ============================================
+// LOOP PRINCIPAL
+// ============================================
+setInterval(()=>{
+  verificarAlarmas();
+  verificarYDepurarBolsillo();
+  controlarCheckin();
+  const h=hoyStr();
+  Object.keys(alertasEjecutadas).forEach(k=>{ if(!k.startsWith(h+'_')) delete alertasEjecutadas[k]; });
+}, 10000);
 
+// ============================================
+// INIT
+// ============================================
 document.addEventListener("DOMContentLoaded", ()=>{
   renderizar();
   const ss=document.getElementById('sonido-salud'), st=document.getElementById('sonido-tareas');
@@ -853,6 +1056,9 @@ document.addEventListener("DOMContentLoaded", ()=>{
   if(bc) bc.value=bolsilloCiclo;
   const af=document.getElementById('act-fecha');
   if(af) af.value=hoyStr();
+  const ca=document.getElementById('box-checkin-activo'), ch=document.getElementById('box-checkin-hora');
+  if(ca) ca.value=checkinActivo;
+  if(ch) ch.value=checkinHora;
   if(datosFicha.nombre){ const e=document.getElementById('f-nombre'); if(e) e.value=datosFicha.nombre; }
   if(datosFicha.sangre){ const e=document.getElementById('f-sangre'); if(e) e.value=datosFicha.sangre; }
   if(datosFicha.patologia){ const e=document.getElementById('f-patologia'); if(e) e.value=datosFicha.patologia; }
@@ -863,6 +1069,9 @@ document.addEventListener("DOMContentLoaded", ()=>{
   verificarYDepurarBolsillo();
 });
 
+// ============================================
+// BLOC Y CALCULADORA
+// ============================================
 function dictarAlBloc(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){ mostrarToast("Dictado no disponible"); return; }

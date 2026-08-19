@@ -28,6 +28,8 @@
         #reloj-saludo { font-size: 1.1rem; color: #6b7280; }
         #reloj-proximo { margin-top: 1.5rem; font-size: 1.15rem; color: #34d399; font-weight: 600; }
         #reloj-salir { margin-top: 2.5rem; background: #1f2937; color: #9ca3af; border: none; padding: 0.9rem 2.5rem; border-radius: 2rem; font-size: 1rem; cursor: pointer; }
+        .foto-capa { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; opacity: 0; transition: opacity 2.5s ease; z-index: 0; }
+        #reloj-hora, #reloj-fecha, #reloj-saludo, #reloj-proximo, #reloj-salir { position: relative; z-index: 1; }
 
         #pantalla-alarma {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -138,7 +140,9 @@
         </div>
     </div>
 
-    <div id="modo-reloj">
+        <div id="modo-reloj">
+        <div id="foto-capa-a" class="foto-capa"></div>
+        <div id="foto-capa-b" class="foto-capa"></div>
         <div id="reloj-hora">00:00</div>
         <div id="reloj-fecha"></div>
         <div id="reloj-saludo"></div>
@@ -296,6 +300,20 @@
                 </select>
             </div>
             <button class="btn-submit" style="background-color:#374151;" onclick="guardarPantallaReloj()">🔆 Guardar Pantalla</button>
+            <div class="form-group" style="margin-top:1rem;">
+                <label>📷 Fotos del modo reloj (podés elegir varias)</label>
+                <input type="file" id="fotos-reloj" accept="image/*" multiple onchange="guardarFotosReloj(event)">
+                <button class="btn-submit" style="background-color:#6b7280; margin-top:0.5rem;" onclick="quitarFotosReloj()">Quitar fotos (fondo negro)</button>
+                <div class="form-group">
+                <label>⏱️ Segundos por foto</label>
+                <select id="box-foto-seg" onchange="guardarFotoSeg()">
+                    <option value="8">8 segundos (ágil)</option>
+                    <option value="12" selected>12 segundos (default)</option>
+                    <option value="20">20 segundos (calmo)</option>
+                    <option value="30">30 segundos (muy calmo)</option>
+                </select>
+            </div>
+            </div>
         </div>
         <div class="section-card" style="box-shadow:none; padding:0; margin-bottom:1.5rem;">
             <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">Administrar Medicamentos</h3>
@@ -583,11 +601,13 @@ function iniciarModoReloj(){
   mr.classList.add('activo');
   actualizarReloj();
   relojInterval=setInterval(actualizarReloj, 1000);
+  iniciarSlideshowFotos();
   if(puedeMantenerPantalla()) pedirWakeLock();
 }
 function salirModoReloj(){
   document.getElementById('modo-reloj').classList.remove('activo');
   if(relojInterval){ clearInterval(relojInterval); relojInterval=null; }
+  detenerSlideshowFotos();
   liberarWakeLock();
 }
 function actualizarReloj(){
@@ -630,6 +650,97 @@ if(navigator.getBattery){
   }).catch(()=>{});
 }
 
+// ============================================
+// FOTOS DEL MODO RELOJ (SLIDESHOW CON DESVANECIMIENTO)
+// ============================================
+let fotosReloj = JSON.parse(obtenerD('circulo_fotos_reloj','[]'))||[];
+let fotoIdx = 0;
+let fotoCapaActiva = 0;
+let fotoTimer = null;
+
+function comprimirImagen(file){
+  return new Promise((res)=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        const max=900;
+        const scale=Math.min(1, max/Math.max(img.width,img.height));
+        canvas.width=Math.round(img.width*scale);
+        canvas.height=Math.round(img.height*scale);
+        const ctx=canvas.getContext('2d');
+        ctx.drawImage(img,0,0,canvas.width,canvas.height);
+        res(canvas.toDataURL('image/jpeg',0.72));
+      };
+      img.src=ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+async function guardarFotosReloj(e){
+  const files=Array.from(e.target.files||[]);
+  if(!files.length) return;
+  mostrarToast('Procesando fotos...');
+  const nuevas=[];
+  for(const f of files){ nuevas.push(await comprimirImagen(f)); }
+  fotosReloj = fotosReloj.concat(nuevas);
+  guardarD('circulo_fotos_reloj', JSON.stringify(fotosReloj));
+  const guardado=JSON.parse(obtenerD('circulo_fotos_reloj','[]'))||[];
+  if(guardado.length!==fotosReloj.length){ fotosReloj=guardado; mostrarToast('⚠️ No entraron todas (memoria llena). Quedaron '+fotosReloj.length); }
+  else mostrarToast(`📷 ${fotosReloj.length} foto(s) lista(s) para el reloj`);
+  if(document.getElementById('modo-reloj').classList.contains('activo')) iniciarSlideshowFotos();
+}
+function quitarFotosReloj(){
+  fotosReloj=[];
+  guardarD('circulo_fotos_reloj','[]');
+  detenerSlideshowFotos();
+  limpiarCapas();
+  mostrarToast('Fondo negro restaurado');
+}
+function limpiarCapas(){
+  ['foto-capa-a','foto-capa-b'].forEach(id=>{
+    const c=document.getElementById(id);
+    if(c){ c.style.opacity=0; c.style.backgroundImage='none'; }
+  });
+}
+function mostrarFoto(i, instant){
+  const capas=[document.getElementById('foto-capa-a'), document.getElementById('foto-capa-b')];
+  if(!capas[0]||!capas[1]) return;
+  const entrante=capas[1-fotoCapaActiva];
+  const saliente=capas[fotoCapaActiva];
+  entrante.style.backgroundImage=`linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.72)), url('${fotosReloj[i]}')`;
+  if(instant){
+    entrante.style.transition='none';
+    entrante.style.opacity=1;
+    saliente.style.opacity=0;
+    setTimeout(()=>{ entrante.style.transition=''; }, 80);
+  } else {
+    entrante.style.opacity=1;
+    saliente.style.opacity=0;
+  }
+  fotoCapaActiva=1-fotoCapaActiva;
+}
+function iniciarSlideshowFotos(){
+  detenerSlideshowFotos();
+  if(!fotosReloj.length){ limpiarCapas(); return; }
+  fotoIdx=0;
+  mostrarFoto(0, true);
+  if(fotosReloj.length>1){
+    fotoTimer=setInterval(()=>{
+      fotoIdx=(fotoIdx+1)%fotosReloj.length;
+      mostrarFoto(fotoIdx, false);
+    }, (parseInt(obtenerD('circulo_foto_seg','12'))||12)*1000);
+  }
+}
+function guardarFotoSeg(){
+  guardarD('circulo_foto_seg', document.getElementById('box-foto-seg').value);
+  mostrarToast('⏱️ Tiempo guardado');
+  if(document.getElementById('modo-reloj').classList.contains('activo')) iniciarSlideshowFotos();
+}
+function detenerSlideshowFotos(){
+  if(fotoTimer){ clearInterval(fotoTimer); fotoTimer=null; }
+}
 function guardarPantallaReloj(){
   guardarD('reloj_sin_carga', document.getElementById('box-reloj-sin-carga').value);
   mostrarToast('Configuración de pantalla guardada');
@@ -1428,6 +1539,8 @@ document.addEventListener("DOMContentLoaded", ()=>{
   actualizarVisibilidadFrecuencia();
   renderAdminCelebraciones();
   mostrarAnimoSiCorresponde();
+  const fs=document.getElementById('box-foto-seg');
+  if(fs) fs.value=obtenerD('circulo_foto_seg','12');
   if(datosFicha.nombre){ const e=document.getElementById('f-nombre'); if(e) e.value=datosFicha.nombre; }
   if(datosFicha.sangre){ const e=document.getElementById('f-sangre'); if(e) e.value=datosFicha.sangre; }
   if(datosFicha.patologia){ const e=document.getElementById('f-patologia'); if(e) e.value=datosFicha.patologia; }

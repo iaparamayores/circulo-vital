@@ -19,15 +19,15 @@
         #modo-reloj {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; z-index: 250; display: none;
-            flex-direction: column; align-items: center; justify-content: center;
+         flex-direction: column; align-items: center; justify-content: flex-start;
             color: #e5e7eb; text-align: center; gap: 0.5rem; padding: 1rem;
-        }
+            }
         #modo-reloj.activo { display: flex; }
-        #reloj-hora { font-size: 6rem; font-weight: 800; color: #fff; letter-spacing: 0.05em; line-height: 1; }
-        #reloj-fecha { font-size: 1.3rem; color: #9ca3af; }
+        #reloj-hora { font-size: 6rem; font-weight: 800; color: #fff; letter-spacing: 0.05em; line-height: 1; margin-top: 1.5rem; }
+        #reloj-fecha { font-size: 1.3rem; color: #9ca3af; margin-top: auto; }
         #reloj-saludo { font-size: 1.1rem; color: #6b7280; }
         #reloj-proximo { margin-top: 1.5rem; font-size: 1.15rem; color: #34d399; font-weight: 600; }
-        #reloj-salir { margin-top: 2.5rem; background: #1f2937; color: #9ca3af; border: none; padding: 0.9rem 2.5rem; border-radius: 2rem; font-size: 1rem; cursor: pointer; }
+        #reloj-salir { margin-top: auto; margin-bottom: 1.5rem; background: #1f2937; color: #9ca3af; border: none; padding: 0.9rem 2.5rem; border-radius: 2rem; font-size: 1rem; cursor: pointer; }
         .foto-capa { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; opacity: 0; transition: opacity 2.5s ease; z-index: 0; }
         #reloj-hora, #reloj-fecha, #reloj-saludo, #reloj-proximo, #reloj-salir { position: relative; z-index: 1; }
 

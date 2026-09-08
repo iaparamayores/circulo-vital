@@ -174,10 +174,11 @@
 
     <div id="pantalla-inicio" style="display: block; width: 100%;">
         <main>
-            <div class="med-warning-card" id="alerta-olvido">
-                <h3 style="color:var(--danger); font-size:1.05rem;">⚠️ Alerta de Salud Continua</h3>
-                <p style="font-size:0.9rem; color:#4b5563;">Dos o más medicamentos con más de 30 min de atraso. Se envió aviso automático por email al familiar.</p>
-                <a href="#" id="link-wa-olvido" class="btn-whatsapp" target="_blank" onclick="gestionarCierreAlertaAlEnviar()">Enviar Aviso por WhatsApp</a>
+        <div class="med-warning-card" id="alerta-olvido">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap;">
+                    <span style="color:var(--danger); font-size:0.85rem; font-weight:700; flex:1;">⚠️ 2+ tomas atrasadas (aviso enviado)</span>
+                    <a href="#" id="link-wa-olvido" class="btn-whatsapp" style="margin:0; padding:0.4rem 0.7rem; font-size:0.8rem;" target="_blank" onclick="gestionarCierreAlertaAlEnviar()">WhatsApp</a>
+                </div>
             </div>
 
             <div class="section-card" style="text-align:center; padding: 0.4rem;">
@@ -194,12 +195,12 @@
                 <button class="btn-submit" style="background:#059669; font-size:1.2rem; padding:1.25rem;" onclick="confirmarCheckin()">💚 Estoy bien</button>
             </div>
 
-            <div class="section-card" id="card-agua" style="display:none; background:#eff6ff; border:2px solid #93c5fd; text-align:center;">
-                <p id="agua-frase" style="font-size:1.05rem; color:#1e40af; font-weight:600;"></p>
-                <p style="font-size:0.85rem; color:#6b7280; margin-top:0.25rem;">Hoy llevás <span id="agua-count">0</span> vasos 💧</p>
-                <div style="display:flex; gap:0.5rem; justify-content:center; margin-top:0.75rem; flex-wrap:wrap;">
-                    <button class="btn-submit" style="width:auto; background:#2563eb;" onclick="tomarAgua()">Ya tomé 😊</button>
-                    <button class="btn-submit" style="width:auto; background:#6b7280;" onclick="ahoraNoAgua()">Ahora no</button>
+          <div id="card-agua" style="display:none; background:#eff6ff; border:1px solid #93c5fd; border-radius:0.75rem; padding:0.4rem 0.6rem;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap;">
+                    <span id="agua-frase" style="font-size:0.9rem; color:#1e40af; font-weight:600; flex:1;"></span>
+                    <span style="font-size:0.8rem; color:#6b7280;">💧 <span id="agua-count">0</span></span>
+                    <button class="btn-action" style="background:#2563eb; padding:6px 10px; font-size:0.85rem;" onclick="tomarAgua()">Ya tomé</button>
+                    <button class="btn-action" style="background:#6b7280; padding:6px 10px; font-size:0.85rem;" onclick="ahoraNoAgua()">Ahora no</button>
                 </div>
             </div>
 
@@ -407,13 +408,19 @@
     </div>
 
     <div id="pantalla-herramientas" class="overlay-screen">
-        <div style="display: grid; gap: 16px;">
+        <div class="solapas-container">
+            <button class="btn-solapa active" id="tab-notas" onclick="cambiarSolapaHerr('notas')">📝 Notas</button>
+            <button class="btn-solapa" id="tab-calc" onclick="cambiarSolapaHerr('calc')">🧮 Calculadora</button>
+        </div>
+        <div class="vista-solapa active" id="vista-notas">
             <div class="section-card">
                 <h2>📝 Bloc de Notas</h2>
-                <textarea id="bloc-notas" style="width:100%; height:170px; padding:0.75rem; border:1px solid #d1d5db; border-radius:0.5rem; font-size:1.05rem; line-height:1.5;" placeholder="Escribí con el teclado o tocá Dictar..."></textarea>
+                <textarea id="bloc-notas" style="width:100%; height:220px; padding:0.75rem; border:1px solid #d1d5db; border-radius:0.5rem; font-size:1.05rem; line-height:1.5;" placeholder="Escribí con el teclado o tocá Dictar..."></textarea>
                 <button class="btn-submit" style="background-color:#7c3aed; margin-top:0.5rem;" onclick="dictarAlBloc()">🎙️ Dictar nota</button>
                 <button class="btn-submit" style="background-color:#3b82f6; margin-top:0.5rem;" onclick="guardarNotaBloc()">💾 Guardar</button>
             </div>
+        </div>
+        <div class="vista-solapa" id="vista-calc">
             <div class="section-card">
                 <h2>🧮 Calculadora</h2>
                 <input type="text" id="calc-pantalla" readonly style="width:100%; height:56px; background:#f3f4f6; text-align:right; padding:10px; font-size:1.8rem; border-radius:8px; border:1px solid #d1d5db; margin-bottom:10px;">
@@ -474,14 +481,14 @@
         </form>
     </div>
 
-    <footer>
-        Sugerencias a: <a href="mailto:iaparamayoresapp@gmail.com">iaparamayoresapp@gmail.com</a>
-    </footer>
-
-    <div class="espacio-publicitario" onclick="clickSlider()">
+ <div class="espacio-publicitario" onclick="clickSlider()">
         <div class="slide-texto visible" id="slide-a"></div>
         <div class="slide-texto" id="slide-b"></div>
     </div>
+
+    <footer>
+        Sugerencias a: <a href="mailto:iaparamayoresapp@gmail.com">iaparamayoresapp@gmail.com</a>
+    </footer>
 
 <script>
 const storageOK = (() => { try { const t='__t__'; localStorage.setItem(t,t); localStorage.removeItem(t); return true; } catch(e){return false;} })();
@@ -1598,6 +1605,12 @@ function dictarAlBloc(){
   r.onresult=e=>{ const t=e.results[0][0].transcript; const ta=document.getElementById('bloc-notas'); ta.value=(ta.value? ta.value+' ':'')+t; mostrarToast("Dictado listo, tocá Guardar"); };
   r.onerror=()=>mostrarToast("No escuché nada");
   r.start();
+}
+function cambiarSolapaHerr(s){
+  ['tab-notas','tab-calc'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  ['vista-notas','vista-calc'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  if(s==='notas'){ document.getElementById('tab-notas').classList.add('active'); document.getElementById('vista-notas').classList.add('active'); }
+  else { document.getElementById('tab-calc').classList.add('active'); document.getElementById('vista-calc').classList.add('active'); }
 }
 function guardarNotaBloc(){ guardarD('circulo_nota_bloc', document.getElementById('bloc-notas').value); mostrarToast("Nota guardada"); }
 function presionarCalc(v){ const p=document.getElementById('calc-pantalla'); if(p) p.value+=v; }

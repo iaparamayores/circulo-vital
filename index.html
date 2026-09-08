@@ -95,7 +95,7 @@
         .btn-voice { background-color: #3b82f6; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 2rem; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 1rem; }
         .btn-voice.listening { background-color: var(--danger); }
 
-        footer { text-align: center; padding: 0.4rem 0.5rem; background-color: #111827; color: #9ca3af; font-size: 0.75rem; border-top: 2px solid var(--primary); line-height: 1.3; }
+        footer { text-align: center; padding: 0.2rem 0.5rem; background-color: #111827; color: #9ca3af; font-size: 0.7rem; border-top: 1px solid var(--primary); line-height: 1.2; }
         footer a { color: var(--primary); text-decoration: none; font-weight: 600; }
 
         .espacio-publicitario { width: 100%; height: 70px; flex-shrink: 0; position: relative; overflow: hidden; background: #111827; }
@@ -189,10 +189,11 @@
                 </div>
             </div>
 
-            <div class="section-card" id="card-checkin" style="display:none; background:#ecfdf5; border:2px solid #34d399; text-align:center;">
-                <h2 style="border-bottom:none; color:#065f46;">¿Cómo estuvo tu día?</h2>
-                <p style="color:#4b5563; font-size:0.9rem; margin-bottom:0.75rem;">Tocá el botón para avisar que estás bien</p>
-                <button class="btn-submit" style="background:#059669; font-size:1.2rem; padding:1.25rem;" onclick="confirmarCheckin()">💚 Estoy bien</button>
+   <div id="card-checkin" style="display:none; background:#ecfdf5; border:1px solid #34d399; border-radius:0.75rem; padding:0.4rem 0.6rem;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap;">
+                    <span style="color:#065f46; font-size:0.95rem; font-weight:700; flex:1;">💚 ¿Cómo estuvo tu día?</span>
+                    <button class="btn-action" style="background:#059669; padding:8px 14px; font-size:0.95rem;" onclick="confirmarCheckin()">Estoy bien</button>
+                </div>
             </div>
 
           <div id="card-agua" style="display:none; background:#eff6ff; border:1px solid #93c5fd; border-radius:0.75rem; padding:0.4rem 0.6rem;">

@@ -10,6 +10,7 @@
     <link rel="manifest" href="./manifest.json">
     <link rel="icon" type="image/png" href="./icon-192.png">
     <link rel="apple-touch-icon" href="./icon-512.png">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 
     <style>
         :root { --primary: #059669; --bg-light: #f0fdf4; --text-dark: #1f2937; --danger: #dc2626; --budget-color: #2563eb; }
@@ -1617,6 +1618,86 @@ function guardarNotaBloc(){ guardarD('circulo_nota_bloc', document.getElementByI
 function presionarCalc(v){ const p=document.getElementById('calc-pantalla'); if(p) p.value+=v; }
 function limpiarCalc(){ const p=document.getElementById('calc-pantalla'); if(p) p.value=''; }
 function calcularResultado(){ try{ const p=document.getElementById('calc-pantalla'); if(!p) return; const i=p.value; if(!i) return; if(!/^[\d+\-*/.()\s]+$/.test(i)){p.value='Error';return;} p.value=new Function('return '+i)(); }catch(e){ const p=document.getElementById('calc-pantalla'); if(p) p.value='Error'; } }
+// ===== NUBE CÍRCULO VITAL (vigilante silencioso) =====
+const SUPA_URL_CV='https://vqezdcdalprvjdtdrqzx.supabase.co';
+const SUPA_KEY_CV='sb_publishable_5RI8bz70kqj7H2TIX6H8uQ_LlZnQtKO';
+let supaCV=null, uidCV=null, nubeOK_CV=false, nubeModo_CV='off';
+const _lsSet_CV=localStorage.setItem.bind(localStorage);
+function nubeToastCV(msg){ let t=document.getElementById('nube-toast-cv'); if(!t){ t=document.createElement('div'); t.id='nube-toast-cv'; document.body.appendChild(t);} t.textContent=msg; t.classList.add('ver'); setTimeout(()=>t.classList.remove('ver'),3500); }
+(function(){ const st=document.createElement('style'); st.textContent='#nube-cv{text-align:center;font-size:.8rem;color:#6b7280;min-height:1.1rem;margin:.2rem 0;} #nube-cv.tocable{cursor:pointer;text-decoration:underline;} #nube-form-cv{display:none;text-align:center;margin:.4rem 0;} #nube-toast-cv{position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:.6rem 1.2rem;border-radius:2rem;font-size:.9rem;font-weight:600;opacity:0;transition:opacity .4s;z-index:999;pointer-events:none;} #nube-toast-cv.ver{opacity:1;}'; document.head.appendChild(st); })();
+const nubeElCV=document.createElement('p'); nubeElCV.id='nube-cv';
+const nubeFormCV=document.createElement('div'); nubeFormCV.id='nube-form-cv';
+nubeFormCV.innerHTML='<input id="nube-mail-cv" type="email" placeholder="Tu email" style="font-size:1.05rem;padding:.6rem;border-radius:.7rem;border:2px solid #ddd6fe;width:60%;margin-bottom:.3rem;"><br><input id="nube-pass-cv" type="password" placeholder="Contraseña de la nube" style="font-size:1.05rem;padding:.6rem;border-radius:.7rem;border:2px solid #ddd6fe;width:60%;"><br><button id="nube-ok-cv" style="margin-top:.4rem;padding:.6rem .9rem;border:none;border-radius:.7rem;background:#7c3aed;color:#fff;font-weight:700;font-size:1rem;">Entrar</button> <button id="nube-new-cv" style="margin-top:.4rem;padding:.6rem .9rem;border:none;border-radius:.7rem;background:#27ae60;color:#fff;font-weight:700;font-size:1rem;">Crear cuenta</button>';
+const anclaCV=document.querySelector('main');
+if(anclaCV&&anclaCV.parentNode){ anclaCV.parentNode.insertBefore(nubeElCV, anclaCV); anclaCV.parentNode.insertBefore(nubeFormCV, anclaCV); }
+function nubeEstadoCV(txt,tocable){ nubeElCV.textContent=txt; if(tocable){nubeElCV.classList.add('tocable');}else{nubeElCV.classList.remove('tocable');} }
+try{ if(window.supabase&&window.supabase.createClient){ supaCV=window.supabase.createClient(SUPA_URL_CV,SUPA_KEY_CV,{auth:{persistSession:true,autoRefreshToken:true,flowType:'implicit',detectSessionInUrl:true}}); } }catch(e){}
+async function nubeRescatarTokenCV(){
+  if(!supaCV) return;
+  try{
+    const h=window.location.hash||'';
+    if(h.includes('access_token=')){
+      const p=new URLSearchParams(h.substring(1));
+      const at=p.get('access_token'); const rt=p.get('refresh_token');
+      if(at){ await supaCV.auth.setSession({ access_token: at, refresh_token: rt||at }); }
+    }
+    const q=new URLSearchParams(window.location.search);
+    const code=q.get('code');
+    if(code){ await supaCV.auth.exchangeCodeForSession(code); }
+    if(h.includes('access_token=')||code){ history.replaceState(null,'',window.location.pathname); }
+  }catch(e){ console.log('[nube cv] rescate', e); }
+}
+async function nubeConectarCV(){
+  if(!supaCV){ nubeEstadoCV('⚠️ Sin nube: el vigilante no existe'); return; }
+  try{
+    const { data: ses } = await supaCV.auth.getSession();
+    if(ses&&ses.session){ uidCV=ses.session.user.id; nubeOK_CV=true; nubeModo_CV='ok'; nubeEstadoCV('☁️ Conectado con tu familia — vigilante activo'); }
+    else { uidCV=null; nubeOK_CV=false; nubeModo_CV='off'; nubeEstadoCV('☁️ Nube apagada — tocá acá para activarla', true); }
+  }catch(e){ nubeOK_CV=false; nubeEstadoCV('⚠️ Sin nube: el vigilante no existe'); }
+}
+nubeElCV.addEventListener('click', ()=>{
+  if(nubeOK_CV){ nubeToastCV('☁️ La nube ya está conectada'); return; }
+  if(!supaCV){ nubeToastCV('Nube no disponible en este navegador'); return; }
+  nubeFormCV.style.display=(nubeFormCV.style.display==='none')?'block':'none';
+});
+document.getElementById('nube-ok-cv').addEventListener('click', async ()=>{
+  const mail=(document.getElementById('nube-mail-cv').value||'').trim();
+  const pass=(document.getElementById('nube-pass-cv').value||'');
+  if(!mail||!mail.includes('@')){ nubeToastCV('Escribí un email válido'); return; }
+  if(!pass){ nubeToastCV('Escribí tu contraseña'); return; }
+  try{
+    const { error } = await supaCV.auth.signInWithPassword({ email: mail, password: pass });
+    if(error) throw error;
+    nubeToastCV('☁️ Conectado a la nube');
+    nubeFormCV.style.display='none';
+    await nubeConectarCV();
+  }catch(e){ nubeToastCV('⚠️ '+(e&&e.message?e.message:'No se pudo entrar')); }
+});
+document.getElementById('nube-new-cv').addEventListener('click', async ()=>{
+  const mail=(document.getElementById('nube-mail-cv').value||'').trim();
+  const pass=(document.getElementById('nube-pass-cv').value||'');
+  if(!mail||!mail.includes('@')){ nubeToastCV('Escribí un email válido'); return; }
+  if(pass.length<6){ nubeToastCV('La contraseña necesita 6 caracteres o más'); return; }
+  try{
+    const { data, error } = await supaCV.auth.signUp({ email: mail, password: pass });
+    if(error) throw error;
+    if(data && data.session){
+      uidCV=data.session.user.id; nubeOK_CV=true;
+      nubeToastCV('☁️ Cuenta creada y conectada');
+      nubeFormCV.style.display='none';
+      await nubeConectarCV();
+    } else {
+      nubeToastCV('Cuenta creada: ahora tocá Entrar');
+    }
+  }catch(e){
+    const m=(e&&e.message)||'';
+    if(/already registered/i.test(m)){ nubeToastCV('Ese mail ya tiene cuenta: tocá Entrar'); }
+    else { nubeToastCV('⚠️ '+(m||'No se pudo crear')); }
+  }
+});
+if(supaCV){ supaCV.auth.onAuthStateChange((ev,ses)=>{ if(ses&&ses.user){ uidCV=ses.user.id; nubeOK_CV=true; nubeConectarCV(); } }); }
+window.addEventListener('online', ()=>{ nubeConectarCV(); });
+nubeRescatarTokenCV().then(()=>{ nubeConectarCV(); setTimeout(()=>nubeConectarCV(),2500); setTimeout(()=>nubeConectarCV(),7000); });
 </script>
 </body>
 </html>

@@ -159,7 +159,8 @@
         <p id="alarma-detalle" style="font-size: 1.3rem; opacity: 0.9;"></p>
         <div class="alarma-botones">
             <button class="btn-alarma-tomar" onclick="alarmaConfirmar()">✅ Ya lo tomé / Listo</button>
-            <button class="btn-alarma-posponer" onclick="alarmaPosponer()">⏰ Posponer 5 min</button>
+           <button class="btn-alarma-posponer" onclick="alarmaPosponer()">⏰ Posponer 5 min</button>
+            <button class="btn-alarma-posponer" style="border-color:rgba(255,255,255,0.7);" onclick="alarmaNoTome()">🚫 No lo tomé ahora</button>
         </div>
     </div>
 
@@ -519,7 +520,7 @@ let modalCB=null;
 function mostrarConfirmacion(msg,cb){ document.getElementById('modal-mensaje').textContent=msg; document.getElementById('modal-confirmacion').classList.add('show'); modalCB=cb; }
 function cerrarModal(ok){ document.getElementById('modal-confirmacion').classList.remove('show'); if(modalCB){modalCB(ok); modalCB=null;} }
 
-let registroTomas = {};
+let registroTomas = {}; let noTomas = {};
 let listaActividades = [];
 let datosFicha = {};
 let configSonidos = {salud:'zen', tareas:'aves'};
@@ -537,6 +538,7 @@ let checkinHora = obtenerD('circulo_checkin_hora','20:00');
 
 try {
   registroTomas = JSON.parse(obtenerD('circulo_tomas','{}')) || {};
+  noTomas = JSON.parse(obtenerD('circulo_notomas','{}')) || {};
   listaActividades = JSON.parse(obtenerD('circulo_actividades','[]')) || [];
   datosFicha = JSON.parse(obtenerD('circulo_ficha','{}')) || {};
   configSonidos = JSON.parse(obtenerD('circulo_sonidos','{"salud":"zen","tareas":"aves"}')) || {salud:'zen', tareas:'aves'};
@@ -1109,6 +1111,7 @@ function alarmaConfirmar(){
     registroTomas[`${hoy}_${alarmaItem.id}`]=true;
     guardarD('circulo_tomas', JSON.stringify(registroTomas));
     descontarStock(alarmaItem.id, alarmaItem.nombre);
+    nubeSubirToma(alarmaItem.id, alarmaItem.nombre, true);
   }
   detenerBucle(); cerrarPantallaAlarma();
   mostrarToast('¡Registrado!'); renderizar();
@@ -1343,7 +1346,30 @@ function marcarToma(id,nombre){
   registroTomas[`${h}_${id}`]=true;
   guardarD('circulo_tomas',JSON.stringify(registroTomas));
   descontarStock(id, nombre);
+  nubeSubirToma(id, nombre, true);
   mostrarToast(`Registrado: ${nombre}`); decir(`${nombre} completado`); renderizar();
+}
+
+// ===== NUBE: sube cada marcación (SÍ o NO) al vigilante =====
+async function nubeSubirToma(tomaId, nombre, tomo){
+  if(!nubeOK_CV || !uidCV || !supaCV) return;
+  try{
+    await supaCV.from('tomas_circulo').insert({ user_id: uidCV, toma_id: String(tomaId), nombre: nombre||'', tomo: tomo });
+  }catch(e){ console.log('[nube cv] subir toma falló', e); }
+}
+
+function marcarNoToma(id, nombre){
+  const h=hoyStr();
+  noTomas[`${h}_${id}`]=true;
+  guardarD('circulo_notomas', JSON.stringify(noTomas));
+  nubeSubirToma(id, nombre, false);
+  mostrarToast(`Anotado: hoy no tomaste ${nombre}`);
+  renderizar();
+}
+
+function alarmaNoTome(){
+  if(alarmaItem && alarmaItem.tipo==='med'){ marcarNoToma(alarmaItem.id, alarmaItem.nombre); }
+  detenerBucle(); cerrarPantallaAlarma();
 }
 
 function gestionarCierreAlertaAlEnviar(){ alertaForzadaOcultaHoy=true; document.getElementById('alerta-olvido').style.display='none'; mostrarToast("Enviado"); }
@@ -1465,7 +1491,7 @@ function renderizar(){
     if(!registroTomas[`${hoy}_${m.id}`]){
       const st=stockMeds[String(m.id)];
       const stTxt = st!==undefined ? `<br><small style="color:${st<=5?'#dc2626':'#6b7280'};">Quedan ${st}</small>` : '';
-      hS+=`<div class="med-card"><div><strong>💊 ${escapeHTML(m.nombre)}</strong><br><small style="color:#6b7280;">${m.hora}</small>${stTxt}</div><button class="btn-action" onclick="marcarToma(${m.id},'${escapeHTML(m.nombre)}')">Ya lo tomé</button></div>`;
+     hS+=`<div class="med-card"><div><strong>💊 ${escapeHTML(m.nombre)}</strong><br><small style="color:#6b7280;">${m.hora}</small>${stTxt}</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;"><button class="btn-action" onclick="marcarToma(${m.id},'${escapeHTML(m.nombre)}')">Ya lo tomé</button><button class="btn-action" style="background:#6b7280;" onclick="marcarNoToma(${m.id},'${escapeHTML(m.nombre)}')">No lo tomé</button></div></div>`;
     }
   });
   listaActividades.forEach(a=>{
@@ -1473,7 +1499,7 @@ function renderizar(){
       if(!registroTomas[`${hoy}_${a.id}`]){
         const st=stockMeds['a'+a.id];
         const stTxt = st!==undefined ? `<br><small style="color:${st<=5?'#dc2626':'#6b7280'};">Quedan ${st}</small>` : '';
-        hS+=`<div class="med-card"><div><strong>💊 ${escapeHTML(a.nombre)}</strong><br><small style="color:#6b7280;">${escapeHTML(a.hora)}</small>${stTxt}</div><button class="btn-action" onclick="marcarToma(${a.id},'${escapeHTML(a.nombre)}')">Ya lo tomé</button></div>`;
+ hS+=`<div class="med-card"><div><strong>💊 ${escapeHTML(a.nombre)}</strong><br><small style="color:#6b7280;">${escapeHTML(a.hora)}</small>${stTxt}</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;"><button class="btn-action" onclick="marcarToma(${a.id},'${escapeHTML(a.nombre)}')">Ya lo tomé</button><button class="btn-action" style="background:#6b7280;" onclick="marcarNoToma(${a.id},'${escapeHTML(a.nombre)}')">No lo tomé</button></div></div>`;
       }
     }
   });

@@ -15,7 +15,7 @@
     <style>
         :root { --primary: #059669; --bg-light: #f0fdf4; --text-dark: #1f2937; --danger: #dc2626; --budget-color: #2563eb; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-        body { background-color: var(--bg-light); color: var(--text-dark); display: flex; flex-direction: column; min-height: 100vh; }
+        body { background-color: var(--bg-light); color: var(--text-dark); display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
 
         #modo-reloj {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -54,7 +54,8 @@
         .btn-install { background: var(--primary); color: white; font-weight: bold; display: none; }
 
         main { flex: 1; padding: 0.75rem; max-width: 600px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 0.75rem; }
-        #pantalla-inicio { flex: 1; }
+      #pantalla-inicio { flex: 1; overflow-y: auto; min-height: 0; }
+#nube-cv, #nube-form-cv { flex-shrink: 0; }v
         .solapas-container { display: flex; gap: 0.35rem; margin-bottom: 0.5rem; }
         .btn-solapa { flex: 1; background: #e5e7eb; color: #4b5563; border: none; padding: 0.7rem 0.5rem; border-radius: 0.75rem; font-weight: bold; font-size: 0.95rem; cursor: pointer; }
         .btn-solapa.active { background: var(--primary); color: white; }
@@ -96,7 +97,7 @@
         .btn-voice { background-color: #3b82f6; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 2rem; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 1rem; }
         .btn-voice.listening { background-color: var(--danger); }
 
-        footer { text-align: center; padding: 0.2rem 0.5rem; background-color: #111827; color: #9ca3af; font-size: 0.7rem; border-top: 1px solid var(--primary); line-height: 1.2; }
+        footer { text-align: center; padding: 0.2rem 0.5rem; background-color: #111827; color: #9ca3af; font-size: 0.7rem; border-top: 1px solid var(--primary); line-height: 1.2; flex-shrink: 0; }
         footer a { color: var(--primary); text-decoration: none; font-weight: 600; }
 
         .espacio-publicitario { width: 100%; height: 70px; flex-shrink: 0; position: relative; overflow: hidden; background: #111827; }
@@ -1653,8 +1654,8 @@ function nubeToastCV(msg){ let t=document.getElementById('nube-toast-cv'); if(!t
 (function(){ const st=document.createElement('style'); st.textContent='#nube-cv{text-align:center;font-size:.8rem;color:#6b7280;min-height:1.1rem;margin:.2rem 0;} #nube-cv.tocable{cursor:pointer;text-decoration:underline;} #nube-form-cv{display:none;text-align:center;margin:.4rem 0;} #nube-toast-cv{position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:.6rem 1.2rem;border-radius:2rem;font-size:.9rem;font-weight:600;opacity:0;transition:opacity .4s;z-index:999;pointer-events:none;} #nube-toast-cv.ver{opacity:1;}'; document.head.appendChild(st); })();
 const nubeElCV=document.createElement('p'); nubeElCV.id='nube-cv';
 const nubeFormCV=document.createElement('div'); nubeFormCV.id='nube-form-cv';
-nubeFormCV.innerHTML='<input id="nube-mail-cv" type="email" placeholder="Tu email" style="font-size:1.05rem;padding:.6rem;border-radius:.7rem;border:2px solid #ddd6fe;width:60%;margin-bottom:.3rem;"><br><input id="nube-pass-cv" type="password" placeholder="Contraseña de la nube" style="font-size:1.05rem;padding:.6rem;border-radius:.7rem;border:2px solid #ddd6fe;width:60%;"><br><button id="nube-ok-cv" style="margin-top:.4rem;padding:.6rem .9rem;border:none;border-radius:.7rem;background:#7c3aed;color:#fff;font-weight:700;font-size:1rem;">Entrar</button> <button id="nube-new-cv" style="margin-top:.4rem;padding:.6rem .9rem;border:none;border-radius:.7rem;background:#27ae60;color:#fff;font-weight:700;font-size:1rem;">Crear cuenta</button>';
-const anclaCV=document.querySelector('main');
+nubeFormCV.innerHTML='<input id="nube-mail-cv" type="email" placeholder="Tu email" style="font-size:1.05rem;padding:.6rem;border-radius:.7rem;border:2px solid #ddd6fe;width:60%;margin-bottom:.3rem;"><br><input id="nube-pass-cv" type="password" placeholder="Contraseña de la nube" style="font-size:1.05rem;padding:.6rem;border-radius:.7rem;border:2px solid #ddd6fe;width:60%;"><br><button id="nube-ok-cv" style="margin-top:.4rem;padding:.6rem .9rem;border:none;border-radius:.7rem;background:#7c3aed;color:#fff;font-weight:700;font-size:1rem;">Entrar</button> <button id="nube-new-cv" style="margin-top:.4rem;padding:.6rem .9rem;border:none;border-radius:.7rem;background:#27ae60;color:#fff;font-weight:700;font-size:1rem;">Crear cuenta</button>
+const anclaCV=document.getElementById('pantalla-inicio');
 if(anclaCV&&anclaCV.parentNode){ anclaCV.parentNode.insertBefore(nubeElCV, anclaCV); anclaCV.parentNode.insertBefore(nubeFormCV, anclaCV); }
 function nubeEstadoCV(txt,tocable){ nubeElCV.textContent=txt; if(tocable){nubeElCV.classList.add('tocable');}else{nubeElCV.classList.remove('tocable');} }
 try{ if(window.supabase&&window.supabase.createClient){ supaCV=window.supabase.createClient(SUPA_URL_CV,SUPA_KEY_CV,{auth:{persistSession:true,autoRefreshToken:true,flowType:'implicit',detectSessionInUrl:true}}); } }catch(e){}

@@ -1467,24 +1467,24 @@ function confirmarCheckin(){
   decir('Gracias por avisar que estás bien');
 }
 function controlarFestejos(){
-  if(obtenerD('circulo_avisos_cumple','1')!=='1'){ const c0=document.getElementById('card-festejo'); if(c0) c0.style.display='none'; return; }
-  const card=document.getElementById('card-festejo');
+  if(obtenerD('circulo_avisos_cumple','1')!=='1'){ var c0=document.getElementById('card-festejo'); if(c0) c0.style.display='none'; return; }
+  var card=document.getElementById('card-festejo');
   if(!card) return;
-  const lista=listaCelebraciones().filter(c=>c.diff<=2);
+  var lista=listaCelebraciones().filter(function(c){ return c.diff<=2; });
   if(!lista.length){ card.style.display='none'; return; }
-  const c=lista[0];
-  const cuando=c.diff===0?'HOY':(c.diff===1?'MAÑANA':`en ${c.diff} días`);
-  const frase=`🎉 Acordate: el cumpleaños de ${c.nombre} es ${cuando}.`;
-  const ef=document.getElementById('festejo-frase'); if(ef) ef.textContent=frase;
-  const wa=document.getElementById('festejo-wa');
-  if(wa){ if(c.tel){ wa.style.display='inline-block'; wa.href=`https://wa.me/${c.tel}?text=${encodeURIComponent('¡Feliz cumpleaños! Te mando un abrazo enorme 🎉')}`; } else { wa.style.display='none'; } }
+  var c=lista[0];
+  var cuando=c.diff===0?'HOY':(c.diff===1?'MAÑANA':('en '+c.diff+' días'));
+  var frase='🎉 Acordate: el cumpleaños de '+c.nombre+' es '+cuando+'.';
+  var ef=document.getElementById('festejo-frase'); if(ef) ef.textContent=frase;
+  var wa=document.getElementById('festejo-wa');
+  if(wa){ if(c.tel){ wa.style.display='inline-block'; wa.href='https://wa.me/'+c.tel+'?text='+encodeURIComponent('¡Feliz cumpleaños! Te mando un abrazo enorme 🎉'); } else { wa.style.display='none'; } }
   card.style.display='block';
-  const hoy=hoyStr();
-  const clave=`circulo_festejo_aviso_${hoy}_${c.id||c.nombre}`;
+  var hoy=hoyStr();
+  var clave='circulo_festejo_aviso_'+hoy+'_'+(c.id||c.nombre);
   if(obtenerD(clave,'')!=='1'){
     guardarD(clave,'1');
     mostrarToast(frase);
-    decir(`Acordate: ${cuando} es el cumpleaños de ${c.nombre}`);
+    decir('Acordate: '+cuando+' es el cumpleaños de '+c.nombre);
   }
 }
 function controlarCheckin(){
@@ -1563,6 +1563,7 @@ function renderizar(){
   controlarOlvidosConsecutivos();
   controlarCheckin();
   controlarFestejos();
+  }
 
 // ============================================
 // SOS

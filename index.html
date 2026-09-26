@@ -1254,35 +1254,50 @@ function esPalabraDeMedicamento(f){
   return f.includes("pastilla")||f.includes("remedio")||f.includes("presión")||f.includes("médico")||f.includes("medicamento")||f.includes("medicación")||f.includes("dosis")||f.includes("tomar")||f.includes("vitamina")||f.includes("enalapril")||f.includes("ibuprofeno")||f.includes("aspirina")||f.includes("insulina");
 }
 
+function esPalabraDeRecordatorio(f){
+  var magicas=['recordatorio de','acordate de','acordarme de','no me olvide de','no olvidar','no olvidarme de','tener presente'];
+  for(var i=0;i<magicas.length;i++){ if(f.includes(magicas[i])) return true; }
+  var claves=['renovar','renuevo','renovacion','renovación','orden','receta','recetario','turno','turnos','cita','citas','analisis','análisis','laboratorio','estudio','estudios','control','controles','chequeo','vacunar','vacuna','vacunacion','vacunación','pami','obra social','prepaga','anses','jubilacion','jubilación','jubilado','medico','médico','medica','médica','doctor','doctora','cardiologo','cardiólogo','traumatologo','traumatólogo','dermatologo','dermatólogo','dentista','odontologo','odontólogo','oftalmologo','oftalmólogo','anteojos','lentes','audifono','audífono','peluqueria','peluquería','manicura','pedicura','vencimiento','vence','vencido','dni','documento','carnet','carné','patente','registro','licencia','tramite','trámite','tramites','trámites','tramitar','impuesto','impuestos','afip','arba','municipalidad','factura','boleta','banco','bancario','seguro','seguros','pagar','pago','luz','gas','agua','telefono','teléfono','internet','cable','alquiler','expensas','farmacia','remedios','pastillas','comprar','compra','mercado','almacen','almacén','ferreteria','ferretería','reunion','reunión','junta','encuentro','viaje','pasaje','micro','avion','avión','aniversario','boda','casamiento'];
+  for(var j=0;j<claves.length;j++){ if(f.includes(claves[j])) return true; }
+  return false;
+}
 function procesarDictadoIntegral(f){
-  if(f.includes("gasté")||f.includes("gaste")||f.includes("pesos")||f.includes("plata")){
-    const n=f.match(/\d+/g); const m=n?parseFloat(n[0]):0;
-    let c=f.replace(/gasté|gaste|pesos|plata|en/g,"").replace(/\d+/g,"").trim();
-    if(c.length<2) c="Gasto dictado";
-    if(m>0){ listaGastos.push({id:generarId(), nombre:c.charAt(0).toUpperCase()+c.slice(1), monto:m}); guardarD('bolsillo_gastos',JSON.stringify(listaGastos)); renderizar(); cambiarSolapa('bolsillo'); mostrarToast(`$${m} registrado`); }
-    else mostrarToast("No entendí el monto");
+  if(f.includes('gasté')||f.includes('gaste')||f.includes('pesos')||f.includes('plata')){
+    var n0=f.match(/\d+/g); var m0=n0?parseFloat(n0[0]):0;
+    var c0=f.replace(/gasté|gaste|pesos|plata|en/g,'').replace(/\d+/g,'').trim();
+    if(c0.length<2) c0='Gasto dictado';
+    if(m0>0){ listaGastos.push({id:generarId(), nombre:c0.charAt(0).toUpperCase()+c0.slice(1), monto:m0}); guardarD('bolsillo_gastos',JSON.stringify(listaGastos)); renderizar(); cambiarSolapa('bolsillo'); mostrarToast('$'+m0+' registrado'); }
+    else mostrarToast('No entendí el monto');
     return;
   }
-  const fecha=parsearFechaDeFrase(f);
-  const horaP=parsearHoraDeFrase(f);
-  let h=horaP;
-  if(!h){ const p=new Date(Date.now()+15*60000); h=`${String(p.getHours()).padStart(2,'0')}:${String(p.getMinutes()).padStart(2,'0')}`; }
-  let n=f
-    .replace(/\d{1,2}\s+de\s+[a-záéíóúñ]+/g,"")
-    .replace(/a\s+las\s+\d{1,2}/g,"")
-    .replace(/\d{1,2}:\d{2}/g,"")
-    .replace(/\d{1,2}\s*(hs|horas)/g,"")
-    .replace(/agendar|agregar|mañana|de la noche|de la tarde|para el|para|tomar/g,"")
+  var fecha=parsearFechaDeFrase(f);
+  var horaP=parsearHoraDeFrase(f);
+  var h=horaP;
+  if(!h){ var p=new Date(Date.now()+15*60000); h=('0'+p.getHours()).slice(-2)+':'+('0'+p.getMinutes()).slice(-2); }
+  var n=f
+    .replace(/\d{1,2}\s+de\s+[a-záéíóúñ]+/g,'')
+    .replace(/a\s+las\s+\d{1,2}/g,'')
+    .replace(/\d{1,2}:\d{2}/g,'')
+    .replace(/\d{1,2}\s*(hs|horas)/g,'')
+    .replace(/agendar|agregar|mañana|de la noche|de la tarde|para el|para|tomar/g,'')
+    .replace(/recordatorio de |acordate de |acordarme de |no me olvide de |no olvidar |no olvidarme de |tener presente /g,'')
     .trim();
-  if(n.length<2) n="Actividad";
-  let tipo = esPalabraDeMedicamento(f) ? 'med' : 'tarea';
-  const act={id:generarId(), nombre:n.charAt(0).toUpperCase()+n.slice(1), hora:h, tipo};
-  if(tipo==='med' && fecha) act.fecha=fecha;
+  if(n.length<2) n='Recordatorio';
+  var esToma=f.includes('tomar')||f.includes('tomé')||f.includes('tome');
+  var tipo;
+  if(esToma&&esPalabraDeMedicamento(f)) tipo='med';
+  else if(esPalabraDeRecordatorio(f)) tipo='rec';
+  else if(esPalabraDeMedicamento(f)) tipo='med';
+  else tipo='tarea';
+  var act={id:generarId(), nombre:n.charAt(0).toUpperCase()+n.slice(1), hora:h, tipo:tipo};
+  if(tipo==='med'&&fecha) act.fecha=fecha;
   if(tipo==='tarea') act.fecha=fecha||hoyStr();
+  if(tipo==='rec') act.fecha=fecha||hoyStr();
   listaActividades.push(act);
   guardarD('circulo_actividades',JSON.stringify(listaActividades));
   renderizar(); cambiarSolapa(tipo==='med'?'salud':'tareas');
-  mostrarToast((tipo==='med'?'💊 ':'🗓️ ')+(fecha?`${formatearFecha(fecha)} ${h}`:`hoy ${h}`));
+  var icono=tipo==='med'?'💊 ':(tipo==='rec'?'📌 ':'🗓️ ');
+  mostrarToast(icono+(fecha?formatearFecha(fecha)+' '+h:'hoy '+h));
 }
 
 // ============================================
@@ -1538,11 +1553,16 @@ function renderizar(){
       hSF+=`<div class="med-card"><div><strong>💊 ${escapeHTML(a.nombre)}</strong><br><small style="color:#6b7280;">📅 ${formatearFecha(a.fecha)} — ${escapeHTML(a.hora)} · Temporal</small></div></div>`;
     });
   listaActividades
-    .filter(a=>a.tipo==='tarea' && fechaDe(a)>=hoy)
-    .sort((x,y)=>(fechaDe(x)+x.hora).localeCompare(fechaDe(y)+y.hora))
-    .forEach(a=>{
-      const fTxt=(a.fecha && a.fecha!==hoy)?`📅 ${formatearFecha(a.fecha)} — `:'';
-      hT+=`<div class="agenda-card"><div><strong>🗓️ ${escapeHTML(a.nombre)}</strong><br><small style="color:#6b7280;">${fTxt}${escapeHTML(a.hora)}</small></div><button class="btn-delete" onclick="borrarActividad(${a.id})">✕</button></div>`;
+    .filter(function(a){ return (a.tipo==='tarea'||a.tipo==='rec') && fechaDe(a)>=hoy; })
+    .sort(function(x,y){ return (fechaDe(x)+x.hora).localeCompare(fechaDe(y)+y.hora); })
+    .forEach(function(a){
+      var esRec=a.tipo==='rec';
+      var borde=esRec?'#f97316':'#4dabf7';
+      var iconoT=esRec?'📌':'️';
+      var detalle;
+      if(esRec){ detalle=(a.fecha===hoy)?'📌 HOY':('📅 '+formatearFecha(a.fecha)); }
+      else { detalle=((a.fecha&&a.fecha!==hoy)?('📅 '+formatearFecha(a.fecha)+' — '):'')+escapeHTML(a.hora); }
+      hT+='<div class="agenda-card" style="border-left-color:'+borde+';"><div><strong>'+iconoT+' '+escapeHTML(a.nombre)+'</strong><br><small style="color:#6b7280;">'+detalle+'</small></div><button class="btn-delete" onclick="borrarActividad('+a.id+')">✕</button></div>';
     });
   listaGastos.forEach(g=>hG+=`<div class="expense-card"><div><strong>🛍️ ${escapeHTML(g.nombre)}</strong><br><small style="color:#dc2626; font-weight:bold;">-$${g.monto}</small></div><button class="btn-delete" onclick="borrarGasto(${g.id})">✕</button></div>`);
   cS.innerHTML=hS; cT.innerHTML=hT; cG.innerHTML=hG;

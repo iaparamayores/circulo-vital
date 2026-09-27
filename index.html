@@ -46,16 +46,17 @@
         .btn-alarma-tomar { background: white; color: #059669; border: none; padding: 1.25rem; border-radius: 1rem; font-size: 1.2rem; font-weight: bold; cursor: pointer; }
         .btn-alarma-posponer { background: rgba(255,255,255,0.15); color: white; border: 2px solid rgba(255,255,255,0.4); padding: 1rem; border-radius: 1rem; font-size: 1rem; cursor: pointer; }
 
-        header { background-color: #111827; color: white; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+        header { background-color: #111827; color: white; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; flex-shrink: 0; }
         header h1 { font-size: 1.2rem; font-weight: 600; }
         .nav-buttons { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
         .btn-nav { background: #374151; color: white; border: none; padding: 0.55rem 0.7rem; border-radius: 0.5rem; cursor: pointer; font-size: 1.25rem !important; line-height: 1; }
         .section-card .btn-nav { font-size: 1.5rem !important; }
         .btn-install { background: var(--primary); color: white; font-weight: bold; display: none; }
 
-        main { flex: 1; padding: 0.75rem; max-width: 600px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 0.75rem; }
-      #pantalla-inicio { flex: 1; overflow-y: auto; min-height: 0; }
-#nube-cv, #nube-form-cv { flex-shrink: 0; }
+        main { flex: 1; padding: 0.75rem; max-width: 600px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 0.75rem; overflow-y: auto; min-height: 0; }
+        #pantalla-inicio { flex: 1; overflow-y: auto; min-height: 0; }
+        #nube-cv, #nube-form-cv { flex-shrink: 0; }
+
         .solapas-container { display: flex; gap: 0.35rem; margin-bottom: 0.5rem; }
         .btn-solapa { flex: 1; background: #e5e7eb; color: #4b5563; border: none; padding: 0.7rem 0.5rem; border-radius: 0.75rem; font-weight: bold; font-size: 0.95rem; cursor: pointer; }
         .btn-solapa.active { background: var(--primary); color: white; }
@@ -87,8 +88,8 @@
         .overlay-screen { position: fixed; top: 60px; left: 0; width: 100%; height: calc(100% - 60px); background-color: white; z-index: 100; display: none; flex-direction: column; padding: 1rem; overflow-y: auto; }
         .overlay-screen.activa { display: flex; }
 
-        .agenda-card { background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid #4dabf7; display: flex; justify-content: space-between; align-items: center; }
-        .med-card { background: #fff; padding: 10px 12px; border-radius: 12px; margin-bottom: 8px; border-left: 5px solid #0ca678; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .agenda-card { background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid #4dabf7; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
+        .med-card { background: #fff; padding: 10px 12px; border-radius: 12px; margin-bottom: 8px; border-left: 5px solid #0ca678; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); flex-wrap: wrap; gap: 6px; }
         .expense-card { background: #fff; padding: 12px; border-radius: 10px; margin-bottom: 8px; border-left: 5px solid #f59e0b; display: flex; justify-content: space-between; align-items: center; }
         .btn-action { background: #0ca678; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; text-decoration: none; }
         .btn-delete { background: #fee2e2; color: #dc2626; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; }
@@ -160,7 +161,7 @@
         <p id="alarma-detalle" style="font-size: 1.3rem; opacity: 0.9;"></p>
         <div class="alarma-botones">
             <button class="btn-alarma-tomar" onclick="alarmaConfirmar()">✅ Ya lo tomé / Listo</button>
-           <button class="btn-alarma-posponer" onclick="alarmaPosponer()">⏰ Posponer 5 min</button>
+            <button class="btn-alarma-posponer" onclick="alarmaPosponer()">⏰ Posponer 5 min</button>
             <button class="btn-alarma-posponer" style="border-color:rgba(255,255,255,0.7);" onclick="alarmaNoTome()">🚫 No lo tomé ahora</button>
         </div>
     </div>
@@ -207,13 +208,14 @@
                     <button class="btn-action" style="background:#6b7280; padding:6px 10px; font-size:0.85rem;" onclick="ahoraNoAgua()">Ahora no</button>
                 </div>
             </div>
-            
-<div id="card-festejo" style="display:none; background:#fff7ed; border:1px solid #fdba74; border-radius:0.75rem; padding:0.4rem 0.6rem;">
+
+<div id="card-festejo" style="display:none; background:#fff7ed; border:2px solid #f97316; border-radius:0.75rem; padding:0.5rem 0.7rem;">
               <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap;">
-                <span id="festejo-frase" style="color:#9a3412; font-size:0.95rem; font-weight:700; flex:1;"></span>
+                <span id="festejo-frase" style="color:#c2410c; font-size:1rem; font-weight:700; flex:1;"></span>
                 <a id="festejo-wa" class="btn-action" style="background:#25d366; text-decoration:none; padding:8px 14px; font-size:0.95rem;" target="_blank">💬 Saludar</a>
               </div>
             </div>
+
             <div class="voice-btn-container">
                 <button class="btn-voice" id="btn-hablar" onclick="activarMicrofono()">🎙️ Hablar con la App</button>
             </div>
@@ -267,29 +269,50 @@
     <div id="pantalla-ajustes" class="overlay-screen">
         <h2 style="margin-bottom: 1.5rem;">Configuración</h2>
         <button class="btn-submit" style="background-color:#0ea5e9; margin-bottom:1.5rem;" onclick="abrirPantalla('pantalla-ficha')">📋 Ficha Médica y Contactos</button>
+
+        <div class="section-card" style="box-shadow:none; padding:0;">
+            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">➕ Agregar Manualmente</h3>
+            <div class="form-group">
+                <label>Nombre</label>
+                <input type="text" id="act-nombre">
+            </div>
+            <div class="form-group">
+                <label>Fecha (para tareas y medicamentos temporales)</label>
+                <input type="date" id="act-fecha">
+            </div>
+            <div class="form-group">
+                <label>Hora (HH:MM) o Monto ($)</label>
+                <input type="text" id="act-variable">
+            </div>
+            <div class="form-group">
+                <label>Tipo</label>
+                <select id="act-tipo" onchange="actualizarVisibilidadFrecuencia()">
+                    <option value="tarea">Actividad</option>
+                    <option value="med">Medicamento</option>
+                    <option value="rec">📌 Recordatorio</option>
+                    <option value="bolsillo">Gasto</option>
+                </select>
+            </div>
+            <div class="form-group" id="grp-frecuencia" style="display:none;">
+                <label>Frecuencia del medicamento</label>
+                <select id="act-frecuencia">
+                    <option value="todos">Todos los días (permanente)</option>
+                    <option value="puntual">Solo un día (temporal, ej: antibiótico)</option>
+                </select>
+            </div>
+            <button class="btn-submit" onclick="guardarEntradaManual()">Agregar</button>
+        </div>
+
         <div class="section-card" style="box-shadow:none; padding:0; margin-bottom:1.5rem;">
-            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">Ajustes de Alertas</h3>
+            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">💊 Administrar Medicamentos</h3>
+            <p style="font-size:0.8rem; color:#6b7280; margin-bottom:0.75rem;">Acá se borran remedios y se recarga el stock. En la pantalla principal ya no hay ✕.</p>
+            <div id="lista-admin-meds"></div>
+        </div>
+
+        <div class="section-card" style="box-shadow:none; padding:0; margin-bottom:1.5rem;">
+            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">💚 Check-in "Estoy bien"</h3>
             <div class="form-group">
-                <label>Sonido para Medicamentos</label>
-                <select id="sonido-salud">
-                    <option value="zen">🎵 Melodía Zen</option>
-                    <option value="aves">🐦 Pajaritos</option>
-                    <option value="digital">🔔 Timbre Digital</option>
-                    <option value="chicharra">🚨 Chicharra Suave</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Sonido para Actividades</label>
-                <select id="sonido-tareas">
-                    <option value="zen">🎵 Melodía Zen</option>
-                    <option value="aves">🐦 Pajaritos</option>
-                    <option value="digital">🔔 Timbre Digital</option>
-                    <option value="chicharra">🚨 Chicharra Suave</option>
-                </select>
-            </div>
-            <button class="btn-submit" onclick="probarSonidoSeleccionado()">🎵 Probar Sonido</button>
-            <div class="form-group" style="margin-top:1rem;">
-                <label>Check-in diario "Estoy bien"</label>
+                <label>Check-in diario</label>
                 <select id="box-checkin-activo">
                     <option value="1">Activado</option>
                     <option value="0">Desactivado</option>
@@ -300,7 +323,11 @@
                 <input type="time" id="box-checkin-hora" value="20:00">
             </div>
             <button class="btn-submit" style="background-color:#059669;" onclick="guardarCheckin()">💚 Guardar Check-in</button>
-            <div class="form-group" style="margin-top:1rem;">
+        </div>
+
+        <div class="section-card" style="box-shadow:none; padding:0; margin-bottom:1.5rem;">
+            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">🔆 Pantalla del Modo Reloj</h3>
+            <div class="form-group">
                 <label>Pantalla despierta sin cargador</label>
                 <select id="box-reloj-sin-carga">
                     <option value="0">No (recomendado, ahorra batería)</option>
@@ -323,11 +350,7 @@
                 </select>
             </div>
         </div>
-        <div class="section-card" style="box-shadow:none; padding:0; margin-bottom:1.5rem;">
-            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">Administrar Medicamentos</h3>
-            <p style="font-size:0.8rem; color:#6b7280; margin-bottom:0.75rem;">Acá se borran remedios y se recarga el stock. En la pantalla principal ya no hay ✕.</p>
-            <div id="lista-admin-meds"></div>
-        </div>
+
         <div class="section-card" style="box-shadow:none; padding:0; margin-bottom:1.5rem;">
             <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">🎉 Celebraciones</h3>
             <div class="form-group">
@@ -363,8 +386,9 @@
             </div>
             <div id="lista-celebraciones-admin"></div>
         </div>
+
         <div class="section-card" style="box-shadow:none; padding:0; margin-bottom:1.5rem;">
-            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">Configuración de Monedero</h3>
+            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">💰 Configuración de Monedero</h3>
             <div class="form-group">
                 <label>Monto Límite ($)</label>
                 <input type="number" id="box-presupuesto-total" value="30000">
@@ -378,41 +402,34 @@
             </div>
             <button class="btn-submit" style="background-color: var(--budget-color);" onclick="actualizarParametrosBolsillo()">Guardar</button>
         </div>
+
+        <div class="section-card" style="box-shadow:none; padding:0; margin-bottom:1.5rem;">
+            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">🔔 Ajustes de Alertas</h3>
+            <div class="form-group">
+                <label>Sonido para Medicamentos</label>
+                <select id="sonido-salud">
+                    <option value="zen">🎵 Melodía Zen</option>
+                    <option value="aves">🐦 Pajaritos</option>
+                    <option value="digital">🔔 Timbre Digital</option>
+                    <option value="chicharra">🚨 Chicharra Suave</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Sonido para Actividades</label>
+                <select id="sonido-tareas">
+                    <option value="zen">🎵 Melodía Zen</option>
+                    <option value="aves">🐦 Pajaritos</option>
+                    <option value="digital">🔔 Timbre Digital</option>
+                    <option value="chicharra">🚨 Chicharra Suave</option>
+                </select>
+            </div>
+            <button class="btn-submit" onclick="probarSonidoSeleccionado()">🎵 Probar Sonido</button>
+        </div>
+
         <div class="section-card" style="box-shadow:none; padding:0;">
-            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">Agregar Manualmente</h3>
-            <div class="form-group">
-                <label>Nombre</label>
-                <input type="text" id="act-nombre">
-            </div>
-            <div class="form-group">
-                <label>Fecha (para tareas y medicamentos temporales)</label>
-                <input type="date" id="act-fecha">
-            </div>
-            <div class="form-group">
-                <label>Hora (HH:MM) o Monto ($)</label>
-                <input type="text" id="act-variable">
-            </div>
-            <div class="form-group">
-                <label>Tipo</label>
-                <select id="act-tipo" onchange="actualizarVisibilidadFrecuencia()">
-                    <option value="tarea">Actividad</option>
-                    <option value="med">Medicamento</option>
-                    <option value="bolsillo">Gasto</option>
-                </select>
-            </div>
-            <div class="form-group" id="grp-frecuencia" style="display:none;">
-                <label>Frecuencia del medicamento</label>
-                <select id="act-frecuencia">
-                    <option value="todos">Todos los días (permanente)</option>
-                    <option value="puntual">Solo un día (temporal, ej: antibiótico)</option>
-                </select>
-            </div>
-            <button class="btn-submit" onclick="guardarEntradaManual()">Agregar</button>
-            <div class="backup-container">
-                <h4>💾 Copia de Seguridad</h4>
-                <button type="button" class="btn-submit" style="background-color:#4b5563; margin:0.5rem 0;" onclick="exportarCopiaSeguridad()">Descargar</button>
-                <input type="file" id="file-backup" accept=".json" onchange="importarCopiaSeguridad(event)">
-            </div>
+            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">💾 Copia de Seguridad</h3>
+            <button type="button" class="btn-submit" style="background-color:#4b5563; margin:0.5rem 0;" onclick="exportarCopiaSeguridad()">Descargar</button>
+            <input type="file" id="file-backup" accept=".json" onchange="importarCopiaSeguridad(event)">
             <button type="button" class="btn-submit" style="background-color:#6b7280; margin-top:1rem;" onclick="cerrarPantalla('pantalla-ajustes')">Volver</button>
         </div>
     </div>
@@ -575,7 +592,7 @@ function borrarMedBase(id){
 }
 
 // ============================================
-// NOTIFICACIONES DEL NAVEGADOR (capa extra)
+// NOTIFICACIONES DEL NAVEGADOR
 // ============================================
 function notificar(titulo, cuerpo){
   try{
@@ -589,7 +606,7 @@ document.addEventListener('click', ()=>{
 }, {once:true});
 
 // ============================================
-// MODO MESITA DE LUZ + BATERÍA INTELIGENTE
+// MODO MESITA DE LUZ
 // ============================================
 let relojInterval = null;
 let wakeLockSentinel = null;
@@ -676,7 +693,7 @@ function guardarPantallaReloj(){
 }
 
 // ============================================
-// FOTOS DEL MODO RELOJ (SLIDESHOW CON DESVANECIMIENTO)
+// FOTOS DEL MODO RELOJ
 // ============================================
 let fotosReloj = JSON.parse(obtenerD('circulo_fotos_reloj','[]'))||[];
 let fotoIdx = 0;
@@ -768,7 +785,7 @@ function guardarFotoSeg(){
 }
 
 // ============================================
-// SLIDER DE CONSEJOS Y AUTOBOMBO (12 segundos)
+// SLIDER
 // ============================================
 const slidesContenido = [
   {t:'💧 Consejo: un vasito de agua cada tanto mantiene la cabeza fresca.'},
@@ -925,7 +942,7 @@ function mostrarAnimoSiCorresponde(){
 }
 
 // ============================================
-// AGUA COMO SUGERENCIA CÁLIDA
+// AGUA
 // ============================================
 function fraseAgua(nombre){
   const frases=[
@@ -972,7 +989,7 @@ function ahoraNoAgua(){
 }
 
 // ============================================
-// CELEBRACIONES (fijas y móviles calculadas)
+// CELEBRACIONES
 // ============================================
 function pascuas(anio){
   const a=anio%19, b=Math.floor(anio/100), c=anio%100;
@@ -1168,22 +1185,14 @@ function renderAdminMeds(){
   const cont=document.getElementById('lista-admin-meds');
   if(!cont) return;
   let html='';
-  var ahoraHHMM=('0'+new Date().getHours()).slice(-2)+':'+('0'+new Date().getMinutes()).slice(-2);
-  var pendientes=[];
-  medsActivos().forEach(function(m){ if(!registroTomas[hoy+'_'+m.id]) pendientes.push({id:m.id,nombre:m.nombre,hora:m.hora,base:true}); });
-  listaActividades.forEach(function(a){ if(a.tipo==='med'&&fechaDe(a)===hoy&&!registroTomas[hoy+'_'+a.id]) pendientes.push({id:a.id,nombre:a.nombre,hora:a.hora,base:false}); });
-  var futuras=pendientes.filter(function(p){ return p.hora>=ahoraHHMM; }).sort(function(x,y){ return x.hora.localeCompare(y.hora); });
-  var vencidas=pendientes.filter(function(p){ return p.hora<ahoraHHMM; }).sort(function(x,y){ return x.hora.localeCompare(y.hora); });
-  futuras.concat(vencidas).forEach(function(p){
-    var st=stockMeds[p.base?String(p.id):('a'+p.id)];
-    var stTxt=(st!==undefined)?('<br><small style="color:'+(st<=5?'#dc2626':'#6b7280')+';">Quedan '+st+'</small>'):'';
-    var tagAtras=(p.hora<ahoraHHMM)?(' <small style="color:#dc2626;font-weight:700;">(atrasada)</small>'):'';
-    hS+='<div class="med-card"><div><strong>💊 '+escapeHTML(p.nombre)+'</strong>'+tagAtras+'<br><small style="color:#6b7280;">'+escapeHTML(p.hora)+'</small>'+stTxt+'</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;"><button class="btn-action" onclick="marcarToma('+p.id+',\''+escapeHTML(p.nombre)+'\')">Ya lo tomé</button><button class="btn-action" style="background:#6b7280;" onclick="marcarNoToma('+p.id+',\''+escapeHTML(p.nombre)+'\')">No lo tomé</button></div></div>';
+  medsActivos().forEach(function(m){
+    const key=String(m.id); const st=stockMeds[key];
+    html+='<div class="med-card"><div><strong>💊 '+escapeHTML(m.nombre)+'</strong><br><small style="color:#6b7280;">'+(st!==undefined?('Quedan '+st):'Sin contador')+' · Diario</small></div><div style="display:flex; gap:6px; align-items:center;"><input type="number" id="stock-'+key+'" placeholder="'+(st!==undefined?st:'')+'" style="width:70px; padding:4px; border:1px solid #d1d5db; border-radius:6px;"><button class="btn-action" onclick="fijarStock(\''+key+'\')">Fijar</button><button class="btn-delete" onclick="borrarMedBase('+m.id+')">✕</button></div></div>';
   });
-  listaActividades.filter(a=>a.tipo==='med').forEach(a=>{
+  listaActividades.filter(function(a){ return a.tipo==='med'; }).forEach(function(a){
     const key='a'+a.id; const st=stockMeds[key];
-    const tipoTxt = a.fecha ? `Temporal · ${formatearFecha(a.fecha)}` : 'Diario';
-    html+=`<div class="med-card"><div><strong>💊 ${escapeHTML(a.nombre)}</strong><br><small style="color:#6b7280;">${st!==undefined?`Quedan ${st}`:'Sin contador'} · ${tipoTxt}</small></div><div style="display:flex; gap:6px; align-items:center;"><input type="number" id="stock-${key}" placeholder="${st!==undefined?st:''}" style="width:70px; padding:4px; border:1px solid #d1d5db; border-radius:6px;"><button class="btn-action" onclick="fijarStock('${key}')">Fijar</button><button class="btn-delete" onclick="borrarActividad(${a.id})">✕</button></div></div>`;
+    const tipoTxt = a.fecha ? ('Temporal · '+formatearFecha(a.fecha)) : 'Diario';
+    html+='<div class="med-card"><div><strong>💊 '+escapeHTML(a.nombre)+'</strong><br><small style="color:#6b7280;">'+(st!==undefined?('Quedan '+st):'Sin contador')+' · '+tipoTxt+'</small></div><div style="display:flex; gap:6px; align-items:center;"><input type="number" id="stock-'+key+'" placeholder="'+(st!==undefined?st:'')+'" style="width:70px; padding:4px; border:1px solid #d1d5db; border-radius:6px;"><button class="btn-action" onclick="fijarStock(\''+key+'\')">Fijar</button><button class="btn-delete" onclick="borrarActividad('+a.id+')">✕</button></div></div>';
   });
   cont.innerHTML = html || '<p style="color:#6b7280; text-align:center; padding:0.5rem;">Sin medicamentos cargados.</p>';
 }
@@ -1261,7 +1270,6 @@ function parsearHoraDeFrase(f){
 function esPalabraDeMedicamento(f){
   return f.includes("pastilla")||f.includes("remedio")||f.includes("presión")||f.includes("médico")||f.includes("medicamento")||f.includes("medicación")||f.includes("dosis")||f.includes("tomar")||f.includes("vitamina")||f.includes("enalapril")||f.includes("ibuprofeno")||f.includes("aspirina")||f.includes("insulina");
 }
-
 function esPalabraDeRecordatorio(f){
   var magicas=['recordatorio de','acordate de','acordarme de','no me olvide de','no olvidar','no olvidarme de','tener presente'];
   for(var i=0;i<magicas.length;i++){ if(f.includes(magicas[i])) return true; }
@@ -1354,6 +1362,7 @@ function guardarEntradaManual(){
       }
     }
     if(t==='tarea') act.fecha=fecha||hoyStr();
+    if(t==='rec') act.fecha=fecha||hoyStr();
     listaActividades.push(act);
     guardarD('circulo_actividades',JSON.stringify(listaActividades));
   }
@@ -1380,7 +1389,6 @@ function marcarToma(id,nombre){
   mostrarToast(`Registrado: ${nombre}`); decir(`${nombre} completado`); renderizar();
 }
 
-// ===== NUBE: sube cada marcación (SÍ o NO) al vigilante =====
 async function nubeSubirToma(tomaId, nombre, tomo){
   if(!nubeOK_CV || !uidCV || !supaCV) return;
   try{
@@ -1405,7 +1413,7 @@ function alarmaNoTome(){
 function gestionarCierreAlertaAlEnviar(){ alertaForzadaOcultaHoy=true; document.getElementById('alerta-olvido').style.display='none'; mostrarToast("Enviado"); }
 
 // ============================================
-// AVISO AUTOMÁTICO AL FAMILIAR (EMAIL)
+// AVISO AL FAMILIAR
 // ============================================
 function enviarAlertaFamiliar(listaMeds, forzar){
   const email = datosFicha.email;
@@ -1471,7 +1479,7 @@ function controlarOlvidosConsecutivos(){
 }
 
 // ============================================
-// CHECK-IN "ESTOY BIEN"
+// CHECK-IN
 // ============================================
 function guardarCheckin(){
   checkinActivo=document.getElementById('box-checkin-activo').value;
@@ -1538,41 +1546,45 @@ function renderizar(){
   if(!cS||!cT||!cG) return;
   const hoy=hoyStr();
   let hS='',hT='',hG='',hSF='';
-  medsActivos().forEach(m=>{
-    if(!registroTomas[`${hoy}_${m.id}`]){
-      const st=stockMeds[String(m.id)];
-      const stTxt = st!==undefined ? `<br><small style="color:${st<=5?'#dc2626':'#6b7280'};">Quedan ${st}</small>` : '';
-     hS+=`<div class="med-card"><div><strong>💊 ${escapeHTML(m.nombre)}</strong><br><small style="color:#6b7280;">${m.hora}</small>${stTxt}</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;"><button class="btn-action" onclick="marcarToma(${m.id},'${escapeHTML(m.nombre)}')">Ya lo tomé</button><button class="btn-action" style="background:#6b7280;" onclick="marcarNoToma(${m.id},'${escapeHTML(m.nombre)}')">No lo tomé</button></div></div>`;
-    }
+
+  // === MEDICACIONES DE HOY (ordenadas: próximas primero, vencidas al final) ===
+  var ahoraHHMM=('0'+new Date().getHours()).slice(-2)+':'+('0'+new Date().getMinutes()).slice(-2);
+  var pendientes=[];
+  medsActivos().forEach(function(m){ if(!registroTomas[hoy+'_'+m.id]) pendientes.push({id:m.id,nombre:m.nombre,hora:m.hora,base:true}); });
+  listaActividades.forEach(function(a){ if(a.tipo==='med'&&fechaDe(a)===hoy&&!registroTomas[hoy+'_'+a.id]) pendientes.push({id:a.id,nombre:a.nombre,hora:a.hora,base:false}); });
+  var futuras=pendientes.filter(function(p){ return p.hora>=ahoraHHMM; }).sort(function(x,y){ return x.hora.localeCompare(y.hora); });
+  var vencidas=pendientes.filter(function(p){ return p.hora<ahoraHHMM; }).sort(function(x,y){ return x.hora.localeCompare(y.hora); });
+  futuras.concat(vencidas).forEach(function(p){
+    var st=stockMeds[p.base?String(p.id):('a'+p.id)];
+    var stTxt=(st!==undefined)?('<br><small style="color:'+(st<=5?'#dc2626':'#6b7280')+';">Quedan '+st+'</small>'):'';
+    var tagAtras=(p.hora<ahoraHHMM)?(' <small style="color:#dc2626;font-weight:700;">(atrasada)</small>'):'';
+    hS+='<div class="med-card"><div><strong>💊 '+escapeHTML(p.nombre)+'</strong>'+tagAtras+'<br><small style="color:#6b7280;">'+escapeHTML(p.hora)+'</small>'+stTxt+'</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;"><button class="btn-action" onclick="marcarToma('+p.id+',\''+escapeHTML(p.nombre)+'\')">Ya lo tomé</button><button class="btn-action" style="background:#6b7280;" onclick="marcarNoToma('+p.id+',\''+escapeHTML(p.nombre)+'\')">No lo tomé</button></div></div>';
   });
-  listaActividades.forEach(a=>{
-    if(a.tipo==='med' && fechaDe(a)===hoy){
-      if(!registroTomas[`${hoy}_${a.id}`]){
-        const st=stockMeds['a'+a.id];
-        const stTxt = st!==undefined ? `<br><small style="color:${st<=5?'#dc2626':'#6b7280'};">Quedan ${st}</small>` : '';
- hS+=`<div class="med-card"><div><strong>💊 ${escapeHTML(a.nombre)}</strong><br><small style="color:#6b7280;">${escapeHTML(a.hora)}</small>${stTxt}</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;"><button class="btn-action" onclick="marcarToma(${a.id},'${escapeHTML(a.nombre)}')">Ya lo tomé</button><button class="btn-action" style="background:#6b7280;" onclick="marcarNoToma(${a.id},'${escapeHTML(a.nombre)}')">No lo tomé</button></div></div>`;
-      }
-    }
-  });
+
+  // === MEDICAMENTOS PRÓXIMOS (días siguientes) ===
   listaActividades
-    .filter(a=>a.tipo==='med' && fechaDe(a)>hoy)
-    .sort((x,y)=>(fechaDe(x)+x.hora).localeCompare(fechaDe(y)+y.hora))
-    .forEach(a=>{
-      hSF+=`<div class="med-card"><div><strong>💊 ${escapeHTML(a.nombre)}</strong><br><small style="color:#6b7280;">📅 ${formatearFecha(a.fecha)} — ${escapeHTML(a.hora)} · Temporal</small></div></div>`;
+    .filter(function(a){ return a.tipo==='med' && fechaDe(a)>hoy; })
+    .sort(function(x,y){ return (fechaDe(x)+x.hora).localeCompare(fechaDe(y)+y.hora); })
+    .forEach(function(a){
+      hSF+='<div class="med-card"><div><strong>💊 '+escapeHTML(a.nombre)+'</strong><br><small style="color:#6b7280;">📅 '+formatearFecha(a.fecha)+' — '+escapeHTML(a.hora)+' · Temporal</small></div></div>';
     });
+
+  // === TAREAS Y RECORDATORIOS ===
   listaActividades
     .filter(function(a){ return (a.tipo==='tarea'||a.tipo==='rec') && fechaDe(a)>=hoy; })
     .sort(function(x,y){ return (fechaDe(x)+x.hora).localeCompare(fechaDe(y)+y.hora); })
     .forEach(function(a){
       var esRec=a.tipo==='rec';
       var borde=esRec?'#f97316':'#4dabf7';
-      var iconoT=esRec?'📌':'️';
+      var iconoT=esRec?'📌':'🗓️';
       var detalle;
       if(esRec){ detalle=(a.fecha===hoy)?'📌 HOY':('📅 '+formatearFecha(a.fecha)); }
       else { detalle=((a.fecha&&a.fecha!==hoy)?('📅 '+formatearFecha(a.fecha)+' — '):'')+escapeHTML(a.hora); }
       hT+='<div class="agenda-card" style="border-left-color:'+borde+';"><div><strong>'+iconoT+' '+escapeHTML(a.nombre)+'</strong><br><small style="color:#6b7280;">'+detalle+'</small></div><button class="btn-delete" onclick="borrarActividad('+a.id+')">✕</button></div>';
     });
-  listaGastos.forEach(g=>hG+=`<div class="expense-card"><div><strong>🛍️ ${escapeHTML(g.nombre)}</strong><br><small style="color:#dc2626; font-weight:bold;">-$${g.monto}</small></div><button class="btn-delete" onclick="borrarGasto(${g.id})">✕</button></div>`);
+
+  listaGastos.forEach(function(g){ hG+='<div class="expense-card"><div><strong>🛍️ '+escapeHTML(g.nombre)+'</strong><br><small style="color:#dc2626; font-weight:bold;">-$'+g.monto+'</small></div><button class="btn-delete" onclick="borrarGasto('+g.id+')">✕</button></div>'; });
+
   cS.innerHTML=hS; cT.innerHTML=hT; cG.innerHTML=hG;
   if(cSF){ cSF.innerHTML=hSF; if(cardSF) cardSF.style.display = hSF ? 'block' : 'none'; }
   const r=calcularRestante();
@@ -1591,7 +1603,7 @@ function renderizar(){
   controlarOlvidosConsecutivos();
   controlarCheckin();
   controlarFestejos();
-  }
+}
 
 // ============================================
 // SOS
@@ -1704,7 +1716,8 @@ function guardarNotaBloc(){ guardarD('circulo_nota_bloc', document.getElementByI
 function presionarCalc(v){ const p=document.getElementById('calc-pantalla'); if(p) p.value+=v; }
 function limpiarCalc(){ const p=document.getElementById('calc-pantalla'); if(p) p.value=''; }
 function calcularResultado(){ try{ const p=document.getElementById('calc-pantalla'); if(!p) return; const i=p.value; if(!i) return; if(!/^[\d+\-*/.()\s]+$/.test(i)){p.value='Error';return;} p.value=new Function('return '+i)(); }catch(e){ const p=document.getElementById('calc-pantalla'); if(p) p.value='Error'; } }
-// ===== NUBE CÍRCULO VITAL (vigilante silencioso) =====
+
+// ===== NUBE CÍRCULO VITAL =====
 const SUPA_URL_CV='https://vqezdcdalprvjdtdrqzx.supabase.co';
 const SUPA_KEY_CV='sb_publishable_5RI8bz70kqj7H2TIX6H8uQ_LlZnQtKO';
 let supaCV=null, uidCV=null, nubeOK_CV=false, nubeModo_CV='off';

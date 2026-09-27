@@ -1168,9 +1168,17 @@ function renderAdminMeds(){
   const cont=document.getElementById('lista-admin-meds');
   if(!cont) return;
   let html='';
-  medsActivos().forEach(m=>{
-    const key=String(m.id); const st=stockMeds[key];
-    html+=`<div class="med-card"><div><strong>💊 ${escapeHTML(m.nombre)}</strong><br><small style="color:#6b7280;">${st!==undefined?`Quedan ${st}`:'Sin contador'} · Diario</small></div><div style="display:flex; gap:6px; align-items:center;"><input type="number" id="stock-${key}" placeholder="${st!==undefined?st:''}" style="width:70px; padding:4px; border:1px solid #d1d5db; border-radius:6px;"><button class="btn-action" onclick="fijarStock('${key}')">Fijar</button><button class="btn-delete" onclick="borrarMedBase(${m.id})">✕</button></div></div>`;
+  var ahoraHHMM=('0'+new Date().getHours()).slice(-2)+':'+('0'+new Date().getMinutes()).slice(-2);
+  var pendientes=[];
+  medsActivos().forEach(function(m){ if(!registroTomas[hoy+'_'+m.id]) pendientes.push({id:m.id,nombre:m.nombre,hora:m.hora,base:true}); });
+  listaActividades.forEach(function(a){ if(a.tipo==='med'&&fechaDe(a)===hoy&&!registroTomas[hoy+'_'+a.id]) pendientes.push({id:a.id,nombre:a.nombre,hora:a.hora,base:false}); });
+  var futuras=pendientes.filter(function(p){ return p.hora>=ahoraHHMM; }).sort(function(x,y){ return x.hora.localeCompare(y.hora); });
+  var vencidas=pendientes.filter(function(p){ return p.hora<ahoraHHMM; }).sort(function(x,y){ return x.hora.localeCompare(y.hora); });
+  futuras.concat(vencidas).forEach(function(p){
+    var st=stockMeds[p.base?String(p.id):('a'+p.id)];
+    var stTxt=(st!==undefined)?('<br><small style="color:'+(st<=5?'#dc2626':'#6b7280')+';">Quedan '+st+'</small>'):'';
+    var tagAtras=(p.hora<ahoraHHMM)?(' <small style="color:#dc2626;font-weight:700;">(atrasada)</small>'):'';
+    hS+='<div class="med-card"><div><strong>💊 '+escapeHTML(p.nombre)+'</strong>'+tagAtras+'<br><small style="color:#6b7280;">'+escapeHTML(p.hora)+'</small>'+stTxt+'</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;"><button class="btn-action" onclick="marcarToma('+p.id+',\''+escapeHTML(p.nombre)+'\')">Ya lo tomé</button><button class="btn-action" style="background:#6b7280;" onclick="marcarNoToma('+p.id+',\''+escapeHTML(p.nombre)+'\')">No lo tomé</button></div></div>';
   });
   listaActividades.filter(a=>a.tipo==='med').forEach(a=>{
     const key='a'+a.id; const st=stockMeds[key];
@@ -1626,11 +1634,14 @@ function guardarDatosFicha(e){
 // ============================================
 // LOOP PRINCIPAL
 // ============================================
+var tickLoop=0;
 setInterval(()=>{
   verificarAlarmas();
   verificarYDepurarBolsillo();
   controlarCheckin();
   controlarAgua();
+  tickLoop++;
+  if(tickLoop%6===0){ renderizar(); }
   const h=hoyStr();
   Object.keys(alertasEjecutadas).forEach(k=>{ if(!k.startsWith(h+'_')) delete alertasEjecutadas[k]; });
 }, 10000);

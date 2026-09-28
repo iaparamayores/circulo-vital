@@ -1817,11 +1817,11 @@ function nubeBorrarRecordatorio(rid){
 }
 function nubeMigrarFestejosYRecordatorios(){
   if(!nubeOK_CV||!uidCV||!supaCV) return;
-  if(obtenerD('circulo_migrado_nube','')==='1') return;
+if(obtenerD('circulo_migrado_nube_v2','')==='1') return;
   var fests=JSON.parse(obtenerD('circulo_celebraciones','[]'))||[];
   fests.forEach(function(c){ nubeSubirFestejo(c.id, c.nombre, c.dia, c.mes, c.tel); });
   (listaActividades||[]).forEach(function(a){ if(a.tipo==='rec') nubeSubirRecordatorio(a.id, a.nombre, a.fecha); });
-  guardarD('circulo_migrado_nube','1');
+  guardarD('circulo_migrado_nube_v2','1');
   mostrarToast('☁️ Festejos y recordatorios sincronizados');
 }
 if(supaCV){ supaCV.auth.onAuthStateChange((ev,ses)=>{ if(ses&&ses.user){ uidCV=ses.user.id; nubeOK_CV=true; nubeConectarCV(); } }); }

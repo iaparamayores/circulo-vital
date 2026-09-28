@@ -1050,6 +1050,7 @@ function agregarCelebracion(){
   const lista=JSON.parse(obtenerD('circulo_celebraciones','[]'))||[];
   lista.push({id:generarId(), nombre, dia, mes, tel});
   guardarD('circulo_celebraciones', JSON.stringify(lista));
+  nubeSubirFestejo(lista[lista.length-1].id, nombre, dia, mes, tel);
   document.getElementById('cel-nombre').value='';
   document.getElementById('cel-dia').value='';
   document.getElementById('cel-tel').value='';
@@ -1061,9 +1062,10 @@ function borrarCelebracion(id){
     if(!ok) return;
     let lista=JSON.parse(obtenerD('circulo_celebraciones','[]'))||[];
     lista=lista.filter(c=>c.id!==id);
-    guardarD('circulo_celebraciones', JSON.stringify(lista));
+guardarD('circulo_celebraciones', JSON.stringify(lista));
+    nubeBorrarFestejo(id);
     renderAdminCelebraciones(); renderCelebraciones(); mostrarToast('Celebración borrada');
-  });
+      });
 }
 function renderAdminCelebraciones(){
   const cont=document.getElementById('lista-celebraciones-admin');
@@ -1311,6 +1313,7 @@ function procesarDictadoIntegral(f){
   if(tipo==='rec') act.fecha=fecha||hoyStr();
   listaActividades.push(act);
   guardarD('circulo_actividades',JSON.stringify(listaActividades));
+  if(tipo==='rec') nubeSubirRecordatorio(act.id, act.nombre, act.fecha);
   renderizar(); cambiarSolapa(tipo==='med'?'salud':'tareas');
   var icono=tipo==='med'?'💊 ':(tipo==='rec'?'📌 ':'🗓️ ');
   mostrarToast(icono+(fecha?formatearFecha(fecha)+' '+h:'hoy '+h));
@@ -1362,9 +1365,10 @@ function guardarEntradaManual(){
       }
     }
     if(t==='tarea') act.fecha=fecha||hoyStr();
-    if(t==='rec') act.fecha=fecha||hoyStr();
+if(t==='rec') act.fecha=fecha||hoyStr();
     listaActividades.push(act);
     guardarD('circulo_actividades',JSON.stringify(listaActividades));
+    if(t==='rec') nubeSubirRecordatorio(act.id, act.nombre, act.fecha);
   }
   configSonidos.salud=document.getElementById('sonido-salud').value;
   configSonidos.tareas=document.getElementById('sonido-tareas').value;
@@ -1379,7 +1383,7 @@ function guardarEntradaManual(){
   cambiarSolapa(t==='bolsillo'?'bolsillo':(t==='med'?'salud':'tareas'));
 }
 function borrarGasto(id){ mostrarConfirmacion("¿Borrar?", ok=>{ if(!ok) return; listaGastos=listaGastos.filter(g=>g.id!==id); guardarD('bolsillo_gastos',JSON.stringify(listaGastos)); renderizar(); mostrarToast("Eliminado"); }); }
-function borrarActividad(id){ mostrarConfirmacion("¿Borrar?", ok=>{ if(!ok) return; listaActividades=listaActividades.filter(a=>a.id!==id); guardarD('circulo_actividades',JSON.stringify(listaActividades)); renderizar(); renderAdminMeds(); mostrarToast("Eliminado"); }); }
+function borrarActividad(id){ mostrarConfirmacion("¿Borrar?", ok=>{ if(!ok) return; var item=listaActividades.find(function(a){return a.id===id;}); listaActividades=listaActividades.filter(a=>a.id!==id); guardarD('circulo_actividades',JSON.stringify(listaActividades)); if(item&&item.tipo==='rec') nubeBorrarRecordatorio(id); renderizar(); renderAdminMeds(); mostrarToast("Eliminado"); }); }
 function marcarToma(id,nombre){
   const h=hoyStr();
   registroTomas[`${h}_${id}`]=true;
@@ -1750,7 +1754,7 @@ async function nubeConectarCV(){
   if(!supaCV){ nubeEstadoCV('⚠️ Sin nube: el vigilante no existe'); return; }
   try{
     const { data: ses } = await supaCV.auth.getSession();
-    if(ses&&ses.session){ uidCV=ses.session.user.id; nubeOK_CV=true; nubeModo_CV='ok'; nubeEstadoCV('☁️ Conectado con tu familia — vigilante activo'); }
+if(ses&&ses.session){ uidCV=ses.session.user.id; nubeOK_CV=true; nubeModo_CV='ok'; nubeEstadoCV('☁️ Conectado con tu familia — vigilante activo'); nubeMigrarFestejosYRecordatorios(); }
     else { uidCV=null; nubeOK_CV=false; nubeModo_CV='off'; nubeEstadoCV('☁️ Nube apagada — tocá acá para activarla', true); }
   }catch(e){ nubeOK_CV=false; nubeEstadoCV('⚠️ Sin nube: el vigilante no existe'); }
 }
@@ -1794,6 +1798,32 @@ document.getElementById('nube-new-cv').addEventListener('click', async ()=>{
     else { nubeToastCV('⚠️ '+(m||'No se pudo crear')); }
   }
 });
+// ===== SINCRONIZACIÓN DE FESTEJOS Y RECORDATORIOS =====
+function nubeSubirFestejo(fid, nombre, dia, mes, tel){
+  if(!nubeOK_CV||!uidCV||!supaCV) return;
+  supaCV.from('festejos_circulo').upsert({ id: fid, user_id: uidCV, nombre: nombre||'', dia: dia, mes: mes, tel: tel||'' }).then(function(){}).catch(function(e){ console.log('[nube cv] subir festejo', e); });
+}
+function nubeBorrarFestejo(fid){
+  if(!nubeOK_CV||!uidCV||!supaCV) return;
+  supaCV.from('festejos_circulo').delete().eq('id', fid).eq('user_id', uidCV).then(function(){}).catch(function(e){ console.log('[nube cv] borrar festejo', e); });
+}
+function nubeSubirRecordatorio(rid, nombre, fecha){
+  if(!nubeOK_CV||!uidCV||!supaCV) return;
+  supaCV.from('recordatorios_circulo').upsert({ id: rid, user_id: uidCV, nombre: nombre||'', fecha: fecha||hoyStr() }).then(function(){}).catch(function(e){ console.log('[nube cv] subir recordatorio', e); });
+}
+function nubeBorrarRecordatorio(rid){
+  if(!nubeOK_CV||!uidCV||!supaCV) return;
+  supaCV.from('recordatorios_circulo').delete().eq('id', rid).eq('user_id', uidCV).then(function(){}).catch(function(e){ console.log('[nube cv] borrar recordatorio', e); });
+}
+function nubeMigrarFestejosYRecordatorios(){
+  if(!nubeOK_CV||!uidCV||!supaCV) return;
+  if(obtenerD('circulo_migrado_nube','')==='1') return;
+  var fests=JSON.parse(obtenerD('circulo_celebraciones','[]'))||[];
+  fests.forEach(function(c){ nubeSubirFestejo(c.id, c.nombre, c.dia, c.mes, c.tel); });
+  (listaActividades||[]).forEach(function(a){ if(a.tipo==='rec') nubeSubirRecordatorio(a.id, a.nombre, a.fecha); });
+  guardarD('circulo_migrado_nube','1');
+  mostrarToast('☁️ Festejos y recordatorios sincronizados');
+}
 if(supaCV){ supaCV.auth.onAuthStateChange((ev,ses)=>{ if(ses&&ses.user){ uidCV=ses.user.id; nubeOK_CV=true; nubeConectarCV(); } }); }
 window.addEventListener('online', ()=>{ nubeConectarCV(); });
 nubeRescatarTokenCV().then(()=>{ nubeConectarCV(); setTimeout(()=>nubeConectarCV(),2500); setTimeout(()=>nubeConectarCV(),7000); });

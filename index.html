@@ -433,6 +433,15 @@
             <button type="button" class="btn-submit" style="background-color:#6b7280; margin-top:1rem;" onclick="cerrarPantalla('pantalla-ajustes')">Volver</button>
         </div>
     </div>
+    <div class="section-card" style="box-shadow:none; padding:0; margin-top:1.5rem; border-top:2px solid #e5e7eb;">
+  <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);"> Vincular Usuario</h3>
+  <div class="form-group">
+    <label>Código de 6 dígitos</label>
+    <input type="text" id="vinc-codigo" placeholder="Ej: 347630" maxlength="6" style="font-size:1.2rem;letter-spacing:4px;text-align:center;">
+  </div>
+  <button class="btn-submit" style="background-color:#059669;" onclick="vincularUsuario()">🔗 Vincular</button>
+  <div id="lista-vinculos" style="margin-top:1rem;"></div>
+</div>
 
     <div id="pantalla-herramientas" class="overlay-screen">
         <div class="solapas-container">

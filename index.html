@@ -1967,7 +1967,12 @@ async function vincularUsuario() {
 }
 
 async function renderVinculos() {
-  if (!nubeOK_CV || !uidCV || !supaCV) return;
+  console.log('[DEBUG renderVinculos] nubeOK_CV:', nubeOK_CV, 'uidCV:', uidCV, 'supaCV:', !!supaCV);
+  
+  if (!nubeOK_CV || !uidCV || !supaCV) {
+    console.log('[DEBUG renderVinculos] No está conectado a la nube');
+    return;
+  }
   
   try {
     const { data: vinculos, error } = await supaCV
@@ -1975,17 +1980,23 @@ async function renderVinculos() {
       .select('*')
       .eq('cuidador_id', uidCV);
     
+    console.log('[DEBUG renderVinculos] Resultado:', { vinculos, error });
+    
     if (error) throw error;
     
     const cont = document.getElementById('lista-vinculos');
     const bloque = document.getElementById('bloque-vincular');
     
+    console.log('[DEBUG renderVinculos] Elementos:', { cont: !!cont, bloque: !!bloque });
+    
     if (!cont) return;
     
     if (!vinculos || vinculos.length === 0) {
+      console.log('[DEBUG renderVinculos] Sin vínculos');
       cont.innerHTML = '<p style="color:#6b7280;text-align:center;font-size:0.9rem;">Sin vínculos activos</p>';
       if (bloque) bloque.style.display = 'block';
     } else {
+      console.log('[DEBUG renderVinculos] Hay vínculos:', vinculos.length);
       if (bloque) bloque.style.display = 'none';
       
       let html = '<p style="font-size:0.9rem;color:#059669;font-weight:600;margin-bottom:0.5rem;">👥 Usuarios vinculados:</p>';
@@ -2008,9 +2019,10 @@ async function renderVinculos() {
     }
     
   } catch (e) {
-    console.log('[nube cv] render vinculos', e);
+    console.error('[DEBUG renderVinculos] Error:', e);
   }
 }
+    
 
 window.addEventListener('load', function() {
   setTimeout(renderVinculos, 1500);

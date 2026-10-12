@@ -2171,6 +2171,34 @@ if (btnAjustesCV) {
     setTimeout(renderVinculos, 500);
   });
 }
+          // Consulta manual de debug (pegar justo antes de </script>)
+setTimeout(async function() {
+  if (!supaCV) {
+    console.log('=== DEBUG MANUAL ===');
+    console.log('supaCV NO existe');
+    return;
+  }
+  
+  console.log('=== DEBUG MANUAL ===');
+  console.log('uidCV:', uidCV);
+  console.log('nubeOK_CV:', nubeOK_CV);
+  
+  const { data: todos, error } = await supaCV
+    .from('vinculos_familiares')
+    .select('*');
+  
+  console.log('TODOS los vínculos en BD:', todos);
+  console.log('Error:', error);
+  
+  if (uidCV) {
+    const { data: filtrados } = await supaCV
+      .from('vinculos_familiares')
+      .select('*')
+      .eq('cuidador_id', uidCV);
+    
+    console.log('Vínculos filtrados por MI uidCV:', filtrados);
+  }
+}, 3000);
 </script>
 </body>
 </html>

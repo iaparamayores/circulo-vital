@@ -2172,33 +2172,29 @@ if (btnAjustesCV) {
   });
 }
           // Consulta manual de debug (pegar justo antes de </script>)
-setTimeout(async function() {
-  if (!supaCV) {
-    console.log('=== DEBUG MANUAL ===');
-    console.log('supaCV NO existe');
-    return;
-  }
-  
-  console.log('=== DEBUG MANUAL ===');
-  console.log('uidCV:', uidCV);
-  console.log('nubeOK_CV:', nubeOK_CV);
-  
-  const { data: todos, error } = await supaCV
-    .from('vinculos_familiares')
-    .select('*');
-  
-  console.log('TODOS los vínculos en BD:', todos);
-  console.log('Error:', error);
-  
-  if (uidCV) {
-    const { data: filtrados } = await supaCV
-      .from('vinculos_familiares')
-      .select('*')
-      .eq('cuidador_id', uidCV);
+// Debug simple y visual
+setTimeout(function() {
+  try {
+    var msg = 'DEBUG:\n';
+    msg += 'uidCV: ' + (uidCV || 'NO DEFINIDO') + '\n';
+    msg += 'nubeOK: ' + nubeOK_CV + '\n';
     
-    console.log('Vínculos filtrados por MI uidCV:', filtrados);
+    if (supaCV && uidCV) {
+      supaCV.from('vinculos_familiares').select('*').eq('cuidador_id', uidCV).then(function(result) {
+        msg += 'Vínculos encontrados: ' + (result.data ? result.data.length : 0) + '\n';
+        if (result.data && result.data.length > 0) {
+          msg += 'Nombre: ' + result.data[0].nombre_adulto + '\n';
+        }
+        alert(msg);
+      });
+    } else {
+      msg += 'No hay conexión a Supabase\n';
+      alert(msg);
+    }
+  } catch(e) {
+    alert('Error: ' + e.message);
   }
-}, 3000);
+}, 2000);
 </script>
 </body>
 </html>

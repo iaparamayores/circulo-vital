@@ -1927,6 +1927,7 @@ async function vincularUsuario() {
   }
   
   try {
+    // Buscar el código válido
     const { data: codigos, error: errorBusqueda } = await supaCV
       .from('codigos_vinculacion')
       .select('*')
@@ -1942,6 +1943,22 @@ async function vincularUsuario() {
     
     const codigoData = codigos[0];
     
+    // Verificar si ya existe el vínculo
+    const { data: vinculosExistentes, error: errorCheck } = await supaCV
+      .from('vinculos_familiares')
+      .select('id')
+      .eq('adulto_id', codigoData.adulto_id)
+      .eq('cuidador_id', uidCV)
+      .limit(1);
+    
+    if (errorCheck) throw errorCheck;
+    
+    if (vinculosExistentes && vinculosExistentes.length > 0) {
+      nubeToastCV('⚠️ Ya estás vinculado con este usuario');
+      return;
+    }
+    
+    // Crear el vínculo
     const { error: errorVinculo } = await supaCV
       .from('vinculos_familiares')
       .insert({
@@ -1952,6 +1969,7 @@ async function vincularUsuario() {
     
     if (errorVinculo) throw errorVinculo;
     
+    // Marcar código como usado
     await supaCV
       .from('codigos_vinculacion')
       .update({ usada: true })

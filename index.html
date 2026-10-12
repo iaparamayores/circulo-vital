@@ -1836,6 +1836,95 @@ if(obtenerD('circulo_migrado_nube_v2','')==='1') return;
 if(supaCV){ supaCV.auth.onAuthStateChange((ev,ses)=>{ if(ses&&ses.user){ uidCV=ses.user.id; nubeOK_CV=true; nubeConectarCV(); } }); }
 window.addEventListener('online', ()=>{ nubeConectarCV(); });
 nubeRescatarTokenCV().then(()=>{ nubeConectarCV(); setTimeout(()=>nubeConectarCV(),2500); setTimeout(()=>nubeConectarCV(),7000); });
+    // --- Vincular Usuario con código ---
+async function vincularUsuario() {
+  const codigo = document.getElementById('vinc-codigo').value.trim();
+  if (!codigo || codigo.length !== 6) {
+    nubeToastCV('Ingresá un código de 6 dígitos');
+    return;
+  }
+  
+  try {
+    // Buscar el código válido
+    const { data: codigos, error: errorBusqueda } = await supaCV
+      .from('codigos_vinculacion')
+      .select('*')
+      .eq('codigo', codigo)
+      .eq('usada', false)
+      .limit(1);
+    
+    if (errorBusqueda) throw errorBusqueda;
+    if (!codigos || codigos.length === 0) {
+      nubeToastCV('Código inválido o ya fue usado');
+      return;
+    }
+    
+    const codigoData = codigos[0];
+    
+    // Crear el vínculo
+    const { error: errorVinculo } = await supaCV
+      .from('vinculos_familiares')
+      .insert({
+        adulto_id: codigoData.adulto_id,
+        cuidador_id: uidCV,
+        nombre_adulto: codigoData.nombre_adulto
+      });
+    
+    if (errorVinculo) throw errorVinculo;
+    
+    // Marcar código como usado
+    await supaCV
+      .from('codigos_vinculacion')
+      .update({ usada: true })
+      .eq('id', codigoData.id);
+    
+    nubeToastCV('✅ ¡Vinculado con ' + (codigoData.nombre_adulto || 'el usuario') + '!');
+    document.getElementById('vinc-codigo').value = '';
+    renderVinculos();
+    
+  } catch (e) {
+    nubeToastCV('❌ Error: ' + e.message);
+  }
+}
+
+// --- Mostrar vínculos activos ---
+async function renderVinculos() {
+  if (!nubeOK_CV || !uidCV || !supaCV) return;
+  
+  try {
+    const { data: vinculos } = await supaCV
+      .from('vinculos_familiares')
+      .select('*')
+      .eq('cuidador_id', uidCV);
+    
+    const cont = document.getElementById('lista-vinculos');
+    if (!cont) return;
+    
+    if (!vinculos || vinculos.length === 0) {
+      cont.innerHTML = '<p style="color:#6b7280;text-align:center;font-size:0.9rem;">Sin vínculos activos</p>';
+      return;
+    }
+    
+    let html = '<p style="font-size:0.9rem;color:#6b7280;margin-bottom:0.5rem;">Vínculos activos:</p>';
+    vinculos.forEach(v => {
+      html += '<div style="background:#f3f4f6;padding:8px;border-radius:8px;margin:5px 0;font-size:0.9rem;">' +
+              '👤 ' + (v.nombre_adulto || 'Usuario') + 
+              '</div>';
+    });
+    cont.innerHTML = html;
+    
+  } catch (e) {
+    console.log('[nube cv] render vinculos', e);
+  }
+}
+
+// Llamar a renderVinculos cuando se abre Ajustes
+const btnAjustesCV = document.querySelector('[onclick*="pantalla-ajustes"]');
+if (btnAjustesCV) {
+  btnAjustesCV.addEventListener('click', function() {
+    setTimeout(renderVinculos, 500);
+  });
+}
 </script>
 </body>
 </html>

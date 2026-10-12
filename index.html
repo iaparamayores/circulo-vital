@@ -434,15 +434,17 @@
         </div>
     </div>
 
-<div id="bloque-vincular" class="section-card" style="box-shadow:none; padding:0; margin-top:1.5rem; border-top:2px solid #e5e7eb;">
-  <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);"> Vincular Usuario</h3>
+<!-- BLOQUE DE VINCULACIÓN (Copiar y pegar este bloque completo) -->
+<div id="bloque-vincular" class="section-card" style="box-shadow:none; padding:1rem; margin-top:1.5rem; border-top:2px solid #e5e7eb;">
+  <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">🔗 Vincular Usuario</h3>
   <div class="form-group">
-    <label>Código de 6 dígitos</label>
-    <input type="text" id="vinc-codigo" placeholder="Ej: 347630" maxlength="6" style="font-size:1.2rem;letter-spacing:4px;text-align:center;">
+    <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.25rem; color:#4b5563;">Código de 6 dígitos</label>
+    <input type="text" id="vinc-codigo" placeholder="Ej: 347630" maxlength="6" style="width:100%; padding:0.8rem; font-size:1.3rem; letter-spacing:6px; text-align:center; border:2px solid #d1d5db; border-radius:0.75rem;">
   </div>
-  <button class="btn-submit" style="background-color:#059669;" onclick="vincularUsuario()">🔗 Vincular</button>
+  <button class="btn-submit" style="background-color:#059669; width:100%; margin-top:0.5rem;" onclick="vincularUsuario()">🔗 Vincular</button>
   <div id="lista-vinculos" style="margin-top:1rem;"></div>
 </div>
+<!-- FIN BLOQUE DE VINCULACIÓN -->
     <div id="pantalla-herramientas" class="overlay-screen">
         <div class="solapas-container">
             <button class="btn-solapa active" id="tab-notas" onclick="cambiarSolapaHerr('notas')">📝 Notas</button>

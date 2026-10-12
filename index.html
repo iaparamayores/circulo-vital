@@ -2030,20 +2030,137 @@ async function renderVinculos() {
         contPrincipal = document.createElement('div');
         contPrincipal.id = 'vinculos-principal';
         contPrincipal.style.cssText = 'background:white;padding:1rem;border-radius:1rem;margin:0.75rem 0;box-shadow:0 2px 4px rgba(0,0,0,0.05);';
-        const main = document.querySelector('main');
-        if (main) main.insertBefore(contPrincipal, main.firstChild);
-      }
-      contPrincipal.innerHTML = html;
+// ==========================================================
+// SISTEMA DE VINCULACIÓN (Código completo y definitivo)
+// ==========================================================
+
+async function vincularUsuario() {
+  console.log('[DEBUG VINCULAR] Iniciando...');
+  const codigoInput = document.getElementById('vinc-codigo');
+  const codigo = codigoInput ? codigoInput.value.trim() : '';
+  
+  if (!codigo || codigo.length !== 6) {
+    nubeToastCV('Ingresá un código de 6 dígitos');
+    return;
+  }
+  
+  console.log('[DEBUG VINCULAR] Código:', codigo, '| uidCV:', uidCV);
+  
+  try {
+    const { data: codigos, error: errorBusqueda } = await supaCV
+      .from('codigos_vinculacion')
+      .select('*')
+      .eq('codigo', codigo)
+      .eq('usada', false)
+      .limit(1);
+    
+    console.log('[DEBUG VINCULAR] Resultado búsqueda:', codigos, errorBusqueda);
+    
+    if (errorBusqueda) throw errorBusqueda;
+    if (!codigos || codigos.length === 0) {
+      nubeToastCV('Código inválido o ya fue usado');
+      return;
     }
     
+    const codigoData = codigos[0];
+    
+    const { data: vinculosExistentes, error: errorCheck } = await supaCV
+      .from('vinculos_familiares')
+      .select('id')
+      .eq('adulto_id', codigoData.adulto_id)
+      .eq('cuidador_id', uidCV)
+      .limit(1);
+      
+    console.log('[DEBUG VINCULAR] Verificación duplicados:', vinculosExistentes);
+    
+    if (vinculosExistentes && vinculosExistentes.length > 0) {
+      nubeToastCV('⚠️ Ya estás vinculado con este usuario');
+      renderVinculos(); 
+      return;
+    }
+    
+    const { error: errorVinculo } = await supaCV
+      .from('vinculos_familiares')
+      .insert({
+        adulto_id: codigoData.adulto_id,
+        cuidador_id: uidCV,
+        nombre_adulto: codigoData.nombre_adulto || 'Usuario'
+      });
+    
+    if (errorVinculo) throw errorVinculo;
+    
+    await supaCV
+      .from('codigos_vinculacion')
+      .update({ usada: true })
+      .eq('id', codigoData.id);
+    
+    console.log('[DEBUG VINCULAR] ¡Vinculación exitosa!');
+    nubeToastCV('✅ ¡Vinculado con ' + (codigoData.nombre_adulto || 'el usuario') + '!');
+    
+    if (codigoInput) codigoInput.value = '';
+    renderVinculos();
+    
   } catch (e) {
-    console.error('[DEBUG renderVinculos] Error:', e);
+    console.error('[DEBUG VINCULAR] Error:', e);
+    nubeToastCV('❌ Error: ' + e.message);
   }
 }
+
+async function renderVinculos() {
+  console.log('[DEBUG RENDER] Inicio. nubeOK_CV:', nubeOK_CV, '| uidCV:', uidCV, '| supaCV:', !!supaCV);
+  
+  if (!nubeOK_CV || !uidCV || !supaCV) {
+    console.log('[DEBUG RENDER] Abortado: falta conexión o uidCV');
+    return;
+  }
+  
+  try {
+    const { data: vinculos, error } = await supaCV
+      .from('vinculos_familiares')
+      .select('*')
+      .eq('cuidador_id', uidCV);
     
+    console.log('[DEBUG RENDER] Vínculos encontrados en BD:', vinculos, 'Error:', error);
+    
+    const cont = document.getElementById('lista-vinculos');
+    const bloque = document.getElementById('bloque-vincular');
+    
+    console.log('[DEBUG RENDER] Elementos DOM: cont=', !!cont, 'bloque=', !!bloque);
+    
+    if (!cont) {
+      console.log('[DEBUG RENDER] Abortado: no se encontró #lista-vinculos');
+      return;
+    }
+    
+    if (!vinculos || vinculos.length === 0) {
+      console.log('[DEBUG RENDER] 0 vínculos. Mostrando formulario.');
+      cont.innerHTML = '<p style="color:#6b7280;text-align:center;font-size:0.9rem; margin-top:10px;">Sin vínculos activos</p>';
+      if (bloque) bloque.style.display = 'block';
+    } else {
+      console.log('[DEBUG RENDER] ' + vinculos.length + ' vínculos. Ocultando formulario y mostrando tarjetas.');
+      if (bloque) bloque.style.display = 'none';
+      
+      let html = '<div style="margin-top:15px; padding:15px; background:#ecfdf5; border:2px solid #059669; border-radius:12px;">';
+      html += '<p style="font-size:1rem; color:#059669; font-weight:700; margin:0 0 10px 0; text-align:center;">👥 Usuarios Vinculados</p>';
+      
+      vinculos.forEach(v => {
+        const fecha = v.creada_en ? new Date(v.creada_en).toLocaleDateString('es-AR') : 'Fecha desconocida';
+        html += '<div style="background:white; padding:12px; border-radius:8px; margin-top:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">';
+        html += '<div style="font-weight:600; color:#1f2937; font-size:1.05rem;">👤 ' + (v.nombre_adulto || 'Usuario') + '</div>';
+        html += '<div style="font-size:0.85rem; color:#6b7280; margin-top:4px;">Vinculado el: ' + fecha + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+      
+      cont.innerHTML = html;
+    }
+  } catch (e) {
+    console.error('[DEBUG RENDER] Error general:', e);
+  }
+}
 
 window.addEventListener('load', function() {
-  setTimeout(renderVinculos, 1500);
+  setTimeout(renderVinculos, 2000);
 });
 // Llamar a renderVinculos cuando se abre Ajustes
 const btnAjustesCV = document.querySelector('[onclick*="pantalla-ajustes"]');

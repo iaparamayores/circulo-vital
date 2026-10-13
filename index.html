@@ -17,7 +17,12 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
         body { background-color: var(--bg-light); color: var(--text-dark); display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
 
-        #modo-reloj { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 250; display: none; flex-direction: column; align-items: center; justify-content: flex-start; color: #e5e7eb; text-align: center; gap: 0.5rem; padding: 1rem; }
+        #modo-reloj {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 250; display: none;
+            flex-direction: column; align-items: center; justify-content: flex-start;
+            color: #e5e7eb; text-align: center; gap: 0.5rem; padding: 1rem;
+        }
         #modo-reloj.activo { display: flex; }
         #reloj-hora { font-size: 6rem; font-weight: 800; color: #fff; letter-spacing: 0.05em; line-height: 1; margin-top: 1.5rem; }
         #reloj-fecha { font-size: 1.3rem; color: #9ca3af; margin-top: auto; }
@@ -27,7 +32,13 @@
         .foto-capa { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; opacity: 0; transition: opacity 2.5s ease; z-index: 0; }
         #reloj-hora, #reloj-fecha, #reloj-saludo, #reloj-proximo, #reloj-salir { position: relative; z-index: 1; }
 
-        #pantalla-alarma { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #059669 0%, #047857 100%); z-index: 300; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; padding: 2rem; }
+        #pantalla-alarma {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            z-index: 300; display: none; flex-direction: column;
+            align-items: center; justify-content: center; color: white;
+            text-align: center; padding: 2rem;
+        }
         #pantalla-alarma.activa { display: flex; }
         .alarma-icono { font-size: 5rem; margin-bottom: 1rem; animation: pulse 1s ease-in-out infinite; }
         @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
@@ -160,7 +171,7 @@
         <div class="nav-buttons">
             <button class="btn-nav btn-install" id="btn-instalar-app" onclick="instalarPWA()" title="Instalar">📲</button>
             <button class="btn-nav" onclick="iniciarModoReloj()" title="Modo reloj">🕐</button>
-            <button class="btn-nav" onclick="abrirPantalla('pantalla-herramientas')" title="Herramientas">️</button>
+            <button class="btn-nav" onclick="abrirPantalla('pantalla-herramientas')" title="Herramientas">🛠️</button>
             <button class="btn-nav" onclick="abrirPantalla('pantalla-ajustes')" title="Ajustes">⚙️</button>
         </div>
     </header>
@@ -182,14 +193,14 @@
                 </div>
             </div>
 
-            <div id="card-checkin" style="display:none; background:#ecfdf5; border:1px solid #34d399; border-radius:0.75rem; padding:0.4rem 0.6rem;">
+   <div id="card-checkin" style="display:none; background:#ecfdf5; border:1px solid #34d399; border-radius:0.75rem; padding:0.4rem 0.6rem;">
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap;">
                     <span style="color:#065f46; font-size:0.95rem; font-weight:700; flex:1;">💚 ¿Cómo estuvo tu día?</span>
                     <button class="btn-action" style="background:#059669; padding:8px 14px; font-size:0.95rem;" onclick="confirmarCheckin()">Estoy bien</button>
                 </div>
             </div>
 
-            <div id="card-agua" style="display:none; background:#eff6ff; border:1px solid #93c5fd; border-radius:0.75rem; padding:0.4rem 0.6rem;">
+          <div id="card-agua" style="display:none; background:#eff6ff; border:1px solid #93c5fd; border-radius:0.75rem; padding:0.4rem 0.6rem;">
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap;">
                     <span id="agua-frase" style="font-size:0.9rem; color:#1e40af; font-weight:600; flex:1;"></span>
                     <span style="font-size:0.8rem; color:#6b7280;">💧 <span id="agua-count">0</span></span>
@@ -198,7 +209,7 @@
                 </div>
             </div>
 
-            <div id="card-festejo" style="display:none; background:#fff7ed; border:2px solid #f97316; border-radius:0.75rem; padding:0.5rem 0.7rem;">
+<div id="card-festejo" style="display:none; background:#fff7ed; border:2px solid #f97316; border-radius:0.75rem; padding:0.5rem 0.7rem;">
               <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap;">
                 <span id="festejo-frase" style="color:#c2410c; font-size:1rem; font-weight:700; flex:1;"></span>
                 <a id="festejo-wa" class="btn-action" style="background:#25d366; text-decoration:none; padding:8px 14px; font-size:0.95rem;" target="_blank">💬 Saludar</a>
@@ -221,7 +232,7 @@
                     <div id="lista-salud"></div>
                 </div>
                 <div class="section-card" id="card-salud-futura" style="display:none;">
-                    <h2> Medicamentos Próximos</h2>
+                    <h2>📅 Medicamentos Próximos</h2>
                     <div id="lista-salud-futura"></div>
                 </div>
             </div>
@@ -278,7 +289,7 @@
                 <select id="act-tipo" onchange="actualizarVisibilidadFrecuencia()">
                     <option value="tarea">Actividad</option>
                     <option value="med">Medicamento</option>
-                    <option value="rec"> Recordatorio</option>
+                    <option value="rec">📌 Recordatorio</option>
                     <option value="bolsillo">Gasto</option>
                 </select>
             </div>
@@ -325,7 +336,7 @@
             </div>
             <button class="btn-submit" style="background-color:#374151;" onclick="guardarPantallaReloj()">🔆 Guardar Pantalla</button>
             <div class="form-group" style="margin-top:1rem;">
-                <label> Fotos del modo reloj (podés elegir varias)</label>
+                <label>📷 Fotos del modo reloj (podés elegir varias)</label>
                 <input type="file" id="fotos-reloj" accept="image/*" multiple onchange="guardarFotosReloj(event)">
                 <button class="btn-submit" style="background-color:#6b7280; margin-top:0.5rem;" onclick="quitarFotosReloj()">Quitar fotos (fondo negro)</button>
             </div>
@@ -393,14 +404,14 @@
         </div>
 
         <div class="section-card" style="box-shadow:none; padding:0; margin-bottom:1.5rem;">
-            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);"> Ajustes de Alertas</h3>
+            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">🔔 Ajustes de Alertas</h3>
             <div class="form-group">
                 <label>Sonido para Medicamentos</label>
                 <select id="sonido-salud">
                     <option value="zen">🎵 Melodía Zen</option>
-                    <option value="aves"> Pajaritos</option>
+                    <option value="aves">🐦 Pajaritos</option>
                     <option value="digital">🔔 Timbre Digital</option>
-                    <option value="chicharra"> Chicharra Suave</option>
+                    <option value="chicharra">🚨 Chicharra Suave</option>
                 </select>
             </div>
             <div class="form-group">
@@ -408,12 +419,24 @@
                 <select id="sonido-tareas">
                     <option value="zen">🎵 Melodía Zen</option>
                     <option value="aves">🐦 Pajaritos</option>
-                    <option value="digital"> Timbre Digital</option>
+                    <option value="digital">🔔 Timbre Digital</option>
                     <option value="chicharra">🚨 Chicharra Suave</option>
                 </select>
             </div>
             <button class="btn-submit" onclick="probarSonidoSeleccionado()">🎵 Probar Sonido</button>
         </div>
+
+      <!-- INICIO: Bloque de Vinculación -->
+        <div class="section-card" style="box-shadow:none; padding:0; margin-top:1.5rem; border-top:2px solid #e5e7eb;">
+            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">🔗 Vincular Usuario</h3>
+            <div class="form-group">
+                <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.25rem; color:#4b5563;">Código de 6 dígitos</label>
+                <input type="text" id="vinc-codigo" placeholder="Ej: 347630" maxlength="6" style="width:100%; padding:0.8rem; font-size:1.3rem; letter-spacing:6px; text-align:center; border:2px solid #d1d5db; border-radius:0.75rem;">
+            </div>
+            <button class="btn-submit" style="background-color:#059669; width:100%; margin-top:0.5rem;" onclick="probarVinculacion()">🔗 Vincular</button>
+            <div id="resultado-vinculo" style="margin-top:1rem; text-align:center;"></div>
+        </div>
+        <!-- FIN: Bloque de Vinculación -->
 
         <div class="section-card" style="box-shadow:none; padding:0;">
             <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">💾 Copia de Seguridad</h3>
@@ -421,19 +444,6 @@
             <input type="file" id="file-backup" accept=".json" onchange="importarCopiaSeguridad(event)">
             <button type="button" class="btn-submit" style="background-color:#6b7280; margin-top:1rem;" onclick="cerrarPantalla('pantalla-ajustes')">Volver</button>
         </div>
-
-        <!-- BLOQUE DE VINCULACIÓN -->
-        <div id="bloque-vincular" class="section-card" style="box-shadow:none; padding:1rem; margin-top:1.5rem; border-top:2px solid #e5e7eb;">
-          <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">🔗 Vincular Usuario</h3>
-          <div class="form-group">
-            <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.25rem; color:#4b5563;">Código de 6 dígitos</label>
-            <input type="text" id="vinc-codigo" placeholder="Ej: 347630" maxlength="6" style="width:100%; padding:0.8rem; font-size:1.3rem; letter-spacing:6px; text-align:center; border:2px solid #d1d5db; border-radius:0.75rem;">
-          </div>
-          <button id="btn-vincular" class="btn-submit" style="background-color:#059669; width:100%; margin-top:0.5rem;" onclick="vincularUsuario()"> Vincular</button>
-          <div id="lista-vinculos" style="margin-top:1rem;"></div>
-        </div>
-        <!-- FIN BLOQUE DE VINCULACIÓN -->
-
     </div>
 
     <div id="pantalla-herramientas" class="overlay-screen">
@@ -443,7 +453,7 @@
         </div>
         <div class="vista-solapa active" id="vista-notas">
             <div class="section-card">
-                <h2> Bloc de Notas</h2>
+                <h2>📝 Bloc de Notas</h2>
                 <textarea id="bloc-notas" style="width:100%; height:220px; padding:0.75rem; border:1px solid #d1d5db; border-radius:0.5rem; font-size:1.05rem; line-height:1.5;" placeholder="Escribí con el teclado o tocá Dictar..."></textarea>
                 <button class="btn-submit" style="background-color:#7c3aed; margin-top:0.5rem;" onclick="dictarAlBloc()">🎙️ Dictar nota</button>
                 <button class="btn-submit" style="background-color:#3b82f6; margin-top:0.5rem;" onclick="guardarNotaBloc()">💾 Guardar</button>
@@ -510,7 +520,7 @@
         </form>
     </div>
 
-    <div class="espacio-publicitario" onclick="clickSlider()">
+ <div class="espacio-publicitario" onclick="clickSlider()">
         <div class="slide-texto visible" id="slide-a"></div>
         <div class="slide-texto" id="slide-b"></div>
     </div>
@@ -520,179 +530,6 @@
     </footer>
 
 <script>
-// ==========================================================
-// SISTEMA DE VINCULACIÓN (Definido PRIMERO para asegurar que exista)
-// ==========================================================
-
-async function vincularUsuario() {
-  alert('[DEBUG] Iniciando vinculación...');
-  
-  const codigoInput = document.getElementById('vinc-codigo');
-  const codigo = codigoInput ? codigoInput.value.trim() : '';
-  
-  if (!codigo || codigo.length !== 6) {
-    alert('[DEBUG] Código inválido: ' + codigo);
-    nubeToastCV('Ingresá un código de 6 dígitos');
-    return;
-  }
-  
-  alert('[DEBUG] Código ingresado: ' + codigo + ' | uidCV: ' + uidCV);
-  
-  if (!nubeOK_CV || !uidCV || !supaCV) {
-    alert('[DEBUG] No hay conexión a la nube. nubeOK: ' + nubeOK_CV + ' | uidCV: ' + uidCV + ' | supaCV: ' + !!supaCV);
-    nubeToastCV('Primero activá la nube');
-    return;
-  }
-  
-  try {
-    alert('[DEBUG] Buscando código en BD...');
-    const { data: codigos, error: errorBusqueda } = await supaCV
-      .from('codigos_vinculacion')
-      .select('*')
-      .eq('codigo', codigo)
-      .eq('usada', false)
-      .limit(1);
-    
-    alert('[DEBUG] Resultado búsqueda: ' + JSON.stringify(codigos) + ' | Error: ' + JSON.stringify(errorBusqueda));
-    
-    if (errorBusqueda) throw errorBusqueda;
-    if (!codigos || codigos.length === 0) {
-      alert('[DEBUG] Código no encontrado o ya usado');
-      nubeToastCV('Código inválido o ya fue usado');
-      return;
-    }
-    
-    const codigoData = codigos[0];
-    alert('[DEBUG] Código encontrado: ' + JSON.stringify(codigoData));
-    
-    const { data: vinculosExistentes, error: errorCheck } = await supaCV
-      .from('vinculos_familiares')
-      .select('id')
-      .eq('adulto_id', codigoData.adulto_id)
-      .eq('cuidador_id', uidCV)
-      .limit(1);
-      
-    alert('[DEBUG] Verificación duplicados: ' + JSON.stringify(vinculosExistentes) + ' | Error: ' + JSON.stringify(errorCheck));
-    
-    if (errorCheck) throw errorCheck;
-    
-    if (vinculosExistentes && vinculosExistentes.length > 0) {
-      alert('[DEBUG] Ya existe vínculo');
-      nubeToastCV('⚠️ Ya estás vinculado con este usuario');
-      renderVinculos(); 
-      return;
-    }
-    
-    alert('[DEBUG] Creando vínculo...');
-    const { error: errorVinculo } = await supaCV
-      .from('vinculos_familiares')
-      .insert({
-        adulto_id: codigoData.adulto_id,
-        cuidador_id: uidCV,
-        nombre_adulto: codigoData.nombre_adulto || 'Usuario'
-      });
-    
-    alert('[DEBUG] Resultado insert: ' + JSON.stringify(errorVinculo));
-    
-    if (errorVinculo) throw errorVinculo;
-    
-    alert('[DEBUG] Marcando código como usado...');
-    const { error: errorUpdate } = await supaCV
-      .from('codigos_vinculacion')
-      .update({ usada: true })
-      .eq('id', codigoData.id);
-    
-    alert('[DEBUG] Resultado update: ' + JSON.stringify(errorUpdate));
-    
-    if (errorUpdate) throw errorUpdate;
-    
-    alert('[DEBUG] ¡Vinculación exitosa!');
-    nubeToastCV('✅ ¡Vinculado con ' + (codigoData.nombre_adulto || 'Usuario') + '!');
-    
-    if (codigoInput) codigoInput.value = '';
-    renderVinculos();
-    
-  } catch (e) {
-    alert('[DEBUG] ERROR: ' + e.message + ' | ' + JSON.stringify(e));
-    nubeToastCV('❌ Error: ' + e.message);
-  }
-}
-
-async function renderVinculos() {
-  console.log('[DEBUG RENDER] Inicio. nubeOK_CV:', nubeOK_CV, '| uidCV:', uidCV, '| supaCV:', !!supaCV);
-  
-  if (!nubeOK_CV || !uidCV || !supaCV) {
-    console.log('[DEBUG RENDER] Abortado: falta conexión o uidCV');
-    return;
-  }
-  
-  try {
-    const { data: vinculos, error } = await supaCV
-      .from('vinculos_familiares')
-      .select('*')
-      .eq('cuidador_id', uidCV);
-    
-    console.log('[DEBUG RENDER] Vínculos encontrados en BD:', vinculos, 'Error:', error);
-    
-    const cont = document.getElementById('lista-vinculos');
-    const bloque = document.getElementById('bloque-vincular');
-    
-    console.log('[DEBUG RENDER] Elementos DOM: cont=', !!cont, 'bloque=', !!bloque);
-    
-    if (!cont) {
-      console.log('[DEBUG RENDER] Abortado: no se encontró #lista-vinculos');
-      return;
-    }
-    
-    if (!vinculos || vinculos.length === 0) {
-      console.log('[DEBUG RENDER] 0 vínculos. Mostrando formulario.');
-      cont.innerHTML = '<p style="color:#6b7280;text-align:center;font-size:0.9rem; margin-top:10px;">Sin vínculos activos</p>';
-      if (bloque) bloque.style.display = 'block';
-    } else {
-      console.log('[DEBUG RENDER] ' + vinculos.length + ' vínculos. Ocultando formulario y mostrando tarjetas.');
-      if (bloque) bloque.style.display = 'none';
-      
-      let html = '<div style="margin-top:15px; padding:15px; background:#ecfdf5; border:2px solid #059669; border-radius:12px;">';
-      html += '<p style="font-size:1rem; color:#059669; font-weight:700; margin:0 0 10px 0; text-align:center;"> Usuarios Vinculados</p>';
-      
-      vinculos.forEach(v => {
-        const fecha = v.creada_en ? new Date(v.creada_en).toLocaleDateString('es-AR') : 'Fecha desconocida';
-        html += '<div style="background:white; padding:12px; border-radius:8px; margin-top:8px; box-shadow:0 1px 3px rgba(0,0,0,0.1);">';
-        html += '<div style="font-weight:600; color:#1f2937; font-size:1.05rem;">👤 ' + (v.nombre_adulto || 'Usuario') + '</div>';
-        html += '<div style="font-size:0.85rem; color:#6b7280; margin-top:4px;">Vinculado el: ' + fecha + '</div>';
-        html += '</div>';
-      });
-      html += '</div>';
-      
-      cont.innerHTML = html;
-    }
-  } catch (e) {
-    console.error('[DEBUG RENDER] Error general:', e);
-  }
-}
-
-// Event listener para el botón de vincular
-document.addEventListener('DOMContentLoaded', function() {
-  const btnVincular = document.getElementById('btn-vincular');
-  if (btnVincular) {
-    btnVincular.addEventListener('click', function() {
-      alert('¡Botón clickeado!');
-      vincularUsuario();
-    });
-  } else {
-    console.log('No se encontró el botón btn-vincular');
-  }
-});
-
-// Ejecutar renderVinculos al cargar
-window.addEventListener('load', function() {
-  setTimeout(renderVinculos, 2000);
-});
-
-// ==========================================================
-// RESTO DEL CÓDIGO DE CÍRCULO VITAL
-// ==========================================================
-
 const storageOK = (() => { try { const t='__t__'; localStorage.setItem(t,t); localStorage.removeItem(t); return true; } catch(e){return false;} })();
 function guardarD(k,v){ if(storageOK) try{localStorage.setItem(k,v);}catch(e){} }
 function obtenerD(k,d=null){ if(storageOK) try{return localStorage.getItem(k)||d;}catch(e){return d;} return d; }
@@ -766,6 +603,9 @@ function borrarMedBase(id){
   });
 }
 
+// ============================================
+// NOTIFICACIONES DEL NAVEGADOR
+// ============================================
 function notificar(titulo, cuerpo){
   try{
     if('Notification' in window && Notification.permission==='granted'){
@@ -777,6 +617,9 @@ document.addEventListener('click', ()=>{
   try{ if('Notification' in window && Notification.permission==='default') Notification.requestPermission(); }catch(e){}
 }, {once:true});
 
+// ============================================
+// MODO MESITA DE LUZ
+// ============================================
 let relojInterval = null;
 let wakeLockSentinel = null;
 let bateriaCargando = false;
@@ -840,7 +683,7 @@ function proximoRecordatorio(){
     if(m.tipo==='med' && registroTomas[`${hoy}_${m.id}`]) return false;
     const p=m.hora.split(':'); return (parseInt(p[0])*60+parseInt(p[1]))>minAh;
   }).sort((x,y)=>x.hora.localeCompare(y.hora));
-  if(futuros.length) return ` Próximo: ${futuros[0].nombre} — ${futuros[0].hora}`;
+  if(futuros.length) return `⏰ Próximo: ${futuros[0].nombre} — ${futuros[0].hora}`;
   return '✅ Sin recordatorios pendientes hoy';
 }
 
@@ -861,6 +704,9 @@ function guardarPantallaReloj(){
   else if(mr.classList.contains('activo')) pedirWakeLock();
 }
 
+// ============================================
+// FOTOS DEL MODO RELOJ
+// ============================================
 let fotosReloj = JSON.parse(obtenerD('circulo_fotos_reloj','[]'))||[];
 let fotoIdx = 0;
 let fotoCapaActiva = 0;
@@ -946,10 +792,13 @@ function detenerSlideshowFotos(){
 }
 function guardarFotoSeg(){
   guardarD('circulo_foto_seg', document.getElementById('box-foto-seg').value);
-  mostrarToast('️ Tiempo guardado');
+  mostrarToast('⏱️ Tiempo guardado');
   if(document.getElementById('modo-reloj').classList.contains('activo')) iniciarSlideshowFotos();
 }
 
+// ============================================
+// SLIDER
+// ============================================
 const slidesContenido = [
   {t:'💧 Consejo: un vasito de agua cada tanto mantiene la cabeza fresca.'},
   {t:'🕐 Tocá el relojito de arriba para el modo mesita de luz.'},
@@ -982,6 +831,9 @@ function clickSlider(){
   if(s && s.u) window.open(s.u,'_blank');
 }
 
+// ============================================
+// SONIDOS
+// ============================================
 let audioCtx = null;
 function obtenerAudio(){
   try {
@@ -1069,6 +921,9 @@ function reproducirSonido(ctx,tipo){
 }
 function probarSonidoSeleccionado(){ reproducirSonido(obtenerAudio(), document.getElementById('sonido-salud').value); }
 
+// ============================================
+// ÁNIMO DE LA MAÑANA
+// ============================================
 function registrarAnimo(emoji, texto){
   const hoy=hoyStr();
   guardarD(`circulo_animo_${hoy}`, emoji);
@@ -1098,6 +953,9 @@ function mostrarAnimoSiCorresponde(){
   }
 }
 
+// ============================================
+// AGUA
+// ============================================
 function fraseAgua(nombre){
   const frases=[
     `${nombre}, ¿un vasito de agua?`,
@@ -1142,6 +1000,9 @@ function ahoraNoAgua(){
   mostrarToast('Dale, te aviso más tarde 😊');
 }
 
+// ============================================
+// CELEBRACIONES
+// ============================================
 function pascuas(anio){
   const a=anio%19, b=Math.floor(anio/100), c=anio%100;
   const d=Math.floor(b/4), e=b%4, f=Math.floor((b+8)/25), g=Math.floor((b-f+1)/3);
@@ -1213,10 +1074,10 @@ function borrarCelebracion(id){
     if(!ok) return;
     let lista=JSON.parse(obtenerD('circulo_celebraciones','[]'))||[];
     lista=lista.filter(c=>c.id!==id);
-    guardarD('circulo_celebraciones', JSON.stringify(lista));
+guardarD('circulo_celebraciones', JSON.stringify(lista));
     nubeBorrarFestejo(id);
     renderAdminCelebraciones(); renderCelebraciones(); mostrarToast('Celebración borrada');
-  });
+      });
 }
 function renderAdminCelebraciones(){
   const cont=document.getElementById('lista-celebraciones-admin');
@@ -1224,7 +1085,7 @@ function renderAdminCelebraciones(){
   const lista=JSON.parse(obtenerD('circulo_celebraciones','[]'))||[];
   let html='';
   lista.forEach(c=>{
-    html+=`<div class="agenda-card" style="border-left-color:#f59e0b;"><div><strong> ${escapeHTML(c.nombre)}</strong><br><small style="color:#6b7280;">${c.dia}/${c.mes}</small></div><button class="btn-delete" onclick="borrarCelebracion(${c.id})">✕</button></div>`;
+    html+=`<div class="agenda-card" style="border-left-color:#f59e0b;"><div><strong>🎉 ${escapeHTML(c.nombre)}</strong><br><small style="color:#6b7280;">${c.dia}/${c.mes}</small></div><button class="btn-delete" onclick="borrarCelebracion(${c.id})">✕</button></div>`;
   });
   cont.innerHTML=html;
 }
@@ -1234,6 +1095,9 @@ function guardarFestPop(){
   mostrarToast('Fechas populares actualizadas');
 }
 
+// ============================================
+// ALARMAS
+// ============================================
 let alarmaItem=null, bucleAlarm=null;
 function verificarAlarmas(){
   const ahora=new Date();
@@ -1258,7 +1122,7 @@ function verificarAlarmas(){
 }
 function dispararAlarma(item){
   alarmaItem=item;
-  document.getElementById('alarma-emoji').textContent = item.tipo==='med'?'💊':'⏰';
+  document.getElementById('alarma-emoji').textContent = item.tipo==='med'?'💊':'️';
   document.getElementById('alarma-titulo').textContent = item.tipo==='med'?'Hora del Medicamento':'Recordatorio';
   document.getElementById('alarma-detalle').textContent = `${item.nombre} — ${item.hora}`;
   document.getElementById('pantalla-alarma').classList.add('activa');
@@ -1300,6 +1164,9 @@ function alarmaPosponer(){
   mostrarToast(`Pospuesta a las ${nh}`); renderizar();
 }
 
+// ============================================
+// CONTADOR DE PASTILLAS
+// ============================================
 function claveStock(id){
   const esBase = medicamentosBase.some(m=>m.id===id);
   return esBase ? String(id) : 'a'+id;
@@ -1313,7 +1180,7 @@ function descontarStock(id, nombre){
   }
 }
 function avisarStockBajo(nombre, n){
-  mostrarToast(`️ Quedan ${n} de ${nombre}`);
+  mostrarToast(`⚠️ Quedan ${n} de ${nombre}`);
   notificar('⚠️ Stock bajo', `Quedan ${n} de ${nombre}`);
   decir(`Atención: quedan ${n} comprimidos de ${nombre}`);
   enviarAlertaFamiliar([{nombre:`Parece que quedan ${n} comprimidos de ${nombre}. Conviene comprar.`, hora:'--'}], true);
@@ -1344,6 +1211,9 @@ function renderAdminMeds(){
   cont.innerHTML = html || '<p style="color:#6b7280; text-align:center; padding:0.5rem;">Sin medicamentos cargados.</p>';
 }
 
+// ============================================
+// NAVEGACIÓN
+// ============================================
 function abrirPantalla(id){
   document.querySelectorAll('.overlay-screen').forEach(p=>p.classList.remove('activa'));
   if(id==='pantalla-inicio') document.getElementById('pantalla-inicio').style.display='block';
@@ -1368,6 +1238,9 @@ function instalarPWA(){
 function decir(t){ try{ if('speechSynthesis' in window){ window.speechSynthesis.cancel(); const m=new SpeechSynthesisUtterance(t); m.lang='es-ES'; window.speechSynthesis.speak(m); } }catch(e){} }
 function mostrarToast(msg){ const t=document.getElementById('toast-notification'); if(t){ t.innerText=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3500);} }
 
+// ============================================
+// DICTADO
+// ============================================
 function activarMicrofono(){
   const btn=document.getElementById('btn-hablar');
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -1458,6 +1331,9 @@ function procesarDictadoIntegral(f){
   mostrarToast(icono+(fecha?formatearFecha(fecha)+' '+h:'hoy '+h));
 }
 
+// ============================================
+// BOLSILLO
+// ============================================
 function calcularRestante(){ return bolsilloPresupuesto - listaGastos.reduce((s,g)=>s+g.monto,0); }
 function actualizarParametrosBolsillo(){
   bolsilloPresupuesto=parseFloat(document.getElementById('box-presupuesto-total').value)||30000;
@@ -1475,6 +1351,9 @@ function verificarYDepurarBolsillo(){
   }catch(e){}
 }
 
+// ============================================
+// ENTRADAS MANUALES
+// ============================================
 function actualizarVisibilidadFrecuencia(){
   const t=document.getElementById('act-tipo').value;
   const g=document.getElementById('grp-frecuencia');
@@ -1498,7 +1377,7 @@ function guardarEntradaManual(){
       }
     }
     if(t==='tarea') act.fecha=fecha||hoyStr();
-    if(t==='rec') act.fecha=fecha||hoyStr();
+if(t==='rec') act.fecha=fecha||hoyStr();
     listaActividades.push(act);
     guardarD('circulo_actividades',JSON.stringify(listaActividades));
     if(t==='rec') nubeSubirRecordatorio(act.id, act.nombre, act.fecha);
@@ -1549,6 +1428,9 @@ function alarmaNoTome(){
 
 function gestionarCierreAlertaAlEnviar(){ alertaForzadaOcultaHoy=true; document.getElementById('alerta-olvido').style.display='none'; mostrarToast("Enviado"); }
 
+// ============================================
+// AVISO AL FAMILIAR
+// ============================================
 function enviarAlertaFamiliar(listaMeds, forzar){
   const email = datosFicha.email;
   if(!email) return false;
@@ -1584,7 +1466,7 @@ function probarAvisoEmail(){
   datosFicha.email = email;
   guardarD('circulo_ficha', JSON.stringify(datosFicha));
   enviarAlertaFamiliar([{nombre:'Prueba de alerta (todo funciona)', hora:'--'}], true);
-  mostrarToast(' Enviando email de prueba...');
+  mostrarToast('📧 Enviando email de prueba...');
 }
 
 function controlarOlvidosConsecutivos(){
@@ -1612,6 +1494,9 @@ function controlarOlvidosConsecutivos(){
   }
 }
 
+// ============================================
+// CHECK-IN
+// ============================================
 function guardarCheckin(){
   checkinActivo=document.getElementById('box-checkin-activo').value;
   checkinHora=document.getElementById('box-checkin-hora').value||'20:00';
@@ -1639,7 +1524,7 @@ function controlarFestejos(){
   var frase='🎉 Acordate: el cumpleaños de '+c.nombre+' es '+cuando+'.';
   var ef=document.getElementById('festejo-frase'); if(ef) ef.textContent=frase;
   var wa=document.getElementById('festejo-wa');
-  if(wa){ if(c.tel){ wa.style.display='inline-block'; wa.href='https://wa.me/'+c.tel+'?text='+encodeURIComponent('¡Feliz cumpleaños! Te mando un abrazo enorme '); } else { wa.style.display='none'; } }
+  if(wa){ if(c.tel){ wa.style.display='inline-block'; wa.href='https://wa.me/'+c.tel+'?text='+encodeURIComponent('¡Feliz cumpleaños! Te mando un abrazo enorme 🎉'); } else { wa.style.display='none'; } }
   card.style.display='block';
   var hoy=hoyStr();
   var clave='circulo_festejo_aviso_'+hoy+'_'+(c.id||c.nombre);
@@ -1668,6 +1553,9 @@ function controlarCheckin(){
   }
 }
 
+// ============================================
+// RENDER
+// ============================================
 function renderizar(){
   const cS=document.getElementById('lista-salud'), cT=document.getElementById('lista-tareas'), cG=document.getElementById('lista-gastos');
   const cSF=document.getElementById('lista-salud-futura'), cardSF=document.getElementById('card-salud-futura');
@@ -1675,6 +1563,7 @@ function renderizar(){
   const hoy=hoyStr();
   let hS='',hT='',hG='',hSF='';
 
+  // === MEDICACIONES DE HOY (ordenadas: próximas primero, vencidas al final) ===
   var ahoraHHMM=('0'+new Date().getHours()).slice(-2)+':'+('0'+new Date().getMinutes()).slice(-2);
   var pendientes=[];
   medsActivos().forEach(function(m){ if(!registroTomas[hoy+'_'+m.id]) pendientes.push({id:m.id,nombre:m.nombre,hora:m.hora,base:true}); });
@@ -1688,6 +1577,7 @@ function renderizar(){
     hS+='<div class="med-card"><div><strong>💊 '+escapeHTML(p.nombre)+'</strong>'+tagAtras+'<br><small style="color:#6b7280;">'+escapeHTML(p.hora)+'</small>'+stTxt+'</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;"><button class="btn-action" onclick="marcarToma('+p.id+',\''+escapeHTML(p.nombre)+'\')">Ya lo tomé</button><button class="btn-action" style="background:#6b7280;" onclick="marcarNoToma('+p.id+',\''+escapeHTML(p.nombre)+'\')">No lo tomé</button></div></div>';
   });
 
+  // === MEDICAMENTOS PRÓXIMOS (días siguientes) ===
   listaActividades
     .filter(function(a){ return a.tipo==='med' && fechaDe(a)>hoy; })
     .sort(function(x,y){ return (fechaDe(x)+x.hora).localeCompare(fechaDe(y)+y.hora); })
@@ -1695,6 +1585,7 @@ function renderizar(){
       hSF+='<div class="med-card"><div><strong>💊 '+escapeHTML(a.nombre)+'</strong><br><small style="color:#6b7280;">📅 '+formatearFecha(a.fecha)+' — '+escapeHTML(a.hora)+' · Temporal</small></div></div>';
     });
 
+  // === TAREAS Y RECORDATORIOS ===
   listaActividades
     .filter(function(a){ return (a.tipo==='tarea'||a.tipo==='rec') && fechaDe(a)>=hoy; })
     .sort(function(x,y){ return (fechaDe(x)+x.hora).localeCompare(fechaDe(y)+y.hora); })
@@ -1730,15 +1621,21 @@ function renderizar(){
   controlarFestejos();
 }
 
+// ============================================
+// SOS
+// ============================================
 function solicitarConfirmacionSOS(){ mostrarConfirmacion("¿Activar alerta SOS?", ok=>{ if(ok) ejecutarSOS(); }); }
 function ejecutarSOS(){
   sonidoChicharra(obtenerAudio()); decir("SOS activado");
   notificar('🆘 SOS', 'Se activó la alerta de emergencia');
-  if(datosFicha.email) enviarAlertaFamiliar([{nombre:' BOTÓN SOS PRESIONADO', hora:'--'}], true);
+  if(datosFicha.email) enviarAlertaFamiliar([{nombre:'🆘 BOTÓN SOS PRESIONADO', hora:'--'}], true);
   if(datosFicha.familiar){ const m=encodeURIComponent(`¡ALERTA SOS! Se presionó el botón de emergencia en Círculo Vital.`); window.open(`https://wa.me/${datosFicha.familiar}?text=${m}`,'_blank'); }
   else { mostrarToast("Cargá un contacto en Ficha Médica"); abrirPantalla('pantalla-ficha'); }
 }
 
+// ============================================
+// BACKUP
+// ============================================
 function exportarCopiaSeguridad(){
   const d={circulo_tomas:obtenerD('circulo_tomas'), circulo_actividades:obtenerD('circulo_actividades'), circulo_ficha:obtenerD('circulo_ficha'), circulo_sonidos:obtenerD('circulo_sonidos'), bolsillo_total:obtenerD('bolsillo_total'), bolsillo_ciclo:obtenerD('bolsillo_ciclo'), bolsillo_gastos:obtenerD('bolsillo_gastos'), bolsillo_reset_date:obtenerD('bolsillo_reset_date'), circulo_nota_bloc:obtenerD('circulo_nota_bloc'), circulo_stock:obtenerD('circulo_stock'), circulo_celebraciones:obtenerD('circulo_celebraciones')};
   const s="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(d));
@@ -1747,6 +1644,9 @@ function exportarCopiaSeguridad(){
 }
 function importarCopiaSeguridad(e){ const f=e.target.files[0]; if(!f) return; const r=new FileReader(); r.onload=ev=>{ try{ const d=JSON.parse(ev.target.result); Object.keys(d).forEach(k=>{ if(d[k]!==null) guardarD(k,d[k]); }); location.reload(); }catch(err){ mostrarToast("Archivo inválido"); } }; r.readAsText(f); }
 
+// ============================================
+// FICHA
+// ============================================
 function guardarDatosFicha(e){
   e.preventDefault();
   datosFicha.nombre=document.getElementById('f-nombre').value;
@@ -1759,6 +1659,9 @@ function guardarDatosFicha(e){
   mostrarToast("Ficha guardada"); cerrarPantalla('pantalla-ficha'); renderizar();
 }
 
+// ============================================
+// LOOP PRINCIPAL
+// ============================================
 var tickLoop=0;
 setInterval(()=>{
   verificarAlarmas();
@@ -1771,6 +1674,9 @@ setInterval(()=>{
   Object.keys(alertasEjecutadas).forEach(k=>{ if(!k.startsWith(h+'_')) delete alertasEjecutadas[k]; });
 }, 10000);
 
+// ============================================
+// INIT
+// ============================================
 document.addEventListener("DOMContentLoaded", ()=>{
   renderizar();
   const ss=document.getElementById('sonido-salud'), st=document.getElementById('sonido-tareas');
@@ -1804,6 +1710,9 @@ document.addEventListener("DOMContentLoaded", ()=>{
   verificarYDepurarBolsillo();
 });
 
+// ============================================
+// BLOC Y CALCULADORA
+// ============================================
 function dictarAlBloc(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){ mostrarToast("Dictado no disponible"); return; }
@@ -1857,9 +1766,9 @@ async function nubeConectarCV(){
   if(!supaCV){ nubeEstadoCV('⚠️ Sin nube: el vigilante no existe'); return; }
   try{
     const { data: ses } = await supaCV.auth.getSession();
-    if(ses&&ses.session){ uidCV=ses.session.user.id; nubeOK_CV=true; nubeModo_CV='ok'; nubeEstadoCV('☁️ Conectado con tu familia — vigilante activo'); nubeMigrarFestejosYRecordatorios(); }
+if(ses&&ses.session){ uidCV=ses.session.user.id; nubeOK_CV=true; nubeModo_CV='ok'; nubeEstadoCV('☁️ Conectado con tu familia — vigilante activo'); nubeMigrarFestejosYRecordatorios(); }
     else { uidCV=null; nubeOK_CV=false; nubeModo_CV='off'; nubeEstadoCV('☁️ Nube apagada — tocá acá para activarla', true); }
-  }catch(e){ nubeOK_CV=false; nubeEstadoCV('️ Sin nube: el vigilante no existe'); }
+  }catch(e){ nubeOK_CV=false; nubeEstadoCV('⚠️ Sin nube: el vigilante no existe'); }
 }
 nubeElCV.addEventListener('click', ()=>{
   if(nubeOK_CV){ nubeToastCV('☁️ La nube ya está conectada'); return; }
@@ -1901,7 +1810,7 @@ document.getElementById('nube-new-cv').addEventListener('click', async ()=>{
     else { nubeToastCV('⚠️ '+(m||'No se pudo crear')); }
   }
 });
-
+// ===== SINCRONIZACIÓN DE FESTEJOS Y RECORDATORIOS =====
 function nubeSubirFestejo(fid, nombre, dia, mes, tel){
   if(!nubeOK_CV||!uidCV||!supaCV) return;
   supaCV.from('festejos_circulo').upsert({ id: fid, user_id: uidCV, nombre: nombre||'', dia: dia, mes: mes, tel: tel||'' }).then(function(){}).catch(function(e){ console.log('[nube cv] subir festejo', e); });
@@ -1920,7 +1829,7 @@ function nubeBorrarRecordatorio(rid){
 }
 function nubeMigrarFestejosYRecordatorios(){
   if(!nubeOK_CV||!uidCV||!supaCV) return;
-  if(obtenerD('circulo_migrado_nube_v2','')==='1') return;
+if(obtenerD('circulo_migrado_nube_v2','')==='1') return;
   var fests=JSON.parse(obtenerD('circulo_celebraciones','[]'))||[];
   fests.forEach(function(c){ nubeSubirFestejo(c.id, c.nombre, c.dia, c.mes, c.tel); });
   (listaActividades||[]).forEach(function(a){ if(a.tipo==='rec') nubeSubirRecordatorio(a.id, a.nombre, a.fecha); });
@@ -1930,7 +1839,89 @@ function nubeMigrarFestejosYRecordatorios(){
 if(supaCV){ supaCV.auth.onAuthStateChange((ev,ses)=>{ if(ses&&ses.user){ uidCV=ses.user.id; nubeOK_CV=true; nubeConectarCV(); } }); }
 window.addEventListener('online', ()=>{ nubeConectarCV(); });
 nubeRescatarTokenCV().then(()=>{ nubeConectarCV(); setTimeout(()=>nubeConectarCV(),2500); setTimeout(()=>nubeConectarCV(),7000); });
+// ============================================
+// SISTEMA DE VINCULACIÓN (Agregado seguro y aislado)
+// ============================================
+function probarVinculacion() {
+    alert("1. ¡El botón funciona!");
+
+    var codigoInput = document.getElementById('vinc-codigo');
+    var codigo = codigoInput ? codigoInput.value.trim() : '';
+
+    if (!codigo || codigo.length !== 6) {
+        alert("2. El código debe tener 6 dígitos. Ingresaste: '" + codigo + "'");
+        return;
+    }
+
+    alert("3. Código válido: " + codigo);
+    alert("4. Estado de la nube: nubeOK_CV = " + (typeof nubeOK_CV !== 'undefined' ? nubeOK_CV : 'NO EXISTE'));
+    alert("5. Estado del usuario: uidCV = " + (typeof uidCV !== 'undefined' ? uidCV : 'NO EXISTE'));
+
+    if (typeof nubeOK_CV === 'undefined' || !nubeOK_CV) {
+        alert("ERROR: La nube no está conectada. Por favor, iniciá sesión primero.");
+        return;
+    }
+
+    if (typeof uidCV === 'undefined' || !uidCV) {
+        alert("ERROR: No hay usuario logueado (uidCV es nulo).");
+        return;
+    }
+
+    alert("6. Todo OK. Buscando código en la base de datos...");
+
+    // Usamos una función asíncrona interna para no complicar la función principal
+    (async function() {
+        try {
+            var respuesta = await supaCV
+                .from('codigos_vinculacion')
+                .select('*')
+                .eq('codigo', codigo)
+                .eq('usada', false)
+                .limit(1);
+
+            alert("7. Respuesta de la base de datos:\nData: " + JSON.stringify(respuesta.data) + "\nError: " + JSON.stringify(respuesta.error));
+
+            if (respuesta.error) {
+                alert("ERROR DE SUPABASE: " + respuesta.error.message);
+                return;
+            }
+
+            if (!respuesta.data || respuesta.data.length === 0) {
+                alert("El código no existe o ya fue usado.");
+                return;
+            }
+
+            var datosCodigo = respuesta.data[0];
+            alert("8. Código encontrado. Adulto ID: " + datosCodigo.adulto_id);
+
+            alert("9. Creando el vínculo...");
+            var resultadoVinculo = await supaCV
+                .from('vinculos_familiares')
+                .insert({
+                    adulto_id: datosCodigo.adulto_id,
+                    cuidador_id: uidCV,
+                    nombre_adulto: datosCodigo.nombre_adulto || 'Usuario'
+                });
+
+            alert("10. Resultado del vínculo:\nError: " + JSON.stringify(resultadoVinculo.error));
+
+            if (resultadoVinculo.error) {
+                alert("ERROR AL CREAR VÍNCULO: " + resultadoVinculo.error.message);
+                return;
+            }
+
+            alert("11. Marcando código como usado...");
+            await supaCV.from('codigos_vinculacion').update({ usada: true }).eq('id', datosCodigo.id);
+
+            alert("12. ¡VINCULACIÓN EXITOSA! 🎉");
+            codigoInput.value = '';
+            document.getElementById('resultado-vinculo').innerHTML = '<p style="color:#059669; font-weight:bold; font-size:1.1rem;">✅ Vinculado correctamente</p>';
+
+        } catch (error) {
+            alert("ERROR CRÍTICO: " + error.message);
+        }
+    })();
+}
 </script>
-    <script src="./vincular.js"></script>
 </body>
 </html>

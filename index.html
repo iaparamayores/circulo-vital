@@ -1856,8 +1856,6 @@ function probarVinculacion() {
     alert("3. Código válido: " + codigo);
     alert("4. Estado de la nube: nubeOK_CV = " + (typeof nubeOK_CV !== 'undefined' ? nubeOK_CV : 'NO EXISTE'));
     alert("5. Estado del usuario: uidCV = " + (typeof uidCV !== 'undefined' ? uidCV : 'NO EXISTE'));
-    alert("5b. URL de Supabase: " + (typeof SUPA_URL_CV !== 'undefined' ? SUPA_URL_CV : 'NO EXISTE'));
-    alert("5c. API Key: " + (typeof SUPA_KEY_CV !== 'undefined' ? SUPA_KEY_CV.substring(0, 20) + '...' : 'NO EXISTE'));
 
     if (typeof nubeOK_CV === 'undefined' || !nubeOK_CV) {
         alert("ERROR: La nube no está conectada. Por favor, iniciá sesión primero.");
@@ -1873,16 +1871,12 @@ function probarVinculacion() {
 
     (async function() {
         try {
-            alert("6b. Ejecutando consulta a codigos_vinculacion...");
-            
+            // Buscar SIN filtro de usada (porque ese filtro está fallando)
             var respuesta = await supaCV
                 .from('codigos_vinculacion')
                 .select('*')
                 .eq('codigo', codigo)
-                .eq('usada', false)
                 .limit(1);
-
-            alert("7. Respuesta completa:\n" + JSON.stringify(respuesta, null, 2));
 
             if (respuesta.error) {
                 alert("ERROR DE SUPABASE: " + respuesta.error.message);
@@ -1890,20 +1884,19 @@ function probarVinculacion() {
             }
 
             if (!respuesta.data || respuesta.data.length === 0) {
-                alert("El código no existe o ya fue usado.\n\nIntentando buscar sin filtro de 'usada'...");
-                
-                var respuesta2 = await supaCV
-                    .from('codigos_vinculacion')
-                    .select('*')
-                    .eq('codigo', codigo)
-                    .limit(1);
-                
-                alert("7b. Resultado sin filtro usada:\n" + JSON.stringify(respuesta2, null, 2));
+                alert("El código no existe en la base de datos.");
                 return;
             }
 
             var datosCodigo = respuesta.data[0];
-            alert("8. Código encontrado. Adulto ID: " + datosCodigo.adulto_id);
+            
+            // Verificar manualmente si está usado
+            if (datosCodigo.usada === true) {
+                alert("El código ya fue usado anteriormente.");
+                return;
+            }
+
+            alert("8. Código encontrado y disponible. Adulto ID: " + datosCodigo.adulto_id);
 
             alert("9. Creando el vínculo...");
             var resultadoVinculo = await supaCV
@@ -1914,22 +1907,20 @@ function probarVinculacion() {
                     nombre_adulto: datosCodigo.nombre_adulto || 'Usuario'
                 });
 
-            alert("10. Resultado del vínculo:\n" + JSON.stringify(resultadoVinculo, null, 2));
-
             if (resultadoVinculo.error) {
                 alert("ERROR AL CREAR VÍNCULO: " + resultadoVinculo.error.message);
                 return;
             }
 
-            alert("11. Marcando código como usado...");
+            alert("10. Vínculo creado. Marcando código como usado...");
             await supaCV.from('codigos_vinculacion').update({ usada: true }).eq('id', datosCodigo.id);
 
-            alert("12. ¡VINCULACIÓN EXITOSA! 🎉");
+            alert("11. ¡VINCULACIÓN EXITOSA! ");
             codigoInput.value = '';
             document.getElementById('resultado-vinculo').innerHTML = '<p style="color:#059669; font-weight:bold; font-size:1.1rem;">✅ Vinculado correctamente</p>';
 
         } catch (error) {
-            alert("ERROR CRÍTICO: " + error.message + "\n\nStack: " + error.stack);
+            alert("ERROR CRÍTICO: " + error.message);
         }
     })();
 }

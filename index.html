@@ -1843,35 +1843,26 @@ nubeRescatarTokenCV().then(()=>{ nubeConectarCV(); setTimeout(()=>nubeConectarCV
 // SISTEMA DE VINCULACIÓN (Agregado seguro y aislado)
 // ============================================
 function probarVinculacion() {
-    alert("1. ¡El botón funciona!");
-
     var codigoInput = document.getElementById('vinc-codigo');
     var codigo = codigoInput ? codigoInput.value.trim() : '';
 
     if (!codigo || codigo.length !== 6) {
-        alert("2. El código debe tener 6 dígitos. Ingresaste: '" + codigo + "'");
+        nubeToastCV('Ingresá un código de 6 dígitos');
         return;
     }
 
-    alert("3. Código válido: " + codigo);
-    alert("4. Estado de la nube: nubeOK_CV = " + (typeof nubeOK_CV !== 'undefined' ? nubeOK_CV : 'NO EXISTE'));
-    alert("5. Estado del usuario: uidCV = " + (typeof uidCV !== 'undefined' ? uidCV : 'NO EXISTE'));
-
     if (typeof nubeOK_CV === 'undefined' || !nubeOK_CV) {
-        alert("ERROR: La nube no está conectada. Por favor, iniciá sesión primero.");
+        nubeToastCV('Primero activá la nube');
         return;
     }
 
     if (typeof uidCV === 'undefined' || !uidCV) {
-        alert("ERROR: No hay usuario logueado (uidCV es nulo).");
+        nubeToastCV('Iniciá sesión primero');
         return;
     }
 
-    alert("6. Todo OK. Buscando código en la base de datos...");
-
     (async function() {
         try {
-            // Buscar SIN filtro de usada (porque ese filtro está fallando)
             var respuesta = await supaCV
                 .from('codigos_vinculacion')
                 .select('*')
@@ -1879,26 +1870,22 @@ function probarVinculacion() {
                 .limit(1);
 
             if (respuesta.error) {
-                alert("ERROR DE SUPABASE: " + respuesta.error.message);
+                nubeToastCV('Error: ' + respuesta.error.message);
                 return;
             }
 
             if (!respuesta.data || respuesta.data.length === 0) {
-                alert("El código no existe en la base de datos.");
+                nubeToastCV('Código no encontrado');
                 return;
             }
 
             var datosCodigo = respuesta.data[0];
             
-            // Verificar manualmente si está usado
             if (datosCodigo.usada === true) {
-                alert("El código ya fue usado anteriormente.");
+                nubeToastCV('Este código ya fue usado');
                 return;
             }
 
-            alert("8. Código encontrado y disponible. Adulto ID: " + datosCodigo.adulto_id);
-
-            alert("9. Creando el vínculo...");
             var resultadoVinculo = await supaCV
                 .from('vinculos_familiares')
                 .insert({
@@ -1908,19 +1895,18 @@ function probarVinculacion() {
                 });
 
             if (resultadoVinculo.error) {
-                alert("ERROR AL CREAR VÍNCULO: " + resultadoVinculo.error.message);
+                nubeToastCV('Error al vincular: ' + resultadoVinculo.error.message);
                 return;
             }
 
-            alert("10. Vínculo creado. Marcando código como usado...");
             await supaCV.from('codigos_vinculacion').update({ usada: true }).eq('id', datosCodigo.id);
 
-            alert("11. ¡VINCULACIÓN EXITOSA! ");
+            nubeToastCV('✅ ¡Vinculado con ' + (datosCodigo.nombre_adulto || 'Usuario') + '!');
             codigoInput.value = '';
             document.getElementById('resultado-vinculo').innerHTML = '<p style="color:#059669; font-weight:bold; font-size:1.1rem;">✅ Vinculado correctamente</p>';
 
         } catch (error) {
-            alert("ERROR CRÍTICO: " + error.message);
+            nubeToastCV('Error: ' + error.message);
         }
     })();
 }

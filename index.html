@@ -1708,39 +1708,56 @@ function renderizar(){
 }
 
 // ============================================
-// SOS CON CUENTA REGRESIVA (3 SEGUNDOS)
+// SOS: MANTENER PRESIONADO (Anti-accidental)
 // ============================================
-let sosTimerInterval = null;
-let sosTimeLeft = 3;
+let sosHoldTimer = null;
+let sosHoldTime = 3;
 
-function solicitarConfirmacionSOS() {
+function iniciarPresionSOS(e) {
+    e.preventDefault(); // Evita comportamentos extraños al tocar
+    
     var modal = document.getElementById('modal-sos-countdown');
     if (modal) {
         modal.classList.add('show');
-        sosTimeLeft = 3;
-        document.getElementById('sos-timer').textContent = sosTimeLeft;
         
-        sosTimerInterval = setInterval(function() {
-            sosTimeLeft--;
-            document.getElementById('sos-timer').textContent = sosTimeLeft;
+        // Cambiamos el texto para indicar que debe mantener presionado
+        var titulo = modal.querySelector('p:first-of-type');
+        var subtitulo = modal.querySelector('p:nth-of-type(2)');
+        if(titulo) titulo.textContent = '🚨 MANTENÉ PRESIONADO PARA ENVIAR SOS';
+        if(subtitulo) subtitulo.textContent = 'Soltá el botón para cancelar';
+        
+        sosHoldTime = 3;
+        document.getElementById('sos-timer').textContent = sosHoldTime;
+        
+        sosHoldTimer = setInterval(function() {
+            sosHoldTime--;
+            document.getElementById('sos-timer').textContent = sosHoldTime;
             
-            if (sosTimeLeft <= 0) {
-                clearInterval(sosTimerInterval);
+            if (sosHoldTime <= 0) {
+                clearInterval(sosHoldTimer);
                 ejecutarSOS();
             }
         }, 1000);
     }
 }
 
-function cancelarSOS() {
-    if (sosTimerInterval) {
-        clearInterval(sosTimerInterval);
+function cancelarPresionSOS() {
+    if (sosHoldTimer) {
+        clearInterval(sosHoldTimer);
+        sosHoldTimer = null;
     }
+    
     var modal = document.getElementById('modal-sos-countdown');
     if (modal) {
         modal.classList.remove('show');
+        
+        // Restauramos el texto original por si acaso
+        var titulo = modal.querySelector('p:first-of-type');
+        var subtitulo = modal.querySelector('p:nth-of-type(2)');
+        if(titulo) titulo.textContent = '🚨 ENVIANDO ALERTA SOS';
+        if(subtitulo) subtitulo.textContent = 'Soltá el botón para cancelar';
     }
-    mostrarToast('Alerta SOS cancelada');
+    mostrarToast('Acción cancelada');
 }
 
 function ejecutarSOS() {
@@ -1749,14 +1766,19 @@ function ejecutarSOS() {
         modal.classList.remove('show');
     }
     
+    // 1. Sonido y Voz
     sonidoChicharra(obtenerAudio());
     decir("Alerta de emergencia enviada a tus familiares");
+    
+    // 2. Notificación local
     notificar('🆘 SOS', 'Se envió la alerta a tus cuidadores');
     
+    // 3. Enviar Email a todos los cuidadores vinculados
     if (datosFicha.email || (typeof nubeOK_CV !== 'undefined' && nubeOK_CV)) {
-        enviarAlertaFamiliar([{ nombre: ' BOTÓN SOS PRESIONADO', hora: '--' }], true);
+        enviarAlertaFamiliar([{ nombre: '🆘 BOTÓN SOS PRESIONADO', hora: '--' }], true);
     }
     
+    // 4. Abrir WhatsApp (si hay número cargado)
     if (datosFicha.familiar) {
         var m = encodeURIComponent('¡ALERTA SOS! Se presionó el botón de emergencia en Círculo Vital. Necesito ayuda urgente.');
         window.open('https://wa.me/' + datosFicha.familiar + '?text=' + m, '_blank');
@@ -1765,9 +1787,8 @@ function ejecutarSOS() {
         abrirPantalla('pantalla-ficha');
     }
     
-    mostrarToast(' ¡Alerta SOS enviada!');
+    mostrarToast('🚨 ¡Alerta SOS enviada!');
 }
-
 // ============================================
 // BACKUP
 // ============================================

@@ -427,23 +427,20 @@
         </div>
 
       <!-- INICIO: Bloque de Vinculación -->
-        <div class="section-card" style="box-shadow:none; padding:0; margin-top:1.5rem; border-top:2px solid #e5e7eb;">
-            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">🔗 Vincular Usuario</h3>
-            <div class="form-group">
-                <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.25rem; color:#4b5563;">Código de 6 dígitos</label>
-                <input type="text" id="vinc-codigo" placeholder="Ej: 347630" maxlength="6" style="width:100%; padding:0.8rem; font-size:1.3rem; letter-spacing:6px; text-align:center; border:2px solid #d1d5db; border-radius:0.75rem;">
-            </div>
-            <button class="btn-submit" style="background-color:#059669; width:100%; margin-top:0.5rem;" onclick="probarVinculacion()">🔗 Vincular</button>
-            <div id="resultado-vinculo" style="margin-top:1rem; text-align:center;"></div>
-        </div>
-        <!-- FIN: Bloque de Vinculación -->
-
-        <div class="section-card" style="box-shadow:none; padding:0;">
-            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">💾 Copia de Seguridad</h3>
-            <button type="button" class="btn-submit" style="background-color:#4b5563; margin:0.5rem 0;" onclick="exportarCopiaSeguridad()">Descargar</button>
-            <input type="file" id="file-backup" accept=".json" onchange="importarCopiaSeguridad(event)">
-            <button type="button" class="btn-submit" style="background-color:#6b7280; margin-top:1rem;" onclick="cerrarPantalla('pantalla-ajustes')">Volver</button>
-        </div>
+<div class="section-card" style="box-shadow:none; padding:0; margin-top:1.5rem; border-top:2px solid #e5e7eb;">
+    <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">🔗 Vincular Usuario</h3>
+    <div class="form-group">
+        <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.25rem; color:#4b5563;">Código de 6 dígitos</label>
+        <input type="text" id="vinc-codigo" placeholder="Ej: 347630" maxlength="6" style="width:100%; padding:0.8rem; font-size:1.3rem; letter-spacing:6px; text-align:center; border:2px solid #d1d5db; border-radius:0.75rem;">
+    </div>
+    <div class="form-group">
+        <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.25rem; color:#4b5563;">Tu email (para recibir alertas)</label>
+        <input type="email" id="vinc-email" placeholder="tucorreo@gmail.com" style="width:100%; padding:0.8rem; font-size:1rem; border:2px solid #d1d5db; border-radius:0.75rem;">
+    </div>
+    <button class="btn-submit" style="background-color:#059669; width:100%; margin-top:0.5rem;" onclick="probarVinculacion()">🔗 Vincular</button>
+    <div id="resultado-vinculo" style="margin-top:1rem; text-align:center;"></div>
+</div>
+<!-- FIN: Bloque de Vinculación -->
     </div>
 
     <div id="pantalla-herramientas" class="overlay-screen">

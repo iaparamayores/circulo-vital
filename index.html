@@ -460,6 +460,13 @@
     <div id="resultado-vinculo" style="margin-top:1rem; text-align:center;"></div>
 </div>
 <!-- FIN: Bloque de Vinculación -->
+
+            <div class="section-card" style="box-shadow:none; padding:0;">
+            <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">💾 Copia de Seguridad</h3>
+            <button type="button" class="btn-submit" style="background-color:#4b5563; margin:0.5rem 0;" onclick="exportarCopiaSeguridad()">Descargar</button>
+            <input type="file" id="file-backup" accept=".json" onchange="importarCopiaSeguridad(event)">
+            <button type="button" class="btn-submit" style="background-color:#6b7280; margin-top:1rem;" onclick="cerrarPantalla('pantalla-ajustes')">Volver</button>
+        </div>
     </div>
 
     <div id="pantalla-herramientas" class="overlay-screen">

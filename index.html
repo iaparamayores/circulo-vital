@@ -1425,69 +1425,138 @@ function alarmaNoTome(){
 
 function gestionarCierreAlertaAlEnviar(){ alertaForzadaOcultaHoy=true; document.getElementById('alerta-olvido').style.display='none'; mostrarToast("Enviado"); }
 
+
 // ============================================
-// AVISO AL FAMILIAR
+// AVISO AL FAMILIAR (Versión Multi-Cuidador)
 // ============================================
-function enviarAlertaFamiliar(listaMeds, forzar){
-  const email = datosFicha.email;
-  if(!email) return false;
+async function enviarAlertaFamiliar(listaMeds, forzar) {
   const ahora = Date.now();
-  const ultimo = parseInt(obtenerD('circulo_ultimo_aviso','0'))||0;
-  if(!forzar && (ahora - ultimo) < 2*60*60*1000) return false;
+  const ultimo = parseInt(obtenerD('circulo_ultimo_aviso', '0')) || 0;
+  if (!forzar && (ahora - ultimo) < 2 * 60 * 60 * 1000) return false;
   guardarD('circulo_ultimo_aviso', String(ahora));
 
-  const nombres = listaMeds.map(m=>`${m.nombre} (${m.hora})`).join(', ');
-  const cuerpo = {
-    _subject: '🚨 ALERTA Círculo Vital: medicación sin tomar',
-    Paciente: datosFicha.nombre || 'Usuario de Círculo Vital',
-    Detalle: `NO se reportaron las siguientes tomas: ${nombres}.`,
-    Accion: `Si estás cerca, acercate o llamalo al ${datosFicha.familiar || 'celular registrado'}. Este aviso se envió automáticamente porque pasaron más de 30 minutos del horario sin confirmar la toma.`,
-    _template: 'table',
-    _captcha: 'false'
-  };
+  const nombres = listaMeds.map(m => `${m.nombre} (${m.hora})`).join(', ');
+  const paciente = datosFicha.nombre || 'Usuario de Círculo Vital';
+  const familiarTel = datosFicha.familiar || 'celular registrado';
 
-  fetch('https://formsubmit.co/ajax/' + encodeURIComponent(email), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify(cuerpo)
-  }).then(r=>{
-    if(r.ok) mostrarToast('📧 Aviso automático enviado al familiar');
-    else console.log('Email no enviado', r.status);
-  }).catch(e=>{ console.log('Fallo aviso email', e); });
-  return true;
+  // 1. Obtener emails de los cuidadores vinculados a este adulto
+  let emailsCuidadores = [];
+  if (nubeOK_CV && uidCV && supaCV) {
+    try {
+      const { data: vinculos, error } = await supaCV
+        .from('vinculos_familiares')
+        .select('email_cuidador')
+        .eq('adulto_id', uidCV); // uidCV es el ID del adulto en esta app
+
+      if (!error && vinculos) {
+        emailsCuidadores = vinculos
+          .map(v => v.email_cuidador)
+          .filter(e => e && e.includes('@')); // Filtra solo emails válidos
+      }
+    } catch (e) {
+      console.log('[alerta] error consultando vínculos:', e);
+    }
+  }
+
+  // 2. Agregar también el email de la ficha (por si acaso), sin duplicar
+  if (datosFicha.email && datosFicha.email.includes('@')) {
+    if (!emailsCuidadores.includes(datosFicha.email)) {
+      emailsCuidadores.push(datosFicha.email);
+    }
+  }
+
+  // 3. Si no hay ningún email, no enviar
+  if (emailsCuidadores.length === 0) {
+    console.log('[alerta] no hay emails configurados para enviar');
+    return false;
+  }
+
+  const asunto = '🚨 ALERTA Círculo Vital: medicación sin tomar';
+  const detalle = `NO se reportaron las siguientes tomas: ${nombres}.`;
+  const accion = `Si estás cerca, acercate o llamalo al ${familiarTel}. Este aviso se envió automáticamente porque pasaron más de 30 minutos del horario sin confirmar la toma.`;
+
+  // 4. Enviar el email a cada cuidador vinculado
+  let enviados = 0;
+  for (const email of emailsCuidadores) {
+    try {
+      const cuerpo = {
+        _subject: asunto,
+        Paciente: paciente,
+        Detalle: detalle,
+        Accion: accion,
+        _template: 'table',
+        _captcha: 'false'
+      };
+
+      const r = await fetch('https://formsubmit.co/ajax/' + encodeURIComponent(email), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(cuerpo)
+      });
+
+      if (r.ok) enviados++;
+      else console.log('Email no enviado a', email, r.status);
+    } catch (e) {
+      console.log('Fallo aviso email a', email, e);
+    }
+  }
+
+  // 5. Avisar en pantalla cuántos se enviaron
+  if (enviados > 0) {
+    mostrarToast(`📧 Aviso enviado a ${enviados} cuidador(es)`);
+  }
+  
+  return enviados > 0;
 }
 
-function probarAvisoEmail(){
+function probarAvisoEmail() {
   const email = document.getElementById('c1-mail').value.trim();
-  if(!email){ mostrarToast('Cargá primero el email del familiar'); return; }
+  if (!email) { 
+    mostrarToast('Cargá primero el email del familiar'); 
+    return; 
+  }
   datosFicha.email = email;
   guardarD('circulo_ficha', JSON.stringify(datosFicha));
-  enviarAlertaFamiliar([{nombre:'Prueba de alerta (todo funciona)', hora:'--'}], true);
+  
+  // Llamamos a la función (ahora es async, pero funciona igual como "fire and forget")
+  enviarAlertaFamiliar([{ nombre: 'Prueba de alerta (todo funciona)', hora: '--' }], true);
   mostrarToast('📧 Enviando email de prueba...');
 }
 
-function controlarOlvidosConsecutivos(){
-  if(alertaForzadaOcultaHoy){ document.getElementById('alerta-olvido').style.display='none'; return; }
-  const hoy=hoyStr();
-  const ahora=new Date();
-  const ahoraMin=ahora.getHours()*60+ahora.getMinutes();
-  const ha=`${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}`;
-  const meds=[...medsActivos(),...listaActividades.filter(a=>a.tipo==='med' && fechaDe(a)===hoy)];
-  const pas=meds.filter(m=>m.hora<=ha);
-  const atrasados=pas.filter(m=>{
-    if(registroTomas[`${hoy}_${m.id}`]) return false;
-    const p=m.hora.split(':');
-    const mm=parseInt(p[0])*60+parseInt(p[1]);
-    return (ahoraMin-mm)>=30;
+function controlarOlvidosConsecutivos() {
+  if (alertaForzadaOcultaHoy) { 
+    document.getElementById('alerta-olvido').style.display = 'none'; 
+    return; 
+  }
+  const hoy = hoyStr();
+  const ahora = new Date();
+  const ahoraMin = ahora.getHours() * 60 + ahora.getMinutes();
+  const ha = `${String(ahora.getHours()).padStart(2, '0')}:${String(ahora.getMinutes()).padStart(2, '0')}`;
+  
+  const meds = [...medsActivos(), ...listaActividades.filter(a => a.tipo === 'med' && fechaDe(a) === hoy)];
+  const pas = meds.filter(m => m.hora <= ha);
+  
+  const atrasados = pas.filter(m => {
+    if (registroTomas[`${hoy}_${m.id}`]) return false;
+    const p = m.hora.split(':');
+    const mm = parseInt(p[0]) * 60 + parseInt(p[1]);
+    return (ahoraMin - mm) >= 30;
   });
-  const b=document.getElementById('alerta-olvido');
-  if(b){
-    if(atrasados.length>=2){
-      b.style.display='block';
-      if(datosFicha.familiar){ const m=encodeURIComponent(`Hola, Círculo Vital detectó que no se reportaron las últimas tomas de medicación.`); document.getElementById('link-wa-olvido').href=`https://wa.me/${datosFicha.familiar}?text=${m}`; }
-      else document.getElementById('link-wa-olvido').href="#";
+  
+  const b = document.getElementById('alerta-olvido');
+  if (b) {
+    if (atrasados.length >= 2) {
+      b.style.display = 'block';
+      if (datosFicha.familiar) { 
+        const m = encodeURIComponent(`Hola, Círculo Vital detectó que no se reportaron las últimas tomas de medicación.`); 
+        document.getElementById('link-wa-olvido').href = `https://wa.me/${datosFicha.familiar}?text=${m}`; 
+      } else { 
+        document.getElementById('link-wa-olvido').href = "#"; 
+      }
       enviarAlertaFamiliar(atrasados, false);
-    } else b.style.display='none';
+    } else {
+      b.style.display = 'none';
+    }
   }
 }
 

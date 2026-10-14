@@ -1706,43 +1706,66 @@ let sosTimerInterval = null;
 let sosTimeLeft = 3;
 
 function solicitarConfirmacionSOS() {
-    document.getElementById('modal-sos-countdown').classList.add('show');
-    sosTimeLeft = 3;
-    document.getElementById('sos-timer').textContent = sosTimeLeft;
-    
-    sosTimerInterval = setInterval(() => {
-        sosTimeLeft--;
+    // Mostrar el modal
+    var modal = document.getElementById('modal-sos-countdown');
+    if (modal) {
+        modal.classList.add('show');
+        sosTimeLeft = 3;
         document.getElementById('sos-timer').textContent = sosTimeLeft;
-        if (sosTimeLeft <= 0) {
-            clearInterval(sosTimerInterval);
-            ejecutarSOS();
-        }
-    }, 1000);
+        
+        // Iniciar cuenta regresiva
+        sosTimerInterval = setInterval(function() {
+            sosTimeLeft--;
+            document.getElementById('sos-timer').textContent = sosTimeLeft;
+            
+            if (sosTimeLeft <= 0) {
+                clearInterval(sosTimerInterval);
+                ejecutarSOS();
+            }
+        }, 1000);
+    } else {
+        console.log("Error: No se encontró el modal-sos-countdown");
+    }
 }
 
 function cancelarSOS() {
-    clearInterval(sosTimerInterval);
-    document.getElementById('modal-sos-countdown').classList.remove('show');
+    if (sosTimerInterval) {
+        clearInterval(sosTimerInterval);
+    }
+    var modal = document.getElementById('modal-sos-countdown');
+    if (modal) {
+        modal.classList.remove('show');
+    }
     mostrarToast('Alerta SOS cancelada');
 }
 
 function ejecutarSOS() {
-    document.getElementById('modal-sos-countdown').classList.remove('show');
+    var modal = document.getElementById('modal-sos-countdown');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+    
+    // 1. Sonido y Voz
     sonidoChicharra(obtenerAudio());
     decir("Alerta de emergencia enviada a tus familiares");
+    
+    // 2. Notificación local
     notificar('🆘 SOS', 'Se envió la alerta a tus cuidadores');
     
-    if (datosFicha.email || (nubeOK_CV && uidCV)) {
+    // 3. Enviar Email a todos los cuidadores vinculados
+    if (datosFicha.email || (typeof nubeOK_CV !== 'undefined' && nubeOK_CV)) {
         enviarAlertaFamiliar([{ nombre: '🆘 BOTÓN SOS PRESIONADO', hora: '--' }], true);
     }
     
+    // 4. Abrir WhatsApp (si hay número cargado)
     if (datosFicha.familiar) {
-        const m = encodeURIComponent(`¡ALERTA SOS! Se presionó el botón de emergencia en Círculo Vital. Necesito ayuda urgente.`);
-        window.open(`https://wa.me/${datosFicha.familiar}?text=${m}`, '_blank');
+        var m = encodeURIComponent('¡ALERTA SOS! Se presionó el botón de emergencia en Círculo Vital. Necesito ayuda urgente.');
+        window.open('https://wa.me/' + datosFicha.familiar + '?text=' + m, '_blank');
     } else {
         mostrarToast("Cargá un contacto en Ficha Médica");
         abrirPantalla('pantalla-ficha');
     }
+    
     mostrarToast('🚨 ¡Alerta SOS enviada!');
 }
 

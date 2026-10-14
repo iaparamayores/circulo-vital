@@ -197,14 +197,20 @@
                     <a href="#" id="link-wa-olvido" class="btn-whatsapp" style="margin:0; padding:0.4rem 0.7rem; font-size:0.8rem;" target="_blank" onclick="gestionarCierreAlertaAlEnviar()">WhatsApp</a>
                 </div>
             </div>
-
-            <div class="section-card" style="text-align:center; padding: 0.4rem;">
-                <button class="btn-sos" onclick="solicitarConfirmacionSOS()">SOS</button>
-                <div style="display:flex; gap:0.5rem; justify-content:center; margin-top:0.75rem; flex-wrap:wrap;">
-                    <a id="link-llamar-familiar" href="#" class="btn-llamada" style="background:#0ea5e9;">📞 Llamar Familiar</a>
-                    <a href="tel:911" class="btn-llamada" style="background:#dc2626;">🚑 Emergencias</a>
-                </div>
-            </div>
+<div class="section-card" style="text-align:center; padding: 0.4rem;">
+    <button class="btn-sos" 
+        ontouchstart="iniciarPresionSOS(event)" 
+        ontouchend="cancelarPresionSOS()" 
+        onmousedown="iniciarPresionSOS(event)" 
+        onmouseup="cancelarPresionSOS()" 
+        onmouseleave="cancelarPresionSOS()">
+        SOS
+    </button>
+    <div style="display:flex; gap:0.5rem; justify-content:center; margin-top:0.75rem; flex-wrap:wrap;">
+        <a id="link-llamar-familiar" href="#" class="btn-llamada" style="background:#0ea5e9;">📞 Llamar Familiar</a>
+        <a href="tel:911" class="btn-llamada" style="background:#dc2626;">🚑 Emergencias</a>
+    </div>
+</div>
 
    <div id="card-checkin" style="display:none; background:#ecfdf5; border:1px solid #34d399; border-radius:0.75rem; padding:0.4rem 0.6rem;">
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap;">

@@ -1700,15 +1700,50 @@ function renderizar(){
 }
 
 // ============================================
-// SOS
+// SOS CON CUENTA REGRESIVA (3 SEGUNDOS)
 // ============================================
-function solicitarConfirmacionSOS(){ mostrarConfirmacion("¿Activar alerta SOS?", ok=>{ if(ok) ejecutarSOS(); }); }
-function ejecutarSOS(){
-  sonidoChicharra(obtenerAudio()); decir("SOS activado");
-  notificar('🆘 SOS', 'Se activó la alerta de emergencia');
-  if(datosFicha.email) enviarAlertaFamiliar([{nombre:'🆘 BOTÓN SOS PRESIONADO', hora:'--'}], true);
-  if(datosFicha.familiar){ const m=encodeURIComponent(`¡ALERTA SOS! Se presionó el botón de emergencia en Círculo Vital.`); window.open(`https://wa.me/${datosFicha.familiar}?text=${m}`,'_blank'); }
-  else { mostrarToast("Cargá un contacto en Ficha Médica"); abrirPantalla('pantalla-ficha'); }
+let sosTimerInterval = null;
+let sosTimeLeft = 3;
+
+function solicitarConfirmacionSOS() {
+    document.getElementById('modal-sos-countdown').classList.add('show');
+    sosTimeLeft = 3;
+    document.getElementById('sos-timer').textContent = sosTimeLeft;
+    
+    sosTimerInterval = setInterval(() => {
+        sosTimeLeft--;
+        document.getElementById('sos-timer').textContent = sosTimeLeft;
+        if (sosTimeLeft <= 0) {
+            clearInterval(sosTimerInterval);
+            ejecutarSOS();
+        }
+    }, 1000);
+}
+
+function cancelarSOS() {
+    clearInterval(sosTimerInterval);
+    document.getElementById('modal-sos-countdown').classList.remove('show');
+    mostrarToast('Alerta SOS cancelada');
+}
+
+function ejecutarSOS() {
+    document.getElementById('modal-sos-countdown').classList.remove('show');
+    sonidoChicharra(obtenerAudio());
+    decir("Alerta de emergencia enviada a tus familiares");
+    notificar('🆘 SOS', 'Se envió la alerta a tus cuidadores');
+    
+    if (datosFicha.email || (nubeOK_CV && uidCV)) {
+        enviarAlertaFamiliar([{ nombre: '🆘 BOTÓN SOS PRESIONADO', hora: '--' }], true);
+    }
+    
+    if (datosFicha.familiar) {
+        const m = encodeURIComponent(`¡ALERTA SOS! Se presionó el botón de emergencia en Círculo Vital. Necesito ayuda urgente.`);
+        window.open(`https://wa.me/${datosFicha.familiar}?text=${m}`, '_blank');
+    } else {
+        mostrarToast("Cargá un contacto en Ficha Médica");
+        abrirPantalla('pantalla-ficha');
+    }
+    mostrarToast('🚨 ¡Alerta SOS enviada!');
 }
 
 // ============================================

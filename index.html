@@ -1707,56 +1707,7 @@ function renderizar(){
   controlarFestejos();
 }
 
-// ============================================
-// SOS: MANTENER PRESIONADO (Anti-accidental)
-// ============================================
-let sosHoldTimer = null;
-let sosHoldTime = 3;
 
-function iniciarPresionSOS(e) {
-    e.preventDefault(); // Evita comportamentos extraños al tocar
-    
-    var modal = document.getElementById('modal-sos-countdown');
-    if (modal) {
-        modal.classList.add('show');
-        
-        // Cambiamos el texto para indicar que debe mantener presionado
-        var titulo = modal.querySelector('p:first-of-type');
-        var subtitulo = modal.querySelector('p:nth-of-type(2)');
-        if(titulo) titulo.textContent = '🚨 MANTENÉ PRESIONADO PARA ENVIAR SOS';
-        if(subtitulo) subtitulo.textContent = 'Soltá el botón para cancelar';
-        
-        sosHoldTime = 3;
-        document.getElementById('sos-timer').textContent = sosHoldTime;
-        
-        sosHoldTimer = setInterval(function() {
-            sosHoldTime--;
-            document.getElementById('sos-timer').textContent = sosHoldTime;
-            
-            if (sosHoldTime <= 0) {
-                clearInterval(sosHoldTimer);
-                ejecutarSOS();
-            }
-        }, 1000);
-    }
-}
-
-function cancelarPresionSOS() {
-    if (sosHoldTimer) {
-        clearInterval(sosHoldTimer);
-        sosHoldTimer = null;
-    }
-    
-    var modal = document.getElementById('modal-sos-countdown');
-    if (modal) {
-        modal.classList.remove('show');
-        
-        // Restauramos el texto original por si acaso
-        var titulo = modal.querySelector('p:first-of-type');
-        var subtitulo = modal.querySelector('p:nth-of-type(2)');
-        if(titulo) titulo.textContent = '🚨 ENVIANDO ALERTA SOS';
-        if(subtitulo) subtitulo.textContent = 'Soltá el botón para cancelar';
-    }
 // ============================================
 // SOS: MANTENER PRESIONADO (Versión Tranquilizadora)
 // ============================================

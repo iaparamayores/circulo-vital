@@ -133,14 +133,14 @@
         </div>
     </div>
     
-    <!-- Modal de Cuenta Regresiva SOS -->
-<div id="modal-sos-countdown" class="modal-overlay" style="background: rgba(220, 38, 38, 0.95); z-index: 9999;">
-    <div class="modal-box" style="background: transparent; border: 4px solid white;">
-        <p style="font-size: 1.5rem; font-weight: 800; color: white; margin-bottom: 1rem;">🚨 ENVIANDO ALERTA SOS</p>
-        <div id="sos-timer" style="font-size: 6rem; font-weight: 900; color: white; line-height: 1; margin: 1rem 0;">3</div>
-        <p style="color: white; font-size: 1.1rem; margin-bottom: 1.5rem;">Tocá "CANCELAR" si fue un error</p>
-        <button onclick="cancelarSOS()" style="background: white; color: #dc2626; border: none; padding: 1rem 2rem; border-radius: 1rem; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%;">
-            ❌ CANCELAR
+    <!-- Modal SOS Countdown (Versión Suave y Tranquilizadora) -->
+<div id="modal-sos-countdown" class="modal-overlay" style="background: rgba(245, 158, 11, 0.9); z-index: 9999;">
+    <div class="modal-box" style="background: white; border-radius: 1.5rem; padding: 2rem; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <p id="sos-titulo" style="font-size: 1.4rem; font-weight: 700; color: #1f2937; margin-bottom: 1rem;">🆘 Manteniendo para pedir ayuda...</p>
+        <div id="sos-timer" style="font-size: 5rem; font-weight: 900; color: #f59e0b; line-height: 1; margin: 1rem 0;">3</div>
+        <p id="sos-subtitulo" style="color: #6b7280; font-size: 1.1rem; margin-bottom: 1.5rem;">Soltá el botón en cualquier momento para cancelar</p>
+        <button onclick="cancelarPresionSOS()" style="background: #e5e7eb; color: #374151; border: none; padding: 0.8rem 2rem; border-radius: 1rem; font-size: 1.1rem; font-weight: 600; cursor: pointer; width: 100%;">
+            Cancelar
         </button>
     </div>
 </div>
@@ -1757,7 +1757,49 @@ function cancelarPresionSOS() {
         if(titulo) titulo.textContent = '🚨 ENVIANDO ALERTA SOS';
         if(subtitulo) subtitulo.textContent = 'Soltá el botón para cancelar';
     }
-    mostrarToast('Acción cancelada');
+// ============================================
+// SOS: MANTENER PRESIONADO (Versión Tranquilizadora)
+// ============================================
+let sosHoldTimer = null;
+let sosHoldTime = 3;
+
+function iniciarPresionSOS(e) {
+    e.preventDefault();
+    
+    var modal = document.getElementById('modal-sos-countdown');
+    if (modal) {
+        modal.classList.add('show');
+        
+        // Textos amables y claros
+        document.getElementById('sos-titulo').textContent = '🆘 Manteniendo para pedir ayuda...';
+        document.getElementById('sos-subtitulo').textContent = 'Soltá el botón para cancelar';
+        
+        sosHoldTime = 3;
+        document.getElementById('sos-timer').textContent = sosHoldTime;
+        
+        sosHoldTimer = setInterval(function() {
+            sosHoldTime--;
+            document.getElementById('sos-timer').textContent = sosHoldTime;
+            
+            if (sosHoldTime <= 0) {
+                clearInterval(sosHoldTimer);
+                ejecutarSOS();
+            }
+        }, 1000);
+    }
+}
+
+function cancelarPresionSOS() {
+    if (sosHoldTimer) {
+        clearInterval(sosHoldTimer);
+        sosHoldTimer = null;
+    }
+    
+    var modal = document.getElementById('modal-sos-countdown');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+    mostrarToast('Acción cancelada. Todo bien.');
 }
 
 function ejecutarSOS() {
@@ -1766,12 +1808,12 @@ function ejecutarSOS() {
         modal.classList.remove('show');
     }
     
-    // 1. Sonido y Voz
+    // 1. Sonido y Voz (tranquilizadora)
     sonidoChicharra(obtenerAudio());
-    decir("Alerta de emergencia enviada a tus familiares");
+    decir("Ayuda en camino. Tus familiares han sido avisados.");
     
     // 2. Notificación local
-    notificar('🆘 SOS', 'Se envió la alerta a tus cuidadores');
+    notificar('🆘 SOS', 'Se avisó a tus cuidadores');
     
     // 3. Enviar Email a todos los cuidadores vinculados
     if (datosFicha.email || (typeof nubeOK_CV !== 'undefined' && nubeOK_CV)) {
@@ -1787,7 +1829,7 @@ function ejecutarSOS() {
         abrirPantalla('pantalla-ficha');
     }
     
-    mostrarToast('🚨 ¡Alerta SOS enviada!');
+    mostrarToast('🚨 ¡Ayuda solicitada con éxito!');
 }
 // ============================================
 // BACKUP

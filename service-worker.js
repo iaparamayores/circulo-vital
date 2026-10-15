@@ -1,13 +1,11 @@
 // ============================================
 // SERVICE WORKER — CÍRCULO VITAL
-// Estrategia: network-first para HTML (se actualiza solo)
-//             cache-first para íconos y manifest
+// Estrategia: network-first para HTML, cache-first para el resto
 // ============================================
 
-const VERSION = 'v8';  // ← subir solo si cambiás íconos o manifest
+const VERSION = 'v9';  // ← Subimos a v9 para forzar la actualización del SW roto
 const CACHE_NAME = `circulo-vital-${VERSION}`;
 
-// Archivos que se guardan sí o sí al instalar la app
 const APP_SHELL = [
   './',
   './index.html',
@@ -17,7 +15,7 @@ const APP_SHELL = [
 ];
 
 // ============================================
-// INSTALACIÓN: guarda los archivos base
+// 1. INSTALACIÓN
 // ============================================
 self.addEventListener('install', event => {
   console.log('[SW] Instalando nueva versión:', VERSION);
@@ -36,7 +34,7 @@ self.addEventListener('install', event => {
 });
 
 // ============================================
-// ACTIVACIÓN: limpia cachés viejas y toma el control
+// 2. ACTIVACIÓN
 // ============================================
 self.addEventListener('activate', event => {
   console.log('[SW] Activando versión:', VERSION);
@@ -57,17 +55,14 @@ self.addEventListener('activate', event => {
 });
 
 // ============================================
-// INTERCEPTAR PETICIONES
+// 3. INTERCEPTAR PETICIONES (FETCH)
 // ============================================
 self.addEventListener('fetch', event => {
   const request = event.request;
 
-  // Solo manejamos GET y peticiones http(s)
   if (request.method !== 'GET' || !request.url.startsWith('http')) return;
 
-  // 🔴 HTML (navegación): NETWORK-FIRST
-  // Siempre busca lo más nuevo en internet; usa caché solo si no hay red.
-  // Así los cambios al index.html llegan solos, sin tocar VERSION.
+  // HTML: NETWORK-FIRST
   if (request.mode === 'navigate' || request.destination === 'document') {
     event.respondWith(
       fetch(request)
@@ -81,15 +76,13 @@ self.addEventListener('fetch', event => {
           return response;
         })
         .catch(() => {
-          console.log('[SW] Sin red para HTML, usando caché');
           return caches.match('./index.html');
         })
     );
     return;
   }
 
-  // 🔵 Todo lo demás (íconos, manifest, imágenes): CACHE-FIRST
-  // Usa lo guardado; solo va a internet si no está cacheado.
+  // Todo lo demás: CACHE-FIRST
   event.respondWith(
     caches.match(request).then(cached => {
       if (cached) return cached;
@@ -101,32 +94,37 @@ self.addEventListener('fetch', event => {
           });
         }
         return response;
-          
-      });// Escuchar eventos push entrantes
+      });
+    })
+  );
+}); // <--- AQUÍ TERMINA CORRECTAMENTE EL FETCH
+
+// ============================================
+// 4. ESCUCHAR EVENTOS PUSH ENTRANTES
+// ============================================
 self.addEventListener('push', function(event) {
     if (event.data) {
         const data = event.data.json();
         const options = {
             body: data.body || 'Tienes una nueva notificación',
-            icon: './icon-192.png', // Asegurate de tener este icono
+            icon: './icon-192.png',
             badge: './icon-192.png',
-            vibrate: [200, 100, 200],
+            vibrate: [200, 100, 200, 100, 200], // Vibración más notoria para emergencias
             tag: 'circulo-vital-alerta',
-            requireInteraction: true // Mantiene la notificación en pantalla hasta que el usuario la toque
+            requireInteraction: true // Mantiene la notificación en pantalla hasta que se toque
         };
         event.waitUntil(
-            self.registration.showNotification(data.title || 'Círculo Vital', options)
+            self.registration.showNotification(data.title || '🚨 Círculo Vital', options)
         );
     }
 });
 
-// Qué pasa cuando el usuario toca la notificación
+// ============================================
+// 5. QUÉ PASA AL TOCAR LA NOTIFICACIÓN
+// ============================================
 self.addEventListener('notificationclick', function(event) {
     event.notification.close();
     event.waitUntil(
-        clients.openWindow('/') // Abre la app
+        clients.openWindow('/') // Abre la app en la raíz
     );
-});
-    })
-  );
 });

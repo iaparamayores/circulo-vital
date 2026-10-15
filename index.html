@@ -2198,30 +2198,321 @@ function nubeSubirFestejo(fid, nombre, dia, mes, tel){
 }
 function nubeBorrarFestejo(fid){
   if(!nubeOK_CV||!uidCV||!supaCV) return;
-  supaCV.from('festejos_circulo').delete().eq('id', fid).eq('user_id', uidCV).then(function(){}).catch(function(e){ console.log('[nube cv] borrar festejo', e); });
+// ============================================
+// ENVÍO DE PUSH A CUIDADORES VINCULADOS
+// ============================================
+async function enviarPushACuidadores(titulo, mensaje) {
+    if (typeof nubeOK_CV === 'undefined' || !nubeOK_CV || !uidCV || typeof supaCV === 'undefined') {
+        console.log('[Push] No hay conexión a la nube o usuario no logueado');
+        return;
+    }
+    try {
+        const { data: vinculos, error } = await supaCV.from('vinculos_familiares').select('cuidador_id').eq('adulto_id', uidCV);
+        if (error || !vinculos || vinculos.length === 0) {
+            console.log('[Push] No hay cuidadores vinculados para enviar push');
+            return;
+        }
+        const targetUsers = vinculos.map(v => v.cuidador_id);
+        const response = await fetch('https://vqezdcdalprvjdtdrqzx.supabase.co/functions/v1/push-send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPA_KEY_CV}`, 'apikey': SUPA_KEY_CV },
+            body: JSON.stringify({ target_users: targetUsers, title: titulo, body: mensaje })
+        });
+        console.log('[Push] Resultado:', await response.json());
+    } catch (e) { console.error('[Push] Error al enviar:', e); }
 }
-function nubeSubirRecordatorio(rid, nombre, fecha){
-  if(!nubeOK_CV||!uidCV||!supaCV) return;
-  supaCV.from('recordatorios_circulo').upsert({ id: rid, user_id: uidCV, nombre: nombre||'', fecha: fecha||hoyStr() }).then(function(){}).catch(function(e){ console.log('[nube cv] subir recordatorio', e); });
+
+// ============================================
+// SUSCRIPCIÓN A PUSH NOTIFICATIONS (Cuidador)
+// ============================================
+async function suscribirseAPushCirculo() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return;
+    try {
+        const { data: keys } = await supaCV.from('vapid_keys').select('public_raw').order('id', { ascending: true }).limit(1);
+        if (!keys || keys.length === 0) return;
+        const applicationServerKey = urlBase64ToUint8Array(keys[0].public_raw);
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: applicationServerKey });
+        const { error } = await supaCV.from('push_subs').upsert({
+            user_id: uidCV,
+            endpoint: subscription.endpoint,
+            p256dh: subscription.getKey('p256dh') ? btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('p256dh')))) : null,
+            auth: subscription.getKey('auth') ? btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth')))) : null
+        }, { onConflict: 'user_id' });
+        if (!error) console.log('[Push] Suscripción guardada para:', uidCV);
+    } catch (e) { console.error('[Push] Error:', e); }
 }
-function nubeBorrarRecordatorio(rid){
-  if(!nubeOK_CV||!uidCV||!supaCV) return;
-  supaCV.from('recordatorios_circulo').delete().eq('id', rid).eq('user_id', uidCV).then(function(){}).catch(function(e){ console.log('[nube cv] borrar recordatorio', e); });
+
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+    return outputArray;
 }
+
+async function forzarSuscripcionPush() {
+    const btn = document.getElementById('btn-activar-push');
+    const estadoEl = document.getElementById('estado-push');
+    if (estadoEl) { estadoEl.textContent = '⏳ Solicitando permiso...'; estadoEl.style.color = '#4b5563'; }
+    await suscribirseAPushCirculo();
+    if (Notification.permission === 'granted') {
+        if (btn) { btn.textContent = '✅ Notificaciones Activadas'; btn.style.backgroundColor = '#059669'; btn.disabled = true; btn.style.opacity = '0.8'; }
+        if (estadoEl) { estadoEl.textContent = 'Tu celular ya está listo para recibir alertas.'; estadoEl.style.color = '#059669'; }
+        nubeToastCV('¡Notificaciones Push activadas!');
+    } else {
+        if (estadoEl) { estadoEl.textContent = '⚠️ Permiso denegado. Revisá Ajustes del celular.'; estadoEl.style.color = '#dc2626'; }
+    }
+}
+
+function verificarEstadoPush() {
+    const btn = document.getElementById('btn-activar-push');
+    const estadoEl = document.getElementById('estado-push');
+    if ('Notification' in window && Notification.permission === 'granted') {
+        if (btn) { btn.textContent = '✅ Notificaciones Activadas'; btn.style.backgroundColor = '#059669'; btn.disabled = true; btn.style.opacity = '0.8'; }
+        if (estadoEl) { estadoEl.textContent = 'Tu celular ya está listo para recibir alertas.'; estadoEl.style.color = '#059669'; }
+    }
+}
+
+// ============================================
+// NUBE CÍRCULO VITAL (COMPLETA Y CORREGIDA)
+// ============================================
+const SUPA_URL_CV='https://vqezdcdalprvjdtdrqzx.supabase.co';
+const SUPA_KEY_CV='sb_publishable_5RI8bz70kqj7H2TIX6H8uQ_LlZnQtKO';
+let supaCV=null, uidCV=null, nubeOK_CV=false, nubeModo_CV='off';
+
+function nubeToastCV(msg){ 
+    let t=document.getElementById('nube-toast-cv'); 
+    if(!t){ t=document.createElement('div'); t.id='nube-toast-cv'; document.body.appendChild(t);} 
+    t.textContent=msg; t.classList.add('ver'); setTimeout(()=>t.classList.remove('ver'),3500); 
+}
+(function(){ 
+    const st=document.createElement('style'); 
+    st.textContent='#nube-cv{text-align:center;font-size:.8rem;color:#6b7280;min-height:1.1rem;margin:.2rem 0;} #nube-cv.tocable{cursor:pointer;text-decoration:underline;} #nube-form-cv{display:none;text-align:center;margin:.4rem 0;} #nube-toast-cv{position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:.6rem 1.2rem;border-radius:2rem;font-size:.9rem;font-weight:600;opacity:0;transition:opacity .4s;z-index:999;pointer-events:none;} #nube-toast-cv.ver{opacity:1;}'; 
+    document.head.appendChild(st); 
+})();
+
+const nubeElCV=document.createElement('p'); nubeElCV.id='nube-cv';
+const nubeFormCV=document.createElement('div'); nubeFormCV.id='nube-form-cv';
+nubeFormCV.innerHTML='<input id="nube-mail-cv" type="email" placeholder="Tu email" style="font-size:1.05rem;padding:.6rem;border-radius:.7rem;border:2px solid #ddd6fe;width:60%;margin-bottom:.3rem;"><br><input id="nube-pass-cv" type="password" placeholder="Contraseña" style="font-size:1.05rem;padding:.6rem;border-radius:.7rem;border:2px solid #ddd6fe;width:60%;"><br><button id="nube-ok-cv" style="margin-top:.4rem;padding:.6rem .9rem;border:none;border-radius:.7rem;background:#7c3aed;color:#fff;font-weight:700;">Entrar</button> <button id="nube-new-cv" style="margin-top:.4rem;padding:.6rem .9rem;border:none;border-radius:.7rem;background:#27ae60;color:#fff;font-weight:700;">Crear cuenta</button>';
+const anclaCV=document.getElementById('pantalla-inicio');
+if(anclaCV&&anclaCV.parentNode){ anclaCV.parentNode.insertBefore(nubeElCV, anclaCV); anclaCV.parentNode.insertBefore(nubeFormCV, anclaCV); }
+
+function nubeEstadoCV(txt,tocable){ nubeElCV.textContent=txt; if(tocable){nubeElCV.classList.add('tocable');}else{nubeElCV.classList.remove('tocable');} }
+try{ if(window.supabase&&window.supabase.createClient){ supaCV=window.supabase.createClient(SUPA_URL_CV,SUPA_KEY_CV,{auth:{persistSession:true,autoRefreshToken:true,flowType:'implicit',detectSessionInUrl:true}}); } }catch(e){}
+
+async function nubeRescatarTokenCV(){
+  if(!supaCV) return;
+  try{
+    const h=window.location.hash||'';
+    if(h.includes('access_token=')){
+      const p=new URLSearchParams(h.substring(1));
+      const at=p.get('access_token'); const rt=p.get('refresh_token');
+      if(at){ await supaCV.auth.setSession({ access_token: at, refresh_token: rt||at }); }
+    }
+    const q=new URLSearchParams(window.location.search);
+    const code=q.get('code');
+    if(code){ await supaCV.auth.exchangeCodeForSession(code); }
+    if(h.includes('access_token=')||code){ history.replaceState(null,'',window.location.pathname); }
+  }catch(e){}
+}
+
+async function nubeConectarCV() {
+    if (!supaCV) { nubeEstadoCV('⚠️ Sin nube: el vigilante no existe'); return; }
+    try {
+        const { data: ses } = await supaCV.auth.getSession();
+        if (ses && ses.session) { 
+            uidCV = ses.session.user.id; 
+            nubeOK_CV = true; 
+            nubeModo_CV = 'ok'; 
+            nubeEstadoCV('☁️ Conectado con tu familia — vigilante activo'); 
+            
+            // 👈 ¡ACÁ ESTÁ LA LÍNEA CLAVE QUE FALTABA!
+            verificarEstadoPush(); 
+            
+            nubeMigrarFestejosYRecordatorios(); 
+        } else { 
+            uidCV = null; 
+            nubeOK_CV = false; 
+            nubeModo_CV = 'off'; 
+            nubeEstadoCV('☁️ Nube apagada — tocá acá para activarla', true); 
+        }
+    } catch (e) { 
+        nubeOK_CV = false; 
+        nubeEstadoCV('⚠️ Sin nube: el vigilante no existe'); 
+    }
+} 
+            
+nubeElCV.addEventListener('click', ()=>{
+  if(nubeOK_CV){ nubeToastCV('☁️ La nube ya está conectada'); return; }
+  if(!supaCV){ nubeToastCV('Nube no disponible'); return; }
+  nubeFormCV.style.display=(nubeFormCV.style.display==='none')?'block':'none';
+});
+
+document.getElementById('nube-ok-cv').addEventListener('click', async ()=>{
+  const mail=(document.getElementById('nube-mail-cv').value||'').trim();
+  const pass=(document.getElementById('nube-pass-cv').value||'');
+  if(!mail||!mail.includes('@')){ nubeToastCV('Email válido'); return; }
+  if(!pass){ nubeToastCV('Contraseña'); return; }
+  try{
+    const { error } = await supaCV.auth.signInWithPassword({ email: mail, password: pass });
+    if(error) throw error;
+    nubeToastCV('☁️ Conectado a la nube');
+    nubeFormCV.style.display='none';
+    await nubeConectarCV();
+  }catch(e){ nubeToastCV('⚠️ '+(e&&e.message?e.message:'No se pudo entrar')); }
+});
+
+document.getElementById('nube-new-cv').addEventListener('click', async ()=>{
+  const mail=(document.getElementById('nube-mail-cv').value||'').trim();
+  const pass=(document.getElementById('nube-pass-cv').value||'');
+  if(!mail||!mail.includes('@')){ nubeToastCV('Email válido'); return; }
+  if(pass.length<6){ nubeToastCV('Mínimo 6 caracteres'); return; }
+  try{
+    const { data, error } = await supaCV.auth.signUp({ email: mail, password: pass });
+    if(error) throw error;
+    if(data && data.session){
+      uidCV=data.session.user.id; nubeOK_CV=true;
+      nubeToastCV('☁️ Cuenta creada y conectada');
+      nubeFormCV.style.display='none';
+      await nubeConectarCV();
+    } else { nubeToastCV('Cuenta creada: ahora tocá Entrar'); }
+  }catch(e){
+    const m=(e&&e.message)||'';
+    if(/already registered/i.test(m)){ nubeToastCV('Ese mail ya tiene cuenta: tocá Entrar'); }
+    else { nubeToastCV('⚠️ '+(m||'No se pudo crear')); }
+  }
+});
+
+function nubeSubirFestejo(fid, nombre, dia, mes, tel){ if(!nubeOK_CV||!uidCV||!supaCV) return; supaCV.from('festejos_circulo').upsert({ id: fid, user_id: uidCV, nombre: nombre||'', dia: dia, mes: mes, tel: tel||'' }).catch(()=>{}); }
+function nubeBorrarFestejo(fid){ if(!nubeOK_CV||!uidCV||!supaCV) return; supaCV.from('festejos_circulo').delete().eq('id', fid).eq('user_id', uidCV).catch(()=>{}); }
+function nubeSubirRecordatorio(rid, nombre, fecha){ if(!nubeOK_CV||!uidCV||!supaCV) return; supaCV.from('recordatorios_circulo').upsert({ id: rid, user_id: uidCV, nombre: nombre||'', fecha: fecha||hoyStr() }).catch(()=>{}); }
+function nubeBorrarRecordatorio(rid){ if(!nubeOK_CV||!uidCV||!supaCV) return; supaCV.from('recordatorios_circulo').delete().eq('id', rid).eq('user_id', uidCV).catch(()=>{}); }
 function nubeMigrarFestejosYRecordatorios(){
-  if(!nubeOK_CV||!uidCV||!supaCV) return;
-if(obtenerD('circulo_migrado_nube_v2','')==='1') return;
-  var fests=JSON.parse(obtenerD('circulo_celebraciones','[]'))||[];
-  fests.forEach(function(c){ nubeSubirFestejo(c.id, c.nombre, c.dia, c.mes, c.tel); });
-  (listaActividades||[]).forEach(function(a){ if(a.tipo==='rec') nubeSubirRecordatorio(a.id, a.nombre, a.fecha); });
+  if(!nubeOK_CV||!uidCV||!supaCV||obtenerD('circulo_migrado_nube_v2','')==='1') return;
+  (JSON.parse(obtenerD('circulo_celebraciones','[]'))||[]).forEach(c=> nubeSubirFestejo(c.id, c.nombre, c.dia, c.mes, c.tel));
+  (listaActividades||[]).forEach(a=>{ if(a.tipo==='rec') nubeSubirRecordatorio(a.id, a.nombre, a.fecha); });
   guardarD('circulo_migrado_nube_v2','1');
   mostrarToast('☁️ Festejos y recordatorios sincronizados');
 }
+
 if(supaCV){ supaCV.auth.onAuthStateChange((ev,ses)=>{ if(ses&&ses.user){ uidCV=ses.user.id; nubeOK_CV=true; nubeConectarCV(); } }); }
 window.addEventListener('online', ()=>{ nubeConectarCV(); });
 nubeRescatarTokenCV().then(()=>{ nubeConectarCV(); setTimeout(()=>nubeConectarCV(),2500); setTimeout(()=>nubeConectarCV(),7000); });
+
 // ============================================
-// SISTEMA DE VINCULACIÓN (Agregado seguro y aislado)
+// BACKUP
+// ============================================
+function exportarCopiaSeguridad(){
+  const d={circulo_tomas:obtenerD('circulo_tomas'), circulo_actividades:obtenerD('circulo_actividades'), circulo_ficha:obtenerD('circulo_ficha'), circulo_sonidos:obtenerD('circulo_sonidos'), bolsillo_total:obtenerD('bolsillo_total'), bolsillo_ciclo:obtenerD('bolsillo_ciclo'), bolsillo_gastos:obtenerD('bolsillo_gastos'), bolsillo_reset_date:obtenerD('bolsillo_reset_date'), circulo_nota_bloc:obtenerD('circulo_nota_bloc'), circulo_stock:obtenerD('circulo_stock'), circulo_celebraciones:obtenerD('circulo_celebraciones')};
+  const s="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(d));
+  const a=document.createElement('a'); a.setAttribute("href",s); a.setAttribute("download","backup_circulo_vital.json");
+  document.body.appendChild(a); a.click(); a.remove(); mostrarToast("Descargado");
+}
+function importarCopiaSeguridad(e){ 
+  const f=e.target.files[0]; if(!f) return; 
+  const r=new FileReader(); 
+  r.onload=ev=>{ 
+    try{ 
+      const d=JSON.parse(ev.target.result); 
+      Object.keys(d).forEach(k=>{ if(d[k]!==null) guardarD(k,d[k]); }); 
+      location.reload(); 
+    }catch(err){ mostrarToast("Archivo inválido"); } 
+  }; 
+  r.readAsText(f); 
+}
+
+// ============================================
+// FICHA
+// ============================================
+function guardarDatosFicha(e){
+  e.preventDefault();
+  datosFicha.nombre=document.getElementById('f-nombre').value;
+  datosFicha.sangre=document.getElementById('f-sangre').value;
+  datosFicha.patologia=document.getElementById('f-patologia').value;
+  datosFicha.familiar=document.getElementById('c1-tel').value;
+  datosFicha.secundario=document.getElementById('c2-tel').value;
+  datosFicha.email=document.getElementById('c1-mail').value.trim();
+  guardarD('circulo_ficha',JSON.stringify(datosFicha));
+  mostrarToast("Ficha guardada"); 
+  cerrarPantalla('pantalla-ficha'); 
+  renderizar();
+}
+
+// ============================================
+// LOOP PRINCIPAL
+// ============================================
+var tickLoop=0;
+setInterval(()=>{
+  verificarAlarmas();
+  verificarYDepurarBolsillo();
+  controlarCheckin();
+  controlarAgua();
+  tickLoop++;
+  if(tickLoop%6===0){ renderizar(); }
+  const h=hoyStr();
+  Object.keys(alertasEjecutadas).forEach(k=>{ if(!k.startsWith(h+'_')) delete alertasEjecutadas[k]; });
+}, 10000);
+
+// ============================================
+// INIT
+// ============================================
+document.addEventListener("DOMContentLoaded", ()=>{
+  renderizar();
+  const ss=document.getElementById('sonido-salud'), st=document.getElementById('sonido-tareas');
+  if(ss) ss.value=configSonidos.salud;
+  if(st) st.value=configSonidos.tareas;
+  const bp=document.getElementById('box-presupuesto-total'), bc=document.getElementById('box-presupuesto-ciclo');
+  if(bp) bp.value=bolsilloPresupuesto;
+  if(bc) bc.value=bolsilloCiclo;
+  const af=document.getElementById('act-fecha'); if(af) af.value=hoyStr();
+  const ca=document.getElementById('box-checkin-activo'), ch=document.getElementById('box-checkin-hora');
+  if(ca) ca.value=checkinActivo; if(ch) ch.value=checkinHora;
+  const br=document.getElementById('box-reloj-sin-carga'); if(br) br.value=obtenerD('reloj_sin_carga','0');
+  const fp=document.getElementById('box-fest-pop'); if(fp) fp.value=obtenerD('circulo_fest_populares','1');
+  const fs=document.getElementById('box-foto-seg'); if(fs) fs.value=obtenerD('circulo_foto_seg','12');
+  actualizarVisibilidadFrecuencia();
+  renderAdminCelebraciones();
+  mostrarAnimoSiCorresponde();
+  iniciarSlider();
+  if(datosFicha.nombre){ const e=document.getElementById('f-nombre'); if(e) e.value=datosFicha.nombre; }
+  if(datosFicha.sangre){ const e=document.getElementById('f-sangre'); if(e) e.value=datosFicha.sangre; }
+  if(datosFicha.patologia){ const e=document.getElementById('f-patologia'); if(e) e.value=datosFicha.patologia; }
+  if(datosFicha.familiar){ const e=document.getElementById('c1-tel'); if(e) e.value=datosFicha.familiar; }
+  if(datosFicha.secundario){ const e=document.getElementById('c2-tel'); if(e) e.value=datosFicha.secundario; }
+  if(datosFicha.email){ const e=document.getElementById('c1-mail'); if(e) e.value=datosFicha.email; }
+  const t=document.getElementById('bloc-notas'); if(t) t.value=obtenerD('circulo_nota_bloc','');
+  verificarYDepurarBolsillo();
+});
+
+// ============================================
+// BLOC Y CALCULADORA
+// ============================================
+function dictarAlBloc(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ mostrarToast("Dictado no disponible"); return; }
+  const r=new SR(); r.lang='es-ES'; r.interimResults=false;
+  mostrarToast("🎙️ Escuchando nota...");
+  r.onresult=e=>{ const t=e.results[0][0].transcript; const ta=document.getElementById('bloc-notas'); ta.value=(ta.value? ta.value+' ':'')+t; mostrarToast("Dictado listo, tocá Guardar"); };
+  r.onerror=()=>mostrarToast("No escuché nada");
+  r.start();
+}
+function cambiarSolapaHerr(s){
+  ['tab-notas','tab-calc'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  ['vista-notas','vista-calc'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  if(s==='notas'){ document.getElementById('tab-notas').classList.add('active'); document.getElementById('vista-notas').classList.add('active'); }
+  else { document.getElementById('tab-calc').classList.add('active'); document.getElementById('vista-calc').classList.add('active'); }
+}
+function guardarNotaBloc(){ guardarD('circulo_nota_bloc', document.getElementById('bloc-notas').value); mostrarToast("Nota guardada"); }
+function presionarCalc(v){ const p=document.getElementById('calc-pantalla'); if(p) p.value+=v; }
+function limpiarCalc(){ const p=document.getElementById('calc-pantalla'); if(p) p.value=''; }
+function calcularResultado(){ try{ const p=document.getElementById('calc-pantalla'); if(!p) return; const i=p.value; if(!i) return; if(!/^[\d+\-*/.()\s]+$/.test(i)){p.value='Error';return;} p.value=new Function('return '+i)(); }catch(e){ const p=document.getElementById('calc-pantalla'); if(p) p.value='Error'; } }
+
+// ============================================
+// SISTEMA DE VINCULACIÓN
 // ============================================
 function probarVinculacion() {
     var codigoInput = document.getElementById('vinc-codigo');
@@ -2229,77 +2520,34 @@ function probarVinculacion() {
     var codigo = codigoInput ? codigoInput.value.trim() : '';
     var email = emailInput ? emailInput.value.trim() : '';
 
-    if (!codigo || codigo.length !== 6) {
-        nubeToastCV('Ingresá un código de 6 dígitos');
-        return;
-    }
-
-    if (!email || !email.includes('@')) {
-        nubeToastCV('Ingresá un email válido para recibir alertas');
-        return;
-    }
-
-    if (typeof nubeOK_CV === 'undefined' || !nubeOK_CV) {
-        nubeToastCV('Primero activá la nube');
-        return;
-    }
-
-    if (typeof uidCV === 'undefined' || !uidCV) {
-        nubeToastCV('Iniciá sesión primero');
-        return;
-    }
+    if (!codigo || codigo.length !== 6) { nubeToastCV('Ingresá un código de 6 dígitos'); return; }
+    if (!email || !email.includes('@')) { nubeToastCV('Ingresá un email válido'); return; }
+    if (typeof nubeOK_CV === 'undefined' || !nubeOK_CV) { nubeToastCV('Primero activá la nube'); return; }
+    if (typeof uidCV === 'undefined' || !uidCV) { nubeToastCV('Iniciá sesión primero'); return; }
 
     (async function() {
         try {
-            var respuesta = await supaCV
-                .from('codigos_vinculacion')
-                .select('*')
-                .eq('codigo', codigo)
-                .limit(1);
-
-            if (respuesta.error) {
-                nubeToastCV('Error: ' + respuesta.error.message);
-                return;
-            }
-
-            if (!respuesta.data || respuesta.data.length === 0) {
-                nubeToastCV('Código no encontrado');
-                return;
-            }
-
+            var respuesta = await supaCV.from('codigos_vinculacion').select('*').eq('codigo', codigo).limit(1);
+            if (respuesta.error) { nubeToastCV('Error: ' + respuesta.error.message); return; }
+            if (!respuesta.data || respuesta.data.length === 0) { nubeToastCV('Código no encontrado'); return; }
             var datosCodigo = respuesta.data[0];
+            if (datosCodigo.usada === true) { nubeToastCV('Este código ya fue usado'); return; }
             
-            if (datosCodigo.usada === true) {
-                nubeToastCV('Este código ya fue usado');
-                return;
-            }
-
-            var resultadoVinculo = await supaCV
-                .from('vinculos_familiares')
-                .insert({
-                    adulto_id: datosCodigo.adulto_id,
-                    cuidador_id: uidCV,
-                    nombre_adulto: datosCodigo.nombre_adulto || 'Usuario',
-                    email_cuidador: email
-                });
-
-            if (resultadoVinculo.error) {
-                nubeToastCV('Error al vincular: ' + resultadoVinculo.error.message);
-                return;
-            }
-
+            var resultadoVinculo = await supaCV.from('vinculos_familiares').insert({
+                adulto_id: datosCodigo.adulto_id,
+                cuidador_id: uidCV,
+                nombre_adulto: datosCodigo.nombre_adulto || 'Usuario',
+                email_cuidador: email
+            });
+            if (resultadoVinculo.error) { nubeToastCV('Error al vincular: ' + resultadoVinculo.error.message); return; }
+            
             await supaCV.from('codigos_vinculacion').update({ usada: true }).eq('id', datosCodigo.id);
-
             nubeToastCV('✅ ¡Vinculado! Recibirás alertas en ' + email);
-            codigoInput.value = '';
-            emailInput.value = '';
+            codigoInput.value = ''; emailInput.value = '';
             document.getElementById('resultado-vinculo').innerHTML = '<p style="color:#059669; font-weight:bold; font-size:1.1rem;">✅ Vinculado correctamente</p>';
-
-        } catch (error) {
-            nubeToastCV('Error: ' + error.message);
-        }
+        } catch (error) { nubeToastCV('Error: ' + error.message); }
     })();
 }
-</script>
+    </script>
 </body>
 </html>

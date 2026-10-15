@@ -1759,6 +1759,51 @@ function cancelarPresionSOS() {
     }
     mostrarToast('Acción cancelada. Todo bien.');
 }
+    // ============================================
+// ENVÍO DE PUSH A CUIDADORES VINCULADOS
+// ============================================
+async function enviarPushACuidadores(titulo, mensaje) {
+    if (typeof nubeOK_CV === 'undefined' || !nubeOK_CV || !uidCV || !supaCV) {
+        console.log('[Push] No hay conexión a la nube o usuario no logueado');
+        return;
+    }
+
+    try {
+        // 1. Buscar los IDs de los cuidadores vinculados a este adulto
+        const { data: vinculos, error } = await supaCV
+            .from('vinculos_familiares')
+            .select('cuidador_id')
+            .eq('adulto_id', uidCV);
+
+        if (error || !vinculos || vinculos.length === 0) {
+            console.log('[Push] No hay cuidadores vinculados para enviar push');
+            return;
+        }
+
+        // Extraer solo los IDs en un array: ['id1', 'id2']
+        const targetUsers = vinculos.map(v => v.cuidador_id);
+
+        // 2. Llamar a la Edge Function
+        const response = await fetch('https://vqezdcdalprvjdtdrqzx.supabase.co/functions/v1/push-send', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPA_KEY_CV}` // Usa la clave pública, la función usa la Service Role internamente
+            },
+            body: JSON.stringify({
+                target_users: targetUsers,
+                title: titulo,
+                body: mensaje
+            })
+        });
+
+        const resultado = await response.json();
+        console.log('[Push] Resultado:', resultado);
+        
+    } catch (e) {
+        console.error('[Push] Error al enviar:', e);
+    }
+}
 
 function ejecutarSOS() {
     var modal = document.getElementById('modal-sos-countdown');
@@ -1766,19 +1811,19 @@ function ejecutarSOS() {
         modal.classList.remove('show');
     }
     
-    // 1. Sonido y Voz (tranquilizadora)
     sonidoChicharra(obtenerAudio());
-    decir("Ayuda en camino. Tus familiares han sido avisados.");
+    decir("Alerta de emergencia enviada a tus familiares");
+    notificar('🆘 SOS', 'Se envió la alerta a tus cuidadores');
     
-    // 2. Notificación local
-    notificar('🆘 SOS', 'Se avisó a tus cuidadores');
-    
-    // 3. Enviar Email a todos los cuidadores vinculados
+    // 👈 NUEVO: Enviar Push a los cuidadores vinculados
+    enviarPushACuidadores('🚨 ALERTA SOS', 'Tu familiar presionó el botón de emergencia en Círculo Vital.');
+
+    // Email a todos los cuidadores vinculados
     if (datosFicha.email || (typeof nubeOK_CV !== 'undefined' && nubeOK_CV)) {
         enviarAlertaFamiliar([{ nombre: '🆘 BOTÓN SOS PRESIONADO', hora: '--' }], true);
     }
     
-    // 4. Abrir WhatsApp (si hay número cargado)
+    // WhatsApp (si hay número cargado)
     if (datosFicha.familiar) {
         var m = encodeURIComponent('¡ALERTA SOS! Se presionó el botón de emergencia en Círculo Vital. Necesito ayuda urgente.');
         window.open('https://wa.me/' + datosFicha.familiar + '?text=' + m, '_blank');
@@ -1787,7 +1832,7 @@ function ejecutarSOS() {
         abrirPantalla('pantalla-ficha');
     }
     
-    mostrarToast('🚨 ¡Ayuda solicitada con éxito!');
+    mostrarToast('🚨 ¡Alerta SOS enviada!');
 }
 // ============================================
 // BACKUP

@@ -1910,6 +1910,25 @@ function urlBase64ToUint8Array(base64String) {
     }
     return outputArray;
 }
+    async function nubeConectarCV() {
+    if (!supaCV) { 
+        nubeEstadoCV('⚠️ Sin nube: el vigilante no existe'); 
+        return; 
+    }
+    try {
+        const { data: ses } = await supaCV.auth.getSession();
+        if (ses && ses.session) { 
+            uidCV = ses.session.user.id; 
+            nubeOK_CV = true; 
+            nubeModo_CV = 'ok'; 
+            nubeEstadoCV('☁️ Conectado con tu familia — vigilante activo'); 
+            
+            // 👈 AGREGÁ ESTA LÍNEA:
+            verificarEstadoPush(); 
+            
+            nubeMigrarFestejosYRecordatorios(); 
+        } else { 
+            // ... (el resto queda igual)
     
 // ============================================
 // BACKUP

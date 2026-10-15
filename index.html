@@ -1933,6 +1933,69 @@ function guardarNotaBloc(){ guardarD('circulo_nota_bloc', document.getElementByI
 function presionarCalc(v){ const p=document.getElementById('calc-pantalla'); if(p) p.value+=v; }
 function limpiarCalc(){ const p=document.getElementById('calc-pantalla'); if(p) p.value=''; }
 function calcularResultado(){ try{ const p=document.getElementById('calc-pantalla'); if(!p) return; const i=p.value; if(!i) return; if(!/^[\d+\-*/.()\s]+$/.test(i)){p.value='Error';return;} p.value=new Function('return '+i)(); }catch(e){ const p=document.getElementById('calc-pantalla'); if(p) p.value='Error'; } }
+    // ============================================
+// SUSCRIPCIÓN A PUSH NOTIFICATIONS (Cuidador)
+// ============================================
+async function suscribirseAPushCirculo() {
+    // 1. Verificar soporte del navegador
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        console.log('[Push] No soportado en este navegador');
+        return;
+    }
+
+    // 2. Pedir permiso al usuario
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+        console.log('[Push] Permiso de notificaciones denegado');
+        return;
+    }
+
+    try {
+        // 3. Obtener la clave pública VAPID de la base de datos
+        const { data: keys } = await supaCV.from('vapid_keys').select('public_raw').order('id', { ascending: true }).limit(1);
+        if (!keys || keys.length === 0) {
+            console.log('[Push] No se encontraron claves VAPID');
+            return;
+        }
+        const applicationServerKey = urlBase64ToUint8Array(keys[0].public_raw);
+
+        // 4. Suscribirse al Push Manager
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: applicationServerKey
+        });
+
+        // 5. Guardar la suscripción en Supabase, vinculada al usuario actual (uidCV)
+        const { error } = await supaCV.from('push_subs').upsert({
+            user_id: uidCV,
+            endpoint: subscription.endpoint,
+            p256dh: subscription.getKey('p256dh') ? btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('p256dh')))) : null,
+            auth: subscription.getKey('auth') ? btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth')))) : null
+        }, { onConflict: 'user_id' }); // Si ya existe, la actualiza
+
+        if (error) {
+            console.error('[Push] Error al guardar suscripción:', error);
+        } else {
+            console.log('[Push] Suscripción guardada exitosamente para:', uidCV);
+        }
+
+    } catch (e) {
+        console.error('[Push] Error al suscribirse:', e);
+    }
+}
+
+// Función auxiliar necesaria para convertir la clave VAPID
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
 
 // ===== NUBE CÍRCULO VITAL =====
 const SUPA_URL_CV='https://vqezdcdalprvjdtdrqzx.supabase.co';
@@ -1963,13 +2026,33 @@ async function nubeRescatarTokenCV(){
     if(h.includes('access_token=')||code){ history.replaceState(null,'',window.location.pathname); }
   }catch(e){ console.log('[nube cv] rescate', e); }
 }
-async function nubeConectarCV(){
-  if(!supaCV){ nubeEstadoCV('⚠️ Sin nube: el vigilante no existe'); return; }
-  try{
-    const { data: ses } = await supaCV.auth.getSession();
-if(ses&&ses.session){ uidCV=ses.session.user.id; nubeOK_CV=true; nubeModo_CV='ok'; nubeEstadoCV('☁️ Conectado con tu familia — vigilante activo'); nubeMigrarFestejosYRecordatorios(); }
-    else { uidCV=null; nubeOK_CV=false; nubeModo_CV='off'; nubeEstadoCV('☁️ Nube apagada — tocá acá para activarla', true); }
-  }catch(e){ nubeOK_CV=false; nubeEstadoCV('⚠️ Sin nube: el vigilante no existe'); }
+async function nubeConectarCV() {
+    if (!supaCV) { 
+        nubeEstadoCV('⚠️ Sin nube: el vigilante no existe'); 
+        return; 
+    }
+    try {
+        const { data: ses } = await supaCV.auth.getSession();
+        if (ses && ses.session) { 
+            uidCV = ses.session.user.id; 
+            nubeOK_CV = true; 
+            nubeModo_CV = 'ok'; 
+            nubeEstadoCV('☁️ Conectado con tu familia — vigilante activo'); 
+            
+            // 👈 NUEVO: Intentar suscribir a push notifications al conectar
+            suscribirseAPushCirculo(); 
+            
+            nubeMigrarFestejosYRecordatorios(); 
+        } else { 
+            uidCV = null; 
+            nubeOK_CV = false; 
+            nubeModo_CV = 'off'; 
+            nubeEstadoCV('☁️ Nube apagada — tocá acá para activarla', true); 
+        }
+    } catch (e) { 
+        nubeOK_CV = false; 
+        nubeEstadoCV('⚠️ Sin nube: el vigilante no existe'); 
+    }
 }
 nubeElCV.addEventListener('click', ()=>{
   if(nubeOK_CV){ nubeToastCV('☁️ La nube ya está conectada'); return; }

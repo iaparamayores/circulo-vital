@@ -101,7 +101,32 @@ self.addEventListener('fetch', event => {
           });
         }
         return response;
-      });
+          
+      });// Escuchar eventos push entrantes
+self.addEventListener('push', function(event) {
+    if (event.data) {
+        const data = event.data.json();
+        const options = {
+            body: data.body || 'Tienes una nueva notificación',
+            icon: './icon-192.png', // Asegurate de tener este icono
+            badge: './icon-192.png',
+            vibrate: [200, 100, 200],
+            tag: 'circulo-vital-alerta',
+            requireInteraction: true // Mantiene la notificación en pantalla hasta que el usuario la toque
+        };
+        event.waitUntil(
+            self.registration.showNotification(data.title || 'Círculo Vital', options)
+        );
+    }
+});
+
+// Qué pasa cuando el usuario toca la notificación
+self.addEventListener('notificationclick', function(event) {
+    event.notification.close();
+    event.waitUntil(
+        clients.openWindow('/') // Abre la app
+    );
+});
     })
   );
 });

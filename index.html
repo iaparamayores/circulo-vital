@@ -2135,8 +2135,8 @@ async function nubeConectarCV() {
             nubeModo_CV = 'ok'; 
             nubeEstadoCV('☁️ Conectado con tu familia — vigilante activo'); 
             
-            // 👈 NUEVO: Intentar suscribir a push notifications al conectar
-            suscribirseAPushCirculo(); 
+            // 👈 ¡ACÁ VA LA LÍNEA QUE FALTABA!
+            verificarEstadoPush(); 
             
             nubeMigrarFestejosYRecordatorios(); 
         } else { 
@@ -2149,7 +2149,8 @@ async function nubeConectarCV() {
         nubeOK_CV = false; 
         nubeEstadoCV('⚠️ Sin nube: el vigilante no existe'); 
     }
-}
+} 
+            
 nubeElCV.addEventListener('click', ()=>{
   if(nubeOK_CV){ nubeToastCV('☁️ La nube ya está conectada'); return; }
   if(!supaCV){ nubeToastCV('Nube no disponible en este navegador'); return; }

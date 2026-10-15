@@ -444,6 +444,18 @@
             </div>
             <button class="btn-submit" onclick="probarSonidoSeleccionado()">🎵 Probar Sonido</button>
         </div>
+        <!-- INICIO: Botón Activar Push -->
+        <div class="section-card" style="box-shadow:none; padding:0; margin-top:1.5rem; border-top:2px solid #e5e7eb; text-align:center;">
+            <h3 style="font-size:1rem; margin-bottom:0.5rem; color:var(--primary);">🔔 Alertas al Instante</h3>
+            <p style="font-size:0.85rem; color:#4b5563; margin-bottom:0.75rem; padding:0 1rem;">
+                Para que este celular vibre y suene cuando haya una emergencia, activá las notificaciones:
+            </p>
+            <button id="btn-activar-push" class="btn-submit" style="background-color:#7c3aed; width:90%; margin:0 auto;" onclick="forzarSuscripcionPush()">
+                🔔 Activar Notificaciones Push
+            </button>
+            <p id="estado-push" style="font-size:0.8rem; color:#6b7280; margin-top:0.5rem;"></p>
+        </div>
+        <!-- FIN: Botón Activar Push -->
 
       <!-- INICIO: Bloque de Vinculación -->
 <div class="section-card" style="box-shadow:none; padding:0; margin-top:1.5rem; border-top:2px solid #e5e7eb;">

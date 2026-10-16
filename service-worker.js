@@ -1,130 +1,115 @@
 // ============================================
 // SERVICE WORKER — CÍRCULO VITAL
-// Estrategia: network-first para HTML, cache-first para el resto
 // ============================================
 
-const VERSION = 'v9';  // ← Subimos a v9 para forzar la actualización del SW roto
+const VERSION = 'v10';
 const CACHE_NAME = `circulo-vital-${VERSION}`;
+const BASE_PATH = '/circulo-vital';
 
 const APP_SHELL = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
+  `${BASE_PATH}/`,
+  `${BASE_PATH}/index.html`,
+  `${BASE_PATH}/manifest.json`,
+  `${BASE_PATH}/icon-192.png`,
+  `${BASE_PATH}/icon-512.png`
 ];
 
-// ============================================
 // 1. INSTALACIÓN
-// ============================================
 self.addEventListener('install', event => {
-  console.log('[SW] Instalando nueva versión:', VERSION);
+  console.log('[SW] Instalando v10');
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('[SW] Cacheando APP_SHELL');
-        return cache.addAll(APP_SHELL);
-      })
-      .then(() => {
-        console.log('[SW] Instalación lista, activando al toque');
-        return self.skipWaiting();
-      })
-      .catch(err => console.error('[SW] Error en install:', err))
+      .then(cache => cache.addAll(APP_SHELL))
+      .then(() => self.skipWaiting())
+      .catch(err => console.error('[SW] Error install:', err))
   );
 });
 
-// ============================================
 // 2. ACTIVACIÓN
-// ============================================
 self.addEventListener('activate', event => {
-  console.log('[SW] Activando versión:', VERSION);
+  console.log('[SW] Activando v10');
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      const promesas = cacheNames
-        .filter(name => name !== CACHE_NAME)
-        .map(name => {
-          console.log('[SW] Borrando caché vieja:', name);
-          return caches.delete(name);
-        });
-      return Promise.all(promesas);
-    }).then(() => {
-      console.log('[SW] Tomando control de las pestañas abiertas');
-      return self.clients.claim();
-    }).catch(err => console.error('[SW] Error en activate:', err))
+    caches.keys().then(names => 
+      Promise.all(names.filter(n => n !== CACHE_NAME).map(n => caches.delete(n)))
+    ).then(() => self.clients.claim())
   );
 });
 
-// ============================================
-// 3. INTERCEPTAR PETICIONES (FETCH)
-// ============================================
+// 3. FETCH
 self.addEventListener('fetch', event => {
-  const request = event.request;
+  const req = event.request;
+  if (req.method !== 'GET' || !req.url.startsWith('http')) return;
 
-  if (request.method !== 'GET' || !request.url.startsWith('http')) return;
-
-  // HTML: NETWORK-FIRST
-  if (request.mode === 'navigate' || request.destination === 'document') {
+  if (req.mode === 'navigate' || req.destination === 'document') {
     event.respondWith(
-      fetch(request)
-        .then(response => {
-          if (response && response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put('./index.html', responseClone);
-            });
+      fetch(req)
+        .then(res => {
+          if (res && res.status === 200) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then(c => c.put(`${BASE_PATH}/index.html`, clone));
           }
-          return response;
+          return res;
         })
-        .catch(() => {
-          return caches.match('./index.html');
-        })
+        .catch(() => caches.match(`${BASE_PATH}/index.html`))
     );
     return;
   }
 
-  // Todo lo demás: CACHE-FIRST
   event.respondWith(
-    caches.match(request).then(cached => {
+    caches.match(req).then(cached => {
       if (cached) return cached;
-      return fetch(request).then(response => {
-        if (response && response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(request, responseClone);
-          });
+      return fetch(req).then(res => {
+        if (res && res.status === 200) {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then(c => c.put(req, clone));
         }
-        return response;
+        return res;
       });
     })
   );
-}); // <--- AQUÍ TERMINA CORRECTAMENTE EL FETCH
-
-// ============================================
-// 4. ESCUCHAR EVENTOS PUSH ENTRANTES
-// ============================================
-self.addEventListener('push', function(event) {
-    if (event.data) {
-        const data = event.data.json();
-        const options = {
-            body: data.body || 'Tienes una nueva notificación',
-            icon: './icon-192.png',
-            badge: './icon-192.png',
-            vibrate: [200, 100, 200, 100, 200], // Vibración más notoria para emergencias
-            tag: 'circulo-vital-alerta',
-            requireInteraction: true // Mantiene la notificación en pantalla hasta que se toque
-        };
-        event.waitUntil(
-            self.registration.showNotification(data.title || '🚨 Círculo Vital', options)
-        );
-    }
 });
 
-// ============================================
-// 5. QUÉ PASA AL TOCAR LA NOTIFICACIÓN
-// ============================================
+// 4. PUSH - ¡Aquí está la magia!
+self.addEventListener('push', function(event) {
+  console.log('[SW] Push recibido:', event.data ? event.data.text() : 'sin datos');
+  
+  if (event.data) {
+    try {
+      const data = event.data.json();
+      const options = {
+        body: data.body || 'Tienes una nueva notificación',
+        icon: `${BASE_PATH}/icon-192.png`,
+        badge: `${BASE_PATH}/icon-192.png`,
+        vibrate: [200, 100, 200, 100, 200],
+        tag: 'circulo-vital-alerta',
+        requireInteraction: true,
+        sound: 'default'
+      };
+      event.waitUntil(
+        self.registration.showNotification(data.title || '🚨 Círculo Vital', options)
+      );
+    } catch (e) {
+      console.error('[SW] Error parseando push:', e);
+      event.waitUntil(
+        self.registration.showNotification('🚨 Círculo Vital', {
+          body: 'Alerta de emergencia',
+          icon: `${BASE_PATH}/icon-192.png`,
+          vibrate: [200, 100, 200]
+        })
+      );
+    }
+  }
+});
+
+// 5. CLICK EN NOTIFICACIÓN
 self.addEventListener('notificationclick', function(event) {
-    event.notification.close();
-    event.waitUntil(
-        clients.openWindow('/') // Abre la app en la raíz
-    );
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window' }).then(clientList => {
+      for (let c of clientList) {
+        if (c.url.includes('circulo-vital') && 'focus' in c) return c.focus();
+      }
+      return clients.openWindow(`${BASE_PATH}/`);
+    })
+  );
 });

@@ -456,6 +456,13 @@
             <p id="estado-push" style="font-size:0.8rem; color:#6b7280; margin-top:0.5rem;"></p>
         </div>
         <!-- FIN: Botón Activar Push -->
+        <!-- Botón de diagnóstico temporal -->
+        <div class="section-card" style="box-shadow:none; padding:0; margin-top:1rem; border-top:2px dashed #e5e7eb; text-align:center;">
+            <button id="btn-test-push" class="btn-submit" style="background-color:#dc2626; width:90%; margin:0 auto;" onclick="forzarTestPush()">
+                🔴 FORZAR SUSCRIPCIÓN (TEST)
+            </button>
+            <p id="test-push-msg" style="font-size:0.8rem; color:#6b7280; margin-top:0.5rem; white-space: pre-wrap;"></p>
+        </div>
 
       <!-- INICIO: Bloque de Vinculación -->
 <div class="section-card" style="box-shadow:none; padding:0; margin-top:1.5rem; border-top:2px solid #e5e7eb;">
@@ -1848,6 +1855,74 @@ function verificarEstadoPush() {
     if ('Notification' in window && Notification.permission === 'granted') {
         if (btn) { btn.textContent = '✅ Notificaciones Activadas'; btn.style.backgroundColor = '#059669'; btn.disabled = true; btn.style.opacity = '0.8'; }
         if (estadoEl) { estadoEl.textContent = 'Tu celular ya está listo para recibir alertas.'; estadoEl.style.color = '#059669'; }
+    }
+}
+    async function forzarTestPush() {
+    const msgEl = document.getElementById('test-push-msg');
+    msgEl.textContent = '⏳ Iniciando...';
+    
+    try {
+        // Verificar variables
+        msgEl.textContent = '1. Verificando variables...\n';
+        msgEl.textContent += `   - supaCV: ${typeof supaCV}\n`;
+        msgEl.textContent += `   - uidCV: ${uidCV || 'NULL'}\n`;
+        msgEl.textContent += `   - nubeOK_CV: ${nubeOK_CV}\n`;
+        
+        if (!supaCV) { msgEl.textContent += '\n❌ ERROR: supaCV no está definido'; return; }
+        if (!uidCV) { msgEl.textContent += '\n❌ ERROR: uidCV es null. ¿Estás logueado?'; return; }
+        
+        // Pedir permiso
+        msgEl.textContent += '\n2. Solicitando permiso...';
+        const permission = await Notification.requestPermission();
+        msgEl.textContent += `\n   - Permiso: ${permission}`;
+        
+        if (permission !== 'granted') { 
+            msgEl.textContent += '\n ERROR: Permiso denegado'; 
+            return; 
+        }
+        
+        // Obtener clave VAPID
+        msgEl.textContent += '\n3. Obteniendo clave VAPID...';
+        const { data: keys, error: keyError } = await supaCV.from('vapid_keys').select('public_raw').order('id', { ascending: true }).limit(1);
+        
+        if (keyError) { 
+            msgEl.textContent += `\n   ❌ ERROR VAPID: ${keyError.message}`; 
+            return; 
+        }
+        if (!keys || keys.length === 0) { 
+            msgEl.textContent += '\n   ❌ ERROR: No hay claves VAPID en la BD'; 
+            return; 
+        }
+        msgEl.textContent += '\n   ✅ Clave obtenida';
+        
+        // Suscribirse
+        msgEl.textContent += '\n4. Suscribiendo al Push Manager...';
+        const applicationServerKey = urlBase64ToUint8Array(keys[0].public_raw);
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: applicationServerKey
+        });
+        msgEl.textContent += '\n   ✅ Subscription creada';
+        
+        // Guardar en BD
+        msgEl.textContent += '\n5. Guardando en Supabase...';
+        const { error: saveError } = await supaCV.from('push_subs').upsert({
+            user_id: uidCV,
+            endpoint: subscription.endpoint,
+            p256dh: subscription.getKey('p256dh') ? btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('p256dh')))) : null,
+            auth: subscription.getKey('auth') ? btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth')))) : null
+        }, { onConflict: 'user_id' });
+        
+        if (saveError) { 
+            msgEl.textContent += `\n   ❌ ERROR AL GUARDAR: ${saveError.message}\n   Detalle: ${JSON.stringify(saveError)}`; 
+        } else {
+            msgEl.textContent += '\n   ✅ ¡GUARDADO EXITOSO!';
+            msgEl.textContent += '\n\n🎉 ¡Andá a Supabase y refrescá push_subs!';
+        }
+        
+    } catch (e) {
+        msgEl.textContent += `\n\n❌ ERROR CRÍTICO: ${e.message}\n${e.stack}`;
     }
 }
 

@@ -1891,11 +1891,56 @@ function verificarEstadoPush() {
         }
         if (!keys || keys.length === 0) { 
             msgEl.textContent += '\n   ❌ ERROR: No hay claves VAPID en la BD'; 
+async function forzarTestPush() {
+    const msgEl = document.getElementById('test-push-msg');
+    msgEl.textContent = '⏳ Iniciando...';
+    
+    try {
+        msgEl.textContent = '1. Verificando variables...\n';
+        msgEl.textContent += `   - supaCV: ${typeof supaCV}\n`;
+        msgEl.textContent += `   - uidCV: ${uidCV || 'NULL'}\n`;
+        msgEl.textContent += `   - nubeOK_CV: ${nubeOK_CV}\n`;
+        
+        if (!supaCV) { msgEl.textContent += '\n ERROR: supaCV no está definido'; return; }
+        if (!uidCV) { msgEl.textContent += '\n❌ ERROR: uidCV es null. ¿Estás logueado?'; return; }
+        
+        msgEl.textContent += '\n2. Solicitando permiso...';
+        const permission = await Notification.requestPermission();
+        msgEl.textContent += `\n   - Permiso: ${permission}`;
+        
+        if (permission !== 'granted') { 
+            msgEl.textContent += '\n❌ ERROR: Permiso denegado'; 
             return; 
         }
-        msgEl.textContent += '\n   ✅ Clave obtenida';
         
-        // Suscribirse
+        msgEl.textContent += '\n3. Obteniendo clave VAPID...\n';
+        
+        // Consulta completa con todos los detalles
+        const { data: keys, error: keyError, count, status, statusText } = await supaCV
+            .from('vapid_keys')
+            .select('*')
+            .order('id', { ascending: true })
+            .limit(1);
+        
+        msgEl.textContent += `   - Status: ${status} ${statusText}\n`;
+        msgEl.textContent += `   - Count: ${count}\n`;
+        msgEl.textContent += `   - Error: ${keyError ? JSON.stringify(keyError) : 'Ninguno'}\n`;
+        msgEl.textContent += `   - Data: ${JSON.stringify(keys)}\n`;
+        
+        if (keyError) { 
+            msgEl.textContent += `\n❌ ERROR DE CONSULTA: ${keyError.message}\n`;
+            msgEl.textContent += `   Detalle: ${JSON.stringify(keyError)}\n`;
+            return; 
+        }
+        if (!keys || keys.length === 0) { 
+            msgEl.textContent += '\n❌ ERROR: La consulta no devolvió filas\n';
+            msgEl.textContent += '   Posible causa: RLS bloquea la lectura\n';
+            msgEl.textContent += '   Solución: Ejecutar ALTER TABLE vapid_keys DISABLE ROW LEVEL SECURITY;\n';
+            return; 
+        }
+        
+        msgEl.textContent += '   ✅ Clave obtenida\n';
+        
         msgEl.textContent += '\n4. Suscribiendo al Push Manager...';
         const applicationServerKey = urlBase64ToUint8Array(keys[0].public_raw);
         const registration = await navigator.serviceWorker.ready;
@@ -1903,9 +1948,8 @@ function verificarEstadoPush() {
             userVisibleOnly: true,
             applicationServerKey: applicationServerKey
         });
-        msgEl.textContent += '\n   ✅ Subscription creada';
+        msgEl.textContent += '\n   ✅ Subscription creada\n';
         
-        // Guardar en BD
         msgEl.textContent += '\n5. Guardando en Supabase...';
         const { error: saveError } = await supaCV.from('push_subs').upsert({
             user_id: uidCV,
@@ -1915,10 +1959,11 @@ function verificarEstadoPush() {
         }, { onConflict: 'user_id' });
         
         if (saveError) { 
-            msgEl.textContent += `\n   ❌ ERROR AL GUARDAR: ${saveError.message}\n   Detalle: ${JSON.stringify(saveError)}`; 
+            msgEl.textContent += `\n    ERROR AL GUARDAR: ${saveError.message}\n`;
+            msgEl.textContent += `   Detalle: ${JSON.stringify(saveError)}\n`;
         } else {
-            msgEl.textContent += '\n   ✅ ¡GUARDADO EXITOSO!';
-            msgEl.textContent += '\n\n🎉 ¡Andá a Supabase y refrescá push_subs!';
+            msgEl.textContent += '\n   ✅ ¡GUARDADO EXITOSO!\n\n';
+            msgEl.textContent += ' ¡Andá a Supabase y refrescá push_subs!';
         }
         
     } catch (e) {

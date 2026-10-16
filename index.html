@@ -1857,40 +1857,7 @@ function verificarEstadoPush() {
         if (estadoEl) { estadoEl.textContent = 'Tu celular ya está listo para recibir alertas.'; estadoEl.style.color = '#059669'; }
     }
 }
-    async function forzarTestPush() {
-    const msgEl = document.getElementById('test-push-msg');
-    msgEl.textContent = '⏳ Iniciando...';
     
-    try {
-        // Verificar variables
-        msgEl.textContent = '1. Verificando variables...\n';
-        msgEl.textContent += `   - supaCV: ${typeof supaCV}\n`;
-        msgEl.textContent += `   - uidCV: ${uidCV || 'NULL'}\n`;
-        msgEl.textContent += `   - nubeOK_CV: ${nubeOK_CV}\n`;
-        
-        if (!supaCV) { msgEl.textContent += '\n❌ ERROR: supaCV no está definido'; return; }
-        if (!uidCV) { msgEl.textContent += '\n❌ ERROR: uidCV es null. ¿Estás logueado?'; return; }
-        
-        // Pedir permiso
-        msgEl.textContent += '\n2. Solicitando permiso...';
-        const permission = await Notification.requestPermission();
-        msgEl.textContent += `\n   - Permiso: ${permission}`;
-        
-        if (permission !== 'granted') { 
-            msgEl.textContent += '\n ERROR: Permiso denegado'; 
-            return; 
-        }
-        
-        // Obtener clave VAPID
-        msgEl.textContent += '\n3. Obteniendo clave VAPID...';
-        const { data: keys, error: keyError } = await supaCV.from('vapid_keys').select('public_raw').order('id', { ascending: true }).limit(1);
-        
-        if (keyError) { 
-            msgEl.textContent += `\n   ❌ ERROR VAPID: ${keyError.message}`; 
-            return; 
-        }
-        if (!keys || keys.length === 0) { 
-            msgEl.textContent += '\n   ❌ ERROR: No hay claves VAPID en la BD'; 
 async function forzarTestPush() {
     const msgEl = document.getElementById('test-push-msg');
     msgEl.textContent = '⏳ Iniciando...';

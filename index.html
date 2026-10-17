@@ -2282,6 +2282,51 @@ function probarVinculacion() {
         } catch (error) { nubeToastCV('Error: ' + error.message); }
     })();
 }
+    // ============================================
+// GENERAR CÓDIGO EN CÍRCULO VITAL
+// ============================================
+async function generarCodigoCV() {
+    if (typeof nubeOK_CV === 'undefined' || !nubeOK_CV || !uidCV || !supaCV) {
+        nubeToastCV('Primero activá la nube e iniciá sesión');
+        return;
+    }
+
+    try {
+        const { data: codigosExistentes, error: errorBusqueda } = await supaCV
+            .from('codigos_vinculacion')
+            .select('*')
+            .eq('adulto_id', uidCV)
+            .eq('usada', false)
+            .limit(1);
+
+        if (errorBusqueda) throw errorBusqueda;
+
+        let codigo;
+
+        if (codigosExistentes && codigosExistentes.length > 0) {
+            codigo = codigosExistentes[0].codigo;
+        } else {
+            codigo = Math.floor(100000 + Math.random() * 900000).toString();
+            
+            const { data, error } = await supaCV.from('codigos_vinculacion').insert({
+                codigo: codigo,
+                adulto_id: uidCV,
+                nombre_adulto: datosFicha.nombre || 'Usuario',
+                usada: false
+            }).select();
+            
+            if (error) throw error;
+        }
+
+        document.getElementById('codigoTextoCV').textContent = codigo;
+        document.getElementById('codigoGeneradoCV').style.display = 'block';
+        nubeToastCV('✅ Código generado: ' + codigo);
+
+    } catch (e) {
+        console.error('[Código CV] Error:', e);
+        nubeToastCV('❌ Error al generar código: ' + e.message);
+    }
+}
     </script>
 </body>
 </html>

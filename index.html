@@ -2268,7 +2268,6 @@ function probarVinculacion() {
             });
             if (resultadoVinculo.error) { nubeToastCV('Error al vincular: ' + resultadoVinculo.error.message); return; }
             
-            await supaCV.from('codigos_vinculacion').update({ usada: true }).eq('id', datosCodigo.id);
             nubeToastCV('✅ ¡Vinculado! Recibirás alertas en ' + email);
             codigoInput.value = ''; emailInput.value = '';
             document.getElementById('resultado-vinculo').innerHTML = '<p style="color:#059669; font-weight:bold; font-size:1.1rem;">✅ Vinculado correctamente</p>';

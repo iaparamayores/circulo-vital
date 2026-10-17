@@ -1735,31 +1735,38 @@ function renderizar(){
 
 
 // ============================================
-// SOS: MANTENER PRESIONADO (Versión Tranquilizadora)
+// SOS: MANTENER PRESIONADO (VERSIÓN ROBUSTA)
 // ============================================
 let sosHoldTimer = null;
 let sosHoldTime = 3;
+let sosActivado = false; // Flag para evitar cancelación después de activar
 
 function iniciarPresionSOS(e) {
-    e.preventDefault();
+    if (e) e.preventDefault();
+    
+    console.log('[SOS] Iniciando presión...');
+    sosActivado = false;
     
     var modal = document.getElementById('modal-sos-countdown');
     if (modal) {
         modal.classList.add('show');
-        
-        // Textos amables y claros
-        document.getElementById('sos-titulo').textContent = '🆘 Manteniendo para pedir ayuda...';
+        document.getElementById('sos-titulo').textContent = ' Manteniendo para pedir ayuda...';
         document.getElementById('sos-subtitulo').textContent = 'Soltá el botón para cancelar';
         
         sosHoldTime = 3;
         document.getElementById('sos-timer').textContent = sosHoldTime;
         
+        console.log('[SOS] Timer iniciado');
         sosHoldTimer = setInterval(function() {
             sosHoldTime--;
             document.getElementById('sos-timer').textContent = sosHoldTime;
+            console.log('[SOS] Countdown:', sosHoldTime);
             
             if (sosHoldTime <= 0) {
+                console.log('[SOS] ¡Countdown completado!');
                 clearInterval(sosHoldTimer);
+                sosHoldTimer = null;
+                sosActivado = true; // Marcar como activado
                 ejecutarSOS();
             }
         }, 1000);
@@ -1767,6 +1774,13 @@ function iniciarPresionSOS(e) {
 }
 
 function cancelarPresionSOS() {
+    // Si ya se activó, NO cancelar
+    if (sosActivado) {
+        console.log('[SOS] Ya activado, ignorando cancelación');
+        return;
+    }
+    
+    console.log('[SOS] Cancelando presión...');
     if (sosHoldTimer) {
         clearInterval(sosHoldTimer);
         sosHoldTimer = null;
@@ -1777,6 +1791,58 @@ function cancelarPresionSOS() {
         modal.classList.remove('show');
     }
     mostrarToast('Acción cancelada. Todo bien.');
+}
+
+async function ejecutarSOS() {
+    console.log('[SOS] EJECUTANDO ALERTA SOS...');
+    
+    try {
+        var modal = document.getElementById('modal-sos-countdown');
+        if (modal) {
+            modal.classList.remove('show');
+        }
+        
+        console.log('[SOS] 1. Sonido y voz...');
+        sonidoChicharra(obtenerAudio());
+        decir("Alerta de emergencia enviada a tus familiares");
+        
+        console.log('[SOS] 2. Notificación local...');
+        notificar('🆘 SOS', 'Se envió la alerta a tus cuidadores');
+        
+        console.log('[SOS] 3. Enviando Push...');
+        try {
+            await enviarPushACuidadores('🚨 ALERTA SOS', 'Tu familiar presionó el botón de emergencia en Círculo Vital.');
+            console.log('[SOS] Push enviado');
+        } catch (e) {
+            console.error('[SOS] Error enviando push:', e);
+        }
+        
+        console.log('[SOS] 4. Enviando Email...');
+        try {
+            if (datosFicha.email || (typeof nubeOK_CV !== 'undefined' && nubeOK_CV)) {
+                await enviarAlertaFamiliar([{ nombre: '🆘 BOTÓN SOS PRESIONADO', hora: '--' }], true);
+                console.log('[SOS] Email enviado');
+            }
+        } catch (e) {
+            console.error('[SOS] Error enviando email:', e);
+        }
+        
+        console.log('[SOS] 5. WhatsApp...');
+        if (datosFicha.familiar) {
+            var m = encodeURIComponent('¡ALERTA SOS! Se presionó el botón de emergencia en Círculo Vital. Necesito ayuda urgente.');
+            window.open('https://wa.me/' + datosFicha.familiar + '?text=' + m, '_blank');
+        } else {
+            mostrarToast("Cargá un contacto en Ficha Médica");
+            abrirPantalla('pantalla-ficha');
+        }
+        
+        console.log('[SOS] ✅ ALERTA COMPLETADA');
+        mostrarToast('🚨 ¡Alerta SOS enviada!');
+        
+    } catch (e) {
+        console.error('[SOS] ERROR CRÍTICO:', e);
+        mostrarToast('❌ Error al enviar SOS: ' + e.message);
+    }
 }
     
     

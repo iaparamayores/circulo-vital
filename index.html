@@ -592,6 +592,55 @@
         <div class="slide-texto visible" id="slide-a"></div>
         <div class="slide-texto" id="slide-b"></div>
     </div>
+    <!-- DASHBOARD DEL CUIDADOR (Oculto por defecto) -->
+    <div id="dashboardCuidador" style="display:none; padding:20px; background:#f8fafc; min-height:100vh;">
+        
+        <!-- Encabezado -->
+        <div style="text-align:center; margin-bottom:30px;">
+            <h1 style="color:#059669; margin:0;">🛡️ Panel de Cuidado</h1>
+            <p style="color:#64748b; margin-top:5px;" id="saludoCuidador">Cargando...</p>
+        </div>
+
+        <!-- BLOQUE 1: Semáforo de Estado -->
+        <div id="bloqueEstado" style="background:#dcfce7; border:2px solid #22c55e; border-radius:20px; padding:25px; text-align:center; margin-bottom:20px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
+            <div style="font-size:3rem; margin-bottom:10px;">🟢</div>
+            <h2 style="color:#166534; margin:0; font-size:1.5rem;">Todo en orden</h2>
+            <p style="color:#15803d; margin-top:10px; font-size:1.1rem;">Tu familiar está en casa y tomó su medicación.</p>
+        </div>
+
+        <!-- BLOQUE 2: Datos en Vivo -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
+            <div style="background:white; border-radius:15px; padding:20px; text-align:center; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                <div style="font-size:2rem;">💊</div>
+                <h3 style="margin:10px 0 5px; color:#334155;">Medicación</h3>
+                <p style="font-size:1.5rem; font-weight:bold; color:#059669; margin:0;" id="datoMedicacion">3/3</p>
+                <p style="font-size:0.8rem; color:#94a3b8; margin-top:5px;">Tomadas hoy</p>
+            </div>
+            <div style="background:white; border-radius:15px; padding:20px; text-align:center; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                <div style="font-size:2rem;">📍</div>
+                <h3 style="margin:10px 0 5px; color:#334155;">Ubicación</h3>
+                <p style="font-size:1.2rem; font-weight:bold; color:#0369a1; margin:0;" id="datoUbicacion">Casa</p>
+                <p style="font-size:0.8rem; color:#94a3b8; margin-top:5px;">Hace 10 min</p>
+            </div>
+        </div>
+
+        <!-- BLOQUE 3: Botones de Acción -->
+        <div style="display:grid; gap:15px;">
+            <button style="background:#3b82f6; color:white; border:none; padding:20px; border-radius:15px; font-size:1.2rem; font-weight:bold; cursor:pointer; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                📞 Llamar ahora
+            </button>
+            <button style="background:#10b981; color:white; border:none; padding:20px; border-radius:15px; font-size:1.2rem; font-weight:bold; cursor:pointer; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                🗺️ Ver mapa en vivo
+            </button>
+        </div>
+
+        <!-- Botón de ajustes (chiquito, abajo) -->
+        <div style="text-align:center; margin-top:30px;">
+            <button id="btnAjustesCuidador" style="background:none; border:none; color:#94a3b8; font-size:0.9rem; cursor:pointer;">
+                ⚙️ Ajustes del Cuidador
+            </button>
+        </div>
+    </div>
     
 
     <footer>

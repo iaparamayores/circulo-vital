@@ -2395,21 +2395,22 @@ async function generarCodigoCV() {
     }
 }
     // =========================================================================
-    // INTERRUPTOR DE ROL (Primera vez que se abre la app)
+    // INTERRUPTOR DE ROL + DASHBOARD
     // =========================================================================
     document.addEventListener('DOMContentLoaded', function() {
         const modalRol = document.getElementById('modalRol');
         const btnSoyAdulto = document.getElementById('btnSoyAdulto');
         const btnSoyCuidador = document.getElementById('btnSoyCuidador');
         
+        const vistaAdulto = document.getElementById('vistaAdulto');
+        const dashboardCuidador = document.getElementById('dashboardCuidador');
+        
         // 1. Verificar si ya hay un rol guardado
         const rolGuardado = localStorage.getItem('cv_rol');
         
         if (!rolGuardado) {
-            // Si NO hay rol, mostrar el modal
             modalRol.style.display = 'flex';
         } else {
-            // Si YA hay rol, aplicar la lógica de visualización
             aplicarRol(rolGuardado);
         }
 
@@ -2418,27 +2419,31 @@ async function generarCodigoCV() {
             localStorage.setItem('cv_rol', 'adulto');
             modalRol.style.display = 'none';
             aplicarRol('adulto');
-            console.log('✅ Rol seleccionado: Adulto');
         });
 
         btnSoyCuidador.addEventListener('click', function() {
             localStorage.setItem('cv_rol', 'cuidador');
             modalRol.style.display = 'none';
             aplicarRol('cuidador');
-            console.log('✅ Rol seleccionado: Cuidador');
         });
 
-        // 3. Función para aplicar el rol (ocultar/mostrar secciones)
+        // 3. Función para cambiar la vista
         function aplicarRol(rol) {
             if (rol === 'cuidador') {
-                // Aquí vamos a ocultar la app del adulto y mostrar el Dashboard
-                // Por ahora, solo mostramos un mensaje de prueba
-                console.log('🛡️ Modo Cuidador activado');
-                alert('Modo Cuidador activado. (Aquí irá el Dashboard)');
+                // Ocultar app del adulto y mostrar Dashboard
+                if (vistaAdulto) vistaAdulto.style.display = 'none';
+                if (dashboardCuidador) dashboardCuidador.style.display = 'block';
                 
-                // TODO: En el próximo paso, ocultaremos el contenido principal y mostraremos el Dashboard
+                // Actualizar saludo con la hora
+                const hora = new Date().getHours();
+                const saludo = hora < 12 ? 'Buenos días' : (hora < 20 ? 'Buenas tardes' : 'Buenas noches');
+                document.getElementById('saludoCuidador').textContent = `${saludo}. Son las ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}.`;
+                
+                console.log('🛡️ Dashboard del Cuidador activado');
             } else {
-                // Modo Adulto: la app funciona normal
+                // Modo Adulto: mostrar app normal
+                if (vistaAdulto) vistaAdulto.style.display = 'block';
+                if (dashboardCuidador) dashboardCuidador.style.display = 'none';
                 console.log('👤 Modo Adulto activado');
             }
         }

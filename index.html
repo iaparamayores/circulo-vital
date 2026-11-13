@@ -2443,19 +2443,17 @@ async function generarCodigoCV() {
         });
 
         // 3. Función para cambiar la vista
+        // 3. Función para cambiar la vista
         function aplicarRol(rol) {
             if (rol === 'cuidador') {
                 // Ocultar app del adulto y mostrar Dashboard
                 if (vistaAdulto) vistaAdulto.style.display = 'none';
                 if (dashboardCuidador) dashboardCuidador.style.display = 'block';
-                // Cargar datos reales del adulto vinculado
-                cargarDatosCuidador();
                 
-                // Actualizar saludo con la hora
-                const hora = new Date().getHours();
-                const saludo = hora < 12 ? 'Buenos días' : (hora < 20 ? 'Buenas tardes' : 'Buenas noches');
-                document.getElementById('saludoCuidador').textContent = `${saludo}. Son las ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}.`;
+                // Mostramos un saludo provisional mientras cargan los datos
+                document.getElementById('saludoCuidador').textContent = 'Cargando datos...';
                 
+                // Llamamos a la función que trae los datos reales y actualiza el saludo con el nombre
                 cargarDatosCuidador();
                 
                 console.log('🛡️ Dashboard del Cuidador activado');

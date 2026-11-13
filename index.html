@@ -2448,6 +2448,7 @@ async function generarCodigoCV() {
                 const hora = new Date().getHours();
                 const saludo = hora < 12 ? 'Buenos días' : (hora < 20 ? 'Buenas tardes' : 'Buenas noches');
                 document.getElementById('saludoCuidador').textContent = `${saludo}. Son las ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}.`;
+                
                 cargarDatosCuidador();
                 
                 console.log('🛡️ Dashboard del Cuidador activado');

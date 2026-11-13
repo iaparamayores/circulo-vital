@@ -609,19 +609,32 @@
             <p style="color:#15803d; margin-top:10px; font-size:1.1rem;">Tu familiar está en casa y tomó su medicación.</p>
         </div>
 
-        <!-- BLOQUE 2: Datos en Vivo -->
-        <div id="cardMedicacion" style="background:white; border-radius:15px; padding:20px; text-align:center; box-shadow:0 2px 4px rgba(0,0,0,0.05); cursor:pointer; transition:all 0.3s;">
+        <!-- BLOQUE 2: Datos en Vivo (lado a lado) -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:20px;">
+            
+            <!-- Tarjeta Medicación (con click para detalle) -->
+            <div id="cardMedicacion" style="background:white; border-radius:15px; padding:20px; text-align:center; box-shadow:0 2px 4px rgba(0,0,0,0.05); cursor:pointer; transition:all 0.3s;">
                 <div style="font-size:2rem;">💊</div>
                 <h3 style="margin:10px 0 5px; color:#334155;">Medicación</h3>
                 <p style="font-size:1.5rem; font-weight:bold; color:#059669; margin:0;" id="datoMedicacion">3/3</p>
                 <p style="font-size:0.8rem; color:#94a3b8; margin-top:5px;">Tomadas hoy</p>
                 <p style="font-size:0.75rem; color:#3b82f6; margin-top:8px;">👆 Tocá para ver detalle</p>
             </div>
+            
+            <!-- Tarjeta Ubicación -->
             <div style="background:white; border-radius:15px; padding:20px; text-align:center; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
                 <div style="font-size:2rem;">📍</div>
                 <h3 style="margin:10px 0 5px; color:#334155;">Ubicación</h3>
                 <p style="font-size:1.2rem; font-weight:bold; color:#0369a1; margin:0;" id="datoUbicacion">Casa</p>
-                <p style="font-size:0.8rem; color:#94a3b8; margin-top:5px;">Hace 10 min</p>
+                <p style="font-size:0.8rem; color:#94a3b8; margin-top:5px;" id="tiempoUbicacion">Hace 10 min</p>
+            </div>
+        </div>
+
+        <!-- PANEL DESPLEGABLE DE MEDICACIÓN (aparece al tocar la tarjeta) -->
+        <div id="panelDetalleMed" style="display:none; background:white; border-radius:15px; padding:20px; margin-bottom:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+            <h3 style="color:#334155; margin-top:0;">💊 Detalle de medicación de hoy</h3>
+            <div id="listaMedicacion" style="display:grid; gap:10px;">
+                <!-- Se llena dinámicamente -->
             </div>
         </div>
 
@@ -642,13 +655,7 @@
             </button>
         </div>
     </div>
-    <!-- PANEL DESPLEGABLE DE MEDICACIÓN -->
-        <div id="panelDetalleMed" style="display:none; background:white; border-radius:15px; padding:20px; margin-bottom:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
-            <h3 style="color:#334155; margin-top:0;">💊 Detalle de medicación de hoy</h3>
-            <div id="listaMedicacion" style="display:grid; gap:10px;">
-                <!-- Se llena dinámicamente -->
-            </div>
-        </div>
+    
     
 
     <footer>

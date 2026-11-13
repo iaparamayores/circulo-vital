@@ -2650,6 +2650,45 @@ async function generarCodigoCV() {
             console.error('Error cargando datos:', e);
         }
     }
+    // =========================================================================
+    // PANEL DESPLEGABLE DE MEDICACIÓN
+    // =========================================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const card = document.getElementById('cardMedicacion');
+        const panel = document.getElementById('panelDetalleMed');
+        const lista = document.getElementById('listaMedicacion');
+
+        if (card && panel && lista) {
+            card.addEventListener('click', function() {
+                if (panel.style.display === 'none' || panel.style.display === '') {
+                    const tomas = window._tomasHoy || [];
+                    if (tomas.length === 0) {
+                        lista.innerHTML = '<p style="color:#64748b; text-align:center; padding:20px;">No hay medicación registrada hoy.</p>';
+                    } else {
+                        lista.innerHTML = tomas.map(t => {
+                            const estado = t.tomo === true
+                                ? '<span style="color:#059669; font-weight:bold; font-size:1.1rem;">✓ Tomada</span>'
+                                : '<span style="color:#dc2626; font-weight:bold; font-size:1.1rem;">✗ Pendiente</span>';
+                            return `
+                                <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; background:#f8fafc; border-radius:12px; border-left:4px solid ${t.tomo === true ? '#059669' : '#dc2626'};">
+                                    <div style="text-align:left;">
+                                        <div style="font-weight:bold; color:#334155; font-size:1.05rem;">${t.nombre || 'Medicación'}</div>
+                                        <div style="font-size:0.85rem; color:#64748b; margin-top:3px;">ID: ${t.toma_id || '-'}</div>
+                                    </div>
+                                    <div>${estado}</div>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                    panel.style.display = 'block';
+                    card.style.background = '#f0fdf4';
+                } else {
+                    panel.style.display = 'none';
+                    card.style.background = 'white';
+                }
+            });
+        }
+    });
     </script>
 </body>
 </html>

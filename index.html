@@ -2465,43 +2465,59 @@ async function generarCodigoCV() {
             }
         }
     });
-    // =========================================================================
-    // CARGAR DATOS REALES PARA EL DASHBOARD DEL CUIDADOR
+    
+// =========================================================================
+    // CARGAR DATOS REALES PARA EL DASHBOARD DEL CUIDADOR (Final)
     // =========================================================================
     async function cargarDatosCuidador() {
+        // 1. Esperar a que la nube conecte
+        if (!uidCV && supaCV) {
+            console.log('Esperando a que la nube conecte...');
+            await nubeConectarCV(); 
+        }
+
+        if (!uidCV) {
+            document.getElementById('saludoCuidador').textContent = 'Iniciá sesión en la nube para ver los datos.';
+            return;
+        }
+
         try {
-            // 1. Obtener el ID del adulto vinculado
-            const { data: vinculo, error: vErr } = await sb
-                .from('vinculaciones')
-                .select('usuario_vinculado_id')
-                .eq('cuidador_id', USER_ID)
+            // 2. Buscar la vinculación REAL (tabla correcta)
+            const { data: vinculo, error: vErr } = await supaCV
+                .from('vinculos_familiares')
+                .select('adulto_id, nombre_adulto')
+                .eq('cuidador_id', uidCV)
                 .maybeSingle();
 
             if (vErr || !vinculo) {
-                console.log('⚠️ No hay adulto vinculado');
+                console.log('⚠️ No hay adulto vinculado:', vErr);
+                document.getElementById('saludoCuidador').textContent = 'No tenés un adulto vinculado aún.';
                 return;
             }
 
-            const adultoId = vinculo.usuario_vinculado_id;
+            const adultoId = vinculo.adulto_id;
+            const nombreAdulto = vinculo.nombre_adulto || 'tu familiar';
 
-            // 2. Cargar medicación de hoy
+            // 3. Saludo personalizado con el nombre
+            const hora = new Date().getHours();
+            const saludo = hora < 12 ? 'Buenos días' : (hora < 20 ? 'Buenas tardes' : 'Buenas noches');
+            document.getElementById('saludoCuidador').textContent = `${saludo}. Son las ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}.`;
+
+            // 4. Medicación de hoy
             const hoy = new Date().toISOString().split('T')[0];
-            const { data: tomas, error: tErr } = await sb
+            const { data: tomas } = await supaCV
                 .from('tomas_circulo')
-                .select('*')
+                .select('nombre, hora, tomo, toma_id')
                 .eq('user_id', adultoId)
                 .eq('fecha', hoy)
-                .order('hora', { ascending: true });
+                .order('toma_id', { ascending: true });
 
-            if (tErr) { console.error('Error tomas:', tErr); return; }
-
-            // Actualizar contador
             const total = tomas ? tomas.length : 0;
-            const hechas = tomas ? tomas.filter(t => t.tomada === true).length : 0;
+            const hechas = tomas ? tomas.filter(t => t.tomo === true).length : 0;
             document.getElementById('datoMedicacion').textContent = `${hechas}/${total}`;
 
-            // 3. Cargar última ubicación (de Ruta Segura)
-            const { data: ultima, error: uErr } = await sb
+            // 5. Última ubicación (Ruta Segura)
+            const { data: ultima } = await supaCV
                 .from('actividad_ruta')
                 .select('accion, creado_en')
                 .eq('user_id', adultoId)
@@ -2509,21 +2525,38 @@ async function generarCodigoCV() {
                 .limit(1)
                 .maybeSingle();
 
-            if (!uErr && ultima) {
-                document.getElementById('datoUbicacion').textContent = 
-                    ultima.accion.replace('🚶 Salió de ', '').replace('🏠 Llegó a ', '') || 'Casa';
+            if (ultima) {
+                let lugar = ultima.accion || 'Casa';
+                lugar = lugar.replace('🚶 Salió de ', '').replace('🏠 Llegó a ', '').replace('🚶 Caminando por ', '');
+                document.getElementById('datoUbicacion').textContent = lugar;
                 
-                // Calcular hace cuánto
                 const mins = Math.round((Date.now() - new Date(ultima.creado_en).getTime()) / 60000);
-                const textoTiempo = mins < 60 ? `Hace ${mins} min` : `Hace ${Math.round(mins/60)} hs`;
-                document.querySelector('#dashboardCuidador p[style*="Hace"]').textContent = textoTiempo;
+                const textoTiempo = mins < 1 ? 'Ahora mismo' : (mins < 60 ? `Hace ${mins} min` : `Hace ${Math.round(mins/60)} hs`);
+                const tiempoEl = document.getElementById('tiempoUbicacion');
+                if (tiempoEl) tiempoEl.textContent = textoTiempo;
             }
 
-            // 4. Guardar las tomas para el detalle
+            // 6. Semáforo
+            const bloqueEstado = document.getElementById('bloqueEstado');
+            if (hechas < total && total > 0) {
+                bloqueEstado.style.background = '#fef3c7';
+                bloqueEstado.style.borderColor = '#f59e0b';
+                bloqueEstado.querySelector('div').textContent = '🟡';
+                bloqueEstado.querySelector('h2').textContent = 'Atención';
+                bloqueEstado.querySelector('p').textContent = `Le faltan ${total - hechas} medicación(es) por tomar.`;
+            } else if (total === 0) {
+                bloqueEstado.style.background = '#f1f5f9';
+                bloqueEstado.style.borderColor = '#94a3b8';
+                bloqueEstado.querySelector('div').textContent = '⚪';
+                bloqueEstado.querySelector('h2').textContent = 'Sin datos';
+                bloqueEstado.querySelector('p').textContent = 'Aún no hay medicación registrada para hoy.';
+            }
+
             window._tomasHoy = tomas || [];
 
         } catch (e) {
-            console.error('Error cargando datos:', e);
+            console.error('Error dashboard:', e);
+            alert('❌ Error:\n\n' + e.message);
         }
     }
 

@@ -2562,6 +2562,94 @@ async function generarCodigoCV() {
             });
         }
     });
+    // =========================================================================
+    // CARGAR DATOS REALES PARA EL DASHBOARD DEL CUIDADOR
+    // =========================================================================
+    async function cargarDatosCuidador() {
+        try {
+            // 1. Buscar la vinculación activa del cuidador
+            const { data: vinculo, error: vErr } = await sb
+                .from('codigos_vinculacion')
+                .select('adulto_id, nombre_adulto')
+                .eq('cuidador_id', USER_ID)
+                .eq('usada', true)
+                .maybeSingle();
+
+            if (vErr || !vinculo) {
+                console.log('⚠️ No hay adulto vinculado');
+                document.getElementById('saludoCuidador').textContent = 'No tenés un adulto vinculado aún.';
+                return;
+            }
+
+            const adultoId = vinculo.adulto_id;
+            const nombreAdulto = vinculo.nombre_adulto || 'tu familiar';
+
+            // Actualizar saludo con el nombre
+            const hora = new Date().getHours();
+            const saludo = hora < 12 ? 'Buenos días' : (hora < 20 ? 'Buenas tardes' : 'Buenas noches');
+            document.getElementById('saludoCuidador').textContent = `${saludo}, ${nombreAdulto}. Son las ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}.`;
+
+            // 2. Cargar medicación de hoy
+            const hoy = new Date().toISOString().split('T')[0];
+            const { data: tomas, error: tErr } = await sb
+                .from('tomas_circulo')
+                .select('*')
+                .eq('user_id', adultoId)
+                .eq('fecha', hoy)
+                .order('toma_id', { ascending: true });
+
+            if (tErr) { console.error('Error tomas:', tErr); }
+
+            // Actualizar contador
+            const total = tomas ? tomas.length : 0;
+            const hechas = tomas ? tomas.filter(t => t.tomo === true).length : 0;
+            document.getElementById('datoMedicacion').textContent = `${hechas}/${total}`;
+
+            // 3. Cargar última ubicación (de Ruta Segura)
+            const { data: ultima, error: uErr } = await sb
+                .from('actividad_ruta')
+                .select('accion, creado_en')
+                .eq('user_id', adultoId)
+                .order('creado_en', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (!uErr && ultima) {
+                let lugar = ultima.accion || 'Casa';
+                lugar = lugar.replace('🚶 Salió de ', '').replace('🏠 Llegó a ', '').replace('🚶 Caminando por ', '');
+                document.getElementById('datoUbicacion').textContent = lugar;
+                
+                const mins = Math.round((Date.now() - new Date(ultima.creado_en).getTime()) / 60000);
+                const textoTiempo = mins < 1 ? 'Ahora mismo' : (mins < 60 ? `Hace ${mins} min` : `Hace ${Math.round(mins/60)} hs`);
+                
+                const ubicacionCard = document.getElementById('datoUbicacion');
+                const tiempoEl = ubicacionCard.nextElementSibling;
+                if (tiempoEl) tiempoEl.textContent = textoTiempo;
+            }
+
+            // 4. Actualizar el semáforo según el estado
+            const bloqueEstado = document.getElementById('bloqueEstado');
+            if (hechas < total) {
+                bloqueEstado.style.background = '#fef3c7';
+                bloqueEstado.style.borderColor = '#f59e0b';
+                bloqueEstado.querySelector('div').textContent = '🟡';
+                bloqueEstado.querySelector('h2').textContent = 'Atención';
+                bloqueEstado.querySelector('p').textContent = `Le faltan ${total - hechas} medicación(es) por tomar.`;
+            } else if (total === 0) {
+                bloqueEstado.style.background = '#f1f5f9';
+                bloqueEstado.style.borderColor = '#94a3b8';
+                bloqueEstado.querySelector('div').textContent = '⚪';
+                bloqueEstado.querySelector('h2').textContent = 'Sin datos';
+                bloqueEstado.querySelector('p').textContent = 'Aún no hay medicación registrada para hoy.';
+            }
+
+            // 5. Guardar las tomas para el detalle desplegable
+            window._tomasHoy = tomas || [];
+
+        } catch (e) {
+            console.error('Error cargando datos:', e);
+        }
+    }
     </script>
 </body>
 </html>

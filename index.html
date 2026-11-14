@@ -2600,58 +2600,67 @@ async function generarCodigoCV() {
             });
         }
     });
-    // =========================================================================
-    // CARGAR DATOS REALES PARA EL DASHBOARD DEL CUIDADOR
+    
+// =========================================================================
+    // CARGAR DATOS REALES PARA EL DASHBOARD DEL CUIDADOR (VERSIÓN FINAL Y LIMPIA)
     // =========================================================================
     async function cargarDatosCuidador() {
+        // 1. DIAGNÓSTICO: Para saber si la función se ejecuta y con qué valores
+        alert('🔍 Diagnóstico:\nuidCV = ' + (uidCV || 'NULL') + '\nsupaCV = ' + (typeof supaCV));
+
+        // 2. Esperar a que la nube conecte si aún no lo hizo
+        if (!uidCV && supaCV) {
+            console.log('Esperando a que la nube conecte...');
+            await nubeConectarCV(); 
+        }
+
+        // 3. Si sigue sin haber usuario, no podemos hacer nada
+        if (!uidCV) {
+            document.getElementById('saludoCuidador').textContent = 'Iniciá sesión en la nube para ver los datos.';
+            return;
+        }
+
         try {
-            // 1. Buscar la vinculación activa del cuidador
-            const { data: vinculo, error: vErr } = await sb
-                .from('codigos_vinculacion')
+            // 4. Buscar la vinculación REAL en la tabla correcta
+            const { data: vinculo, error: vErr } = await supaCV
+                .from('vinculos_familiares')
                 .select('adulto_id, nombre_adulto')
-                .eq('cuidador_id', USER_ID)
-                .eq('usada', true)
+                .eq('cuidador_id', uidCV)
                 .maybeSingle();
 
             if (vErr || !vinculo) {
-                console.log('⚠️ No hay adulto vinculado');
+                console.log('⚠️ No hay adulto vinculado:', vErr);
                 document.getElementById('saludoCuidador').textContent = 'No tenés un adulto vinculado aún.';
                 return;
             }
 
             const adultoId = vinculo.adulto_id;
             const nombreAdulto = vinculo.nombre_adulto || 'tu familiar';
-            
-            async function cargarDatosCuidador() {
-        // DIAGNÓSTICO: Mostrar el valor de uidCV
-        alert('🔍 Diagnóstico:\nuidCV = ' + (uidCV || 'NULL') + '\nsupaCV = ' + (typeof supaCV));
-        
-        // 1. Esperar a que la nube conecte
-        if (!uidCV && supaCV) {
 
-            // Actualizar saludo con el nombre
+            // 5. Saludo personalizado
             const hora = new Date().getHours();
             const saludo = hora < 12 ? 'Buenos días' : (hora < 20 ? 'Buenas tardes' : 'Buenas noches');
             document.getElementById('saludoCuidador').textContent = `${saludo}, ${nombreAdulto}. Son las ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}.`;
 
-            // 2. Cargar medicación de hoy
+            // 6. Medicación de hoy
             const hoy = new Date().toISOString().split('T')[0];
-            const { data: tomas, error: tErr } = await sb
+            const { data: tomas, error: tErr } = await supaCV
                 .from('tomas_circulo')
-                .select('*')
+                .select('nombre, hora, tomo, toma_id')
                 .eq('user_id', adultoId)
                 .eq('fecha', hoy)
                 .order('toma_id', { ascending: true });
 
-            if (tErr) { console.error('Error tomas:', tErr); }
+            if (tErr) { console.error('Error al buscar tomas:', tErr); }
 
-            // Actualizar contador
             const total = tomas ? tomas.length : 0;
             const hechas = tomas ? tomas.filter(t => t.tomo === true).length : 0;
+            
+            // ¡ACÁ CAMBIA EL 3/3 POR EL VALOR REAL!
             document.getElementById('datoMedicacion').textContent = `${hechas}/${total}`;
 
-            // 3. Cargar última ubicación (de Ruta Segura)
-            const { data: ultima, error: uErr } = await sb
+            // 7. Última ubicación (Ruta Segura)
+            const { data: ultima, error: uErr } = await supaCV
                 .from('actividad_ruta')
                 .select('accion, creado_en')
                 .eq('user_id', adultoId)
@@ -2667,14 +2676,13 @@ async function generarCodigoCV() {
                 const mins = Math.round((Date.now() - new Date(ultima.creado_en).getTime()) / 60000);
                 const textoTiempo = mins < 1 ? 'Ahora mismo' : (mins < 60 ? `Hace ${mins} min` : `Hace ${Math.round(mins/60)} hs`);
                 
-                const ubicacionCard = document.getElementById('datoUbicacion');
-                const tiempoEl = ubicacionCard.nextElementSibling;
+                const tiempoEl = document.getElementById('tiempoUbicacion');
                 if (tiempoEl) tiempoEl.textContent = textoTiempo;
             }
 
-            // 4. Actualizar el semáforo según el estado
+            // 8. Semáforo
             const bloqueEstado = document.getElementById('bloqueEstado');
-            if (hechas < total) {
+            if (hechas < total && total > 0) {
                 bloqueEstado.style.background = '#fef3c7';
                 bloqueEstado.style.borderColor = '#f59e0b';
                 bloqueEstado.querySelector('div').textContent = '🟡';
@@ -2688,12 +2696,12 @@ async function generarCodigoCV() {
                 bloqueEstado.querySelector('p').textContent = 'Aún no hay medicación registrada para hoy.';
             }
 
-            // 5. Guardar las tomas para el detalle desplegable
+            // 9. Guardar para el panel desplegable
             window._tomasHoy = tomas || [];
 
         } catch (e) {
             console.error('Error cargando datos del dashboard:', e);
-            alert('❌ Error al cargar el Dashboard:\n\n' + e.message + '\n\nStack: ' + e.stack);
+            alert('❌ Error al cargar el Dashboard:\n\n' + e.message);
         }
     }
     // =========================================================================

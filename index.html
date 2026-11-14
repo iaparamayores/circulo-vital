@@ -2621,6 +2621,13 @@ async function generarCodigoCV() {
 
             const adultoId = vinculo.adulto_id;
             const nombreAdulto = vinculo.nombre_adulto || 'tu familiar';
+            
+            async function cargarDatosCuidador() {
+        // DIAGNÓSTICO: Mostrar el valor de uidCV
+        alert('🔍 Diagnóstico:\nuidCV = ' + (uidCV || 'NULL') + '\nsupaCV = ' + (typeof supaCV));
+        
+        // 1. Esperar a que la nube conecte
+        if (!uidCV && supaCV) {
 
             // Actualizar saludo con el nombre
             const hora = new Date().getHours();
@@ -2685,7 +2692,8 @@ async function generarCodigoCV() {
             window._tomasHoy = tomas || [];
 
         } catch (e) {
-            console.error('Error cargando datos:', e);
+            console.error('Error cargando datos del dashboard:', e);
+            alert('❌ Error al cargar el Dashboard:\n\n' + e.message + '\n\nStack: ' + e.stack);
         }
     }
     // =========================================================================

@@ -601,6 +601,18 @@
             <h1 style="color:#059669; margin:0;">🛡️ Panel de Cuidado</h1>
             <p style="color:#64748b; margin-top:5px;" id="saludoCuidador">Cargando...</p>
         </div>
+        <!-- Botón de login de nube (solo aparece si no hay sesión) -->
+        <div id="loginNubeContainer" style="display:none; text-align:center; margin:20px 0;">
+            <p style="color:#6b7280; margin-bottom:15px;">Para ver los datos de tu familiar, iniciá sesión en la nube:</p>
+            <button id="btnLoginNube" style="background:#7c3aed; color:white; border:none; padding:15px 30px; border-radius:12px; font-size:1.1rem; font-weight:bold; cursor:pointer; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                ☁️ Iniciar sesión en la nube
+            </button>
+            <div id="formLoginNube" style="display:none; margin-top:20px; padding:20px; background:white; border-radius:12px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                <input id="loginEmail" type="email" placeholder="Email" style="width:100%; padding:12px; margin-bottom:10px; border:2px solid #ddd6fe; border-radius:8px; font-size:1rem;">
+                <input id="loginPass" type="password" placeholder="Contraseña" style="width:100%; padding:12px; margin-bottom:15px; border:2px solid #ddd6fe; border-radius:8px; font-size:1rem;">
+                <button id="btnEntrarNube" style="background:#059669; color:white; border:none; padding:12px 25px; border-radius:8px; font-size:1rem; font-weight:bold; cursor:pointer;">Entrar</button>
+            </div>
+        </div>
 
         <!-- BLOQUE 1: Semáforo de Estado -->
         <div id="bloqueEstado" style="background:#dcfce7; border:2px solid #22c55e; border-radius:20px; padding:25px; text-align:center; margin-bottom:20px; box-shadow:0 4px 6px rgba(0,0,0,0.05);">
@@ -2512,6 +2524,15 @@ async function generarCodigoCV() {
     async function cargarDatosCuidador() {
         // 1. DIAGNÓSTICO: Este cartel nos dirá si la función se ejecuta
         alert('🔍 Diagnóstico:\nuidCV = ' + (uidCV || 'NULL') + '\nsupaCV = ' + (typeof supaCV));
+        if (!uidCV) {
+            document.getElementById('saludoCuidador').textContent = 'Iniciá sesión en la nube para ver los datos.';
+            
+            // Mostrar el botón de login
+            const loginContainer = document.getElementById('loginNubeContainer');
+            if (loginContainer) loginContainer.style.display = 'block';
+            
+            return;
+        }
 
         // 2. Esperar a que la nube conecte si aún no lo hizo
         if (!uidCV && supaCV) {
@@ -2603,12 +2624,53 @@ async function generarCodigoCV() {
 
             // 9. Guardar para el panel desplegable
             window._tomasHoy = tomas || [];
+            // Ocultar el botón de login si ya hay sesión
+            const loginContainer = document.getElementById('loginNubeContainer');
+            if (loginContainer) loginContainer.style.display = 'none';
 
         } catch (e) {
             console.error('Error cargando datos del dashboard:', e);
             alert('❌ Error al cargar el Dashboard:\n\n' + e.message);
         }
     }
+    // =========================================================================
+    // LOGIN DE NUBE DESDE EL DASHBOARD
+    // =========================================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnLoginNube = document.getElementById('btnLoginNube');
+        const formLoginNube = document.getElementById('formLoginNube');
+        const btnEntrarNube = document.getElementById('btnEntrarNube');
+        const loginContainer = document.getElementById('loginContainer');
+
+        if (btnLoginNube && formLoginNube) {
+            btnLoginNube.addEventListener('click', function() {
+                formLoginNube.style.display = formLoginNube.style.display === 'none' ? 'block' : 'none';
+            });
+
+            btnEntrarNube.addEventListener('click', async function() {
+                const email = document.getElementById('loginEmail').value.trim();
+                const pass = document.getElementById('loginPass').value;
+                
+                if (!email || !email.includes('@')) { alert('Email válido'); return; }
+                if (!pass) { alert('Contraseña'); return; }
+                
+                try {
+                    const { error } = await supaCV.auth.signInWithPassword({ email, password: pass });
+                    if (error) throw error;
+                    
+                    alert('✅ Conectado a la nube');
+                    formLoginNube.style.display = 'none';
+                    btnLoginNube.style.display = 'none';
+                    loginContainer.style.display = 'none';
+                    
+                    // Recargar los datos del dashboard
+                    await cargarDatosCuidador();
+                } catch (e) {
+                    alert('❌ ' + (e.message || 'No se pudo entrar'));
+                }
+            });
+        }
+    });
     </script>
 </body>
 </html>

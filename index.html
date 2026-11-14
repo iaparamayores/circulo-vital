@@ -2601,11 +2601,51 @@ async function generarCodigoCV() {
         }
     });
     
-// =========================================================================
+
+    // =========================================================================
+    // PANEL DESPLEGABLE DE MEDICACIÓN
+    // =========================================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const card = document.getElementById('cardMedicacion');
+        const panel = document.getElementById('panelDetalleMed');
+        const lista = document.getElementById('listaMedicacion');
+
+        if (card && panel && lista) {
+            card.addEventListener('click', function() {
+                if (panel.style.display === 'none' || panel.style.display === '') {
+                    const tomas = window._tomasHoy || [];
+                    if (tomas.length === 0) {
+                        lista.innerHTML = '<p style="color:#64748b; text-align:center; padding:20px;">No hay medicación registrada hoy.</p>';
+                    } else {
+                        lista.innerHTML = tomas.map(t => {
+                            const estado = t.tomo === true
+                                ? '<span style="color:#059669; font-weight:bold; font-size:1.1rem;">✓ Tomada</span>'
+                                : '<span style="color:#dc2626; font-weight:bold; font-size:1.1rem;">✗ Pendiente</span>';
+                            return `
+                                <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; background:#f8fafc; border-radius:12px; border-left:4px solid ${t.tomo === true ? '#059669' : '#dc2626'};">
+                                    <div style="text-align:left;">
+                                        <div style="font-weight:bold; color:#334155; font-size:1.05rem;">${t.nombre || 'Medicación'}</div>
+                                        <div style="font-size:0.85rem; color:#64748b; margin-top:3px;">ID: ${t.toma_id || '-'}</div>
+                                    </div>
+                                    <div>${estado}</div>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                    panel.style.display = 'block';
+                    card.style.background = '#f0fdf4';
+                } else {
+                    panel.style.display = 'none';
+                    card.style.background = 'white';
+                }
+            });
+        }
+    });
+    // =========================================================================
     // CARGAR DATOS REALES PARA EL DASHBOARD DEL CUIDADOR (VERSIÓN FINAL Y LIMPIA)
     // =========================================================================
     async function cargarDatosCuidador() {
-        // 1. DIAGNÓSTICO: Para saber si la función se ejecuta y con qué valores
+        // 1. DIAGNÓSTICO: Este cartel nos dirá si la función se ejecuta
         alert('🔍 Diagnóstico:\nuidCV = ' + (uidCV || 'NULL') + '\nsupaCV = ' + (typeof supaCV));
 
         // 2. Esperar a que la nube conecte si aún no lo hizo
@@ -2656,7 +2696,7 @@ async function generarCodigoCV() {
             const total = tomas ? tomas.length : 0;
             const hechas = tomas ? tomas.filter(t => t.tomo === true).length : 0;
             
-            // ¡ACÁ CAMBIA EL 3/3 POR EL VALOR REAL!
+            // ¡ACÁ CAMBIA EL 0/0 POR EL VALOR REAL!
             document.getElementById('datoMedicacion').textContent = `${hechas}/${total}`;
 
             // 7. Última ubicación (Ruta Segura)
@@ -2704,45 +2744,6 @@ async function generarCodigoCV() {
             alert('❌ Error al cargar el Dashboard:\n\n' + e.message);
         }
     }
-    // =========================================================================
-    // PANEL DESPLEGABLE DE MEDICACIÓN
-    // =========================================================================
-    document.addEventListener('DOMContentLoaded', function() {
-        const card = document.getElementById('cardMedicacion');
-        const panel = document.getElementById('panelDetalleMed');
-        const lista = document.getElementById('listaMedicacion');
-
-        if (card && panel && lista) {
-            card.addEventListener('click', function() {
-                if (panel.style.display === 'none' || panel.style.display === '') {
-                    const tomas = window._tomasHoy || [];
-                    if (tomas.length === 0) {
-                        lista.innerHTML = '<p style="color:#64748b; text-align:center; padding:20px;">No hay medicación registrada hoy.</p>';
-                    } else {
-                        lista.innerHTML = tomas.map(t => {
-                            const estado = t.tomo === true
-                                ? '<span style="color:#059669; font-weight:bold; font-size:1.1rem;">✓ Tomada</span>'
-                                : '<span style="color:#dc2626; font-weight:bold; font-size:1.1rem;">✗ Pendiente</span>';
-                            return `
-                                <div style="display:flex; justify-content:space-between; align-items:center; padding:15px; background:#f8fafc; border-radius:12px; border-left:4px solid ${t.tomo === true ? '#059669' : '#dc2626'};">
-                                    <div style="text-align:left;">
-                                        <div style="font-weight:bold; color:#334155; font-size:1.05rem;">${t.nombre || 'Medicación'}</div>
-                                        <div style="font-size:0.85rem; color:#64748b; margin-top:3px;">ID: ${t.toma_id || '-'}</div>
-                                    </div>
-                                    <div>${estado}</div>
-                                </div>
-                            `;
-                        }).join('');
-                    }
-                    panel.style.display = 'block';
-                    card.style.background = '#f0fdf4';
-                } else {
-                    panel.style.display = 'none';
-                    card.style.background = 'white';
-                }
-            });
-        }
-    });
     </script>
 </body>
 </html>

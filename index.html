@@ -2685,18 +2685,26 @@ async function generarCodigoCV() {
             });
         }
 
-        // 3. Botón de emergencia: Cierra sesión y recarga la página
+      // 3. Botón de emergencia: Cierra sesión, muestra login y recarga
         if (btnForzarLogout) {
             btnForzarLogout.addEventListener('click', async function() {
                 try {
                     await supaCV.auth.signOut();
-                    alert('✅ Sesión cerrada. La página se va a recargar.');
-                    location.reload();
+                    
+                    // Mostrar el formulario de login automáticamente
+                    if (loginContainer) loginContainer.style.display = 'block';
+                    if (formLogin) formLogin.style.display = 'block';
+                    
+                    // Limpiar los campos
+                    document.getElementById('loginEmail').value = '';
+                    document.getElementById('loginPass').value = '';
+                    
+                    alert('✅ Sesión cerrada. Ahora ingresá el mail del cuidador.');
                 } catch (e) {
-                    location.reload(); // Fuerza la recarga igual si hay error
+                    location.reload();
                 }
             });
-        }
+        }  
     });
     </script>
 </body>

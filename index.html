@@ -2637,21 +2637,27 @@ async function generarCodigoCV() {
             alert('❌ Error al cargar el Dashboard:\n\n' + e.message);
         }
     }
+    
     // =========================================================================
-    // LOGIN DE NUBE DESDE EL DASHBOARD
+    // LOGIN DESDE EL DASHBOARD (con botón Cambiar Cuenta)
     // =========================================================================
     document.addEventListener('DOMContentLoaded', function() {
-        const btnLoginNube = document.getElementById('btnLoginNube');
-        const formLoginNube = document.getElementById('formLoginNube');
-        const btnEntrarNube = document.getElementById('btnEntrarNube');
-        const loginContainer = document.getElementById('loginContainer');
+        const btnMostrar = document.getElementById('btnMostrarLogin');
+        const formLogin = document.getElementById('formLoginNube');
+        const btnEntrar = document.getElementById('btnEntrarNube');
+        const loginContainer = document.getElementById('loginNubeContainer');
+        const btnCambiar = document.getElementById('btnCambiarCuenta');
 
-        if (btnLoginNube && formLoginNube) {
-            btnLoginNube.addEventListener('click', function() {
-                formLoginNube.style.display = formLoginNube.style.display === 'none' ? 'block' : 'none';
+        // Mostrar/ocultar el formulario
+        if (btnMostrar && formLogin) {
+            btnMostrar.addEventListener('click', function() {
+                formLogin.style.display = formLogin.style.display === 'none' ? 'block' : 'none';
             });
+        }
 
-            btnEntrarNube.addEventListener('click', async function() {
+        // Botón Entrar
+        if (btnEntrar) {
+            btnEntrar.addEventListener('click', async function() {
                 const email = document.getElementById('loginEmail').value.trim();
                 const pass = document.getElementById('loginPass').value;
                 
@@ -2662,16 +2668,22 @@ async function generarCodigoCV() {
                     const { error } = await supaCV.auth.signInWithPassword({ email, password: pass });
                     if (error) throw error;
                     
-                    alert('✅ Conectado a la nube');
-                    formLoginNube.style.display = 'none';
-                    btnLoginNube.style.display = 'none';
+                    alert('✅ Conectado');
+                    formLogin.style.display = 'none';
                     loginContainer.style.display = 'none';
                     
-                    // Recargar los datos del dashboard
                     await cargarDatosCuidador();
                 } catch (e) {
                     alert('❌ ' + (e.message || 'No se pudo entrar'));
                 }
+            });
+        }
+
+        // Botón Cambiar Cuenta (cierra sesión y recarga)
+        if (btnCambiar) {
+            btnCambiar.addEventListener('click', async function() {
+                await supaCV.auth.signOut();
+                location.reload();
             });
         }
     });

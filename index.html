@@ -2556,10 +2556,11 @@ async function generarCodigoCV() {
 
             if (vErr || !vinculo) {
                 console.log('⚠️ No hay adulto vinculado:', vErr);
-                document.getElementById('saludoCuidador').textContent = 'No tenés un adulto vinculado aún.';
+                document.getElementById('saludoCuidador').textContent = 'Esta cuenta no tiene un adulto vinculado. ¿Iniciaste sesión con el mail del cuidador?';
+                const loginContainer = document.getElementById('loginNubeContainer');
+                if (loginContainer) loginContainer.style.display = 'block';
                 return;
             }
-
             const adultoId = vinculo.adulto_id;
             const nombreAdulto = vinculo.nombre_adulto || 'tu familiar';
 

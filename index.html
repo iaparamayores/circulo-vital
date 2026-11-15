@@ -682,7 +682,9 @@
         Sugerencias a: <a href="mailto:iaparamayoresapp@gmail.com">iaparamayoresapp@gmail.com</a>
     </footer>
 
+    
 <script>
+    window.onerror = function(msg, url, line){ alert('⚠️ Error línea ' + line + ':\n' + msg); };
 const storageOK = (() => { try { const t='__t__'; localStorage.setItem(t,t); localStorage.removeItem(t); return true; } catch(e){return false;} })();
 function guardarD(k,v){ if(storageOK) try{localStorage.setItem(k,v);}catch(e){} }
 function obtenerD(k,d=null){ if(storageOK) try{return localStorage.getItem(k)||d;}catch(e){return d;} return d; }

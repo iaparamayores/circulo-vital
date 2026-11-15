@@ -2555,83 +2555,87 @@ async function generarCodigoCV() {
             });
         }
     });
+    
+// =========================================================================
+    // CARGAR DATOS REALES PARA EL DASHBOARD DEL CUIDADOR (CORREGIDA)
     // =========================================================================
-    // CARGAR DATOS REALES PARA EL DASHBOARD DEL CUIDADOR (VERSIÓN FINAL Y LIMPIA)
-    // =========================================================================
+    async function cargarDatosCuidador() {
+        try { // <--- El try abre AQUÍ, abarcando todo
+            
+            // 1. Leer el adulto vinculado (sin login)
+            const adultoId = localStorage.getItem('cv_adulto_vinculado');
+            const nombreAdulto = localStorage.getItem('cv_adulto_nombre') || 'tu familiar';
 
-async function cargarDatosCuidador() {
-    // 1. Leer el adulto vinculado (sin login)
-    const adultoId = localStorage.getItem('cv_adulto_vinculado');
-    const nombreAdulto = localStorage.getItem('cv_adulto_nombre') || 'tu familiar';
+            if (!adultoId) {
+                document.getElementById('saludoCuidador').textContent = 'Todavía no te vinculaste. Ingresá el código de 6 dígitos.';
+                const loginContainer = document.getElementById('loginNubeContainer');
+                if (loginContainer) loginContainer.style.display = 'block';
+                return;
+            }
 
-    if (!adultoId) {
-        document.getElementById('saludoCuidador').textContent = 'Todavía no te vinculaste. Ingresá el código de 6 dígitos.';
-        const loginContainer = document.getElementById('loginNubeContainer');
-        if (loginContainer) loginContainer.style.display = 'block';
-        return;
-    }
+            // Si hay vínculo, ocultamos el formulario de login por las dudas
+            const loginContainerHide = document.getElementById('loginNubeContainer');
+            if (loginContainerHide) loginContainerHide.style.display = 'none';
 
-    // 2. Saludo con nombre
-    const hora = new Date().getHours();
-    const saludo = hora < 12 ? 'Buenos días' : (hora < 20 ? 'Buenas tardes' : 'Buenas noches');
-    document.getElementById('saludoCuidador').textContent = `${saludo}. Son las ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}.`;
+            // 2. Saludo con nombre
+            const hora = new Date().getHours();
+            const saludo = hora < 12 ? 'Buenos días' : (hora < 20 ? 'Buenas tardes' : 'Buenas noches');
+            document.getElementById('saludoCuidador').textContent = `${saludo}. Son las ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}.`;
 
-    // 3. Medicación de hoy
-    const hoy = new Date().toISOString().split('T')[0];
-    const { data: tomas } = await supaCV
-        .from('tomas_circulo')
-        .select('nombre, hora, tomo, toma_id')
-        .eq('user_id', adultoId)
-        .eq('fecha', hoy);
+            // 3. Medicación de hoy
+            const hoy = new Date().toISOString().split('T')[0];
+            const { data: tomas, error: tErr } = await supaCV
+                .from('tomas_circulo')
+                .select('nombre, hora, tomo, toma_id')
+                .eq('user_id', adultoId)
+                .eq('fecha', hoy);
 
-    const total = tomas ? tomas.length : 0;
-    const hechas = tomas ? tomas.filter(t => t.tomo === true).length : 0;
-    document.getElementById('datoMedicacion').textContent = `${hechas}/${total}`;
+            if (tErr) console.error('Error tomas:', tErr);
 
-    // 4. Última ubicación
-    const { data: ultima } = await supaCV
-        .from('actividad_ruta')
-        .select('accion, creado_en')
-        .eq('user_id', adultoId)
-        .order('creado_en', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+            const total = tomas ? tomas.length : 0;
+            const hechas = tomas ? tomas.filter(t => t.tomo === true).length : 0;
+            document.getElementById('datoMedicacion').textContent = `${hechas}/${total}`;
 
-    if (ultima) {
-        let lugar = ultima.accion || 'Casa';
-        lugar = lugar.replace('🚶 Salió de ', '').replace('🏠 Llegó a ', '').replace('🚶 Caminando por ', '');
-        document.getElementById('datoUbicacion').textContent = lugar;
-        const mins = Math.round((Date.now() - new Date(ultima.creado_en).getTime()) / 60000);
-        const tiempoEl = document.getElementById('tiempoUbicacion');
-        if (tiempoEl) tiempoEl.textContent = mins < 1 ? 'Ahora mismo' : (mins < 60 ? `Hace ${mins} min` : `Hace ${Math.round(mins/60)} hs`);
-    }
+            // 4. Última ubicación
+            const { data: ultima, error: uErr } = await supaCV
+                .from('actividad_ruta')
+                .select('accion, creado_en')
+                .eq('user_id', adultoId)
+                .order('creado_en', { ascending: false })
+                .limit(1)
+                .maybeSingle();
 
-    // 5. Semáforo
-    const bloqueEstado = document.getElementById('bloqueEstado');
-    if (total > 0 && hechas < total) {
-        bloqueEstado.style.background = '#fef3c7';
-        bloqueEstado.querySelector('div').textContent = '🟡';
-        bloqueEstado.querySelector('h2').textContent = 'Atención';
-        bloqueEstado.querySelector('p').textContent = `A ${nombreAdulto} le faltan ${total - hechas} medicación(es).`;
-    } else if (total === 0) {
-        bloqueEstado.style.background = '#f1f5f9';
-        bloqueEstado.querySelector('div').textContent = '⚪';
-        bloqueEstado.querySelector('h2').textContent = 'Sin datos hoy';
-        bloqueEstado.querySelector('p').textContent = `Aún no hay medicación registrada para ${nombreAdulto}.`;
-    } else {
-        bloqueEstado.style.background = '#dcfce7';
-        bloqueEstado.querySelector('div').textContent = '🟢';
-        bloqueEstado.querySelector('h2').textContent = 'Todo en orden';
-        bloqueEstado.querySelector('p').textContent = `${nombreAdulto} tomó toda su medicación.`;
-    }
+            if (!uErr && ultima) {
+                let lugar = ultima.accion || 'Casa';
+                lugar = lugar.replace('🚶 Salió de ', '').replace('🏠 Llegó a ', '').replace('🚶 Caminando por ', '');
+                document.getElementById('datoUbicacion').textContent = lugar;
+                const mins = Math.round((Date.now() - new Date(ultima.creado_en).getTime()) / 60000);
+                const tiempoEl = document.getElementById('tiempoUbicacion');
+                if (tiempoEl) tiempoEl.textContent = mins < 1 ? 'Ahora mismo' : (mins < 60 ? `Hace ${mins} min` : `Hace ${Math.round(mins/60)} hs`);
+            }
 
-    window._tomasHoy = tomas || [];
-}
-            // Ocultar el botón de login si ya hay sesión
-            const loginContainer = document.getElementById('loginNubeContainer');
-            if (loginContainer) loginContainer.style.display = 'none';
+            // 5. Semáforo
+            const bloqueEstado = document.getElementById('bloqueEstado');
+            if (total > 0 && hechas < total) {
+                bloqueEstado.style.background = '#fef3c7';
+                bloqueEstado.querySelector('div').textContent = '🟡';
+                bloqueEstado.querySelector('h2').textContent = 'Atención';
+                bloqueEstado.querySelector('p').textContent = `A ${nombreAdulto} le faltan ${total - hechas} medicación(es).`;
+            } else if (total === 0) {
+                bloqueEstado.style.background = '#f1f5f9';
+                bloqueEstado.querySelector('div').textContent = '⚪';
+                bloqueEstado.querySelector('h2').textContent = 'Sin datos hoy';
+                bloqueEstado.querySelector('p').textContent = `Aún no hay medicación registrada para ${nombreAdulto}.`;
+            } else {
+                bloqueEstado.style.background = '#dcfce7';
+                bloqueEstado.querySelector('div').textContent = '🟢';
+                bloqueEstado.querySelector('h2').textContent = 'Todo en orden';
+                bloqueEstado.querySelector('p').textContent = `${nombreAdulto} tomó toda su medicación.`;
+            }
 
-        } catch (e) {
+            window._tomasHoy = tomas || [];
+
+        } catch (e) { // <--- El catch cierra AQUÍ, perfectamente emparejado
             console.error('Error cargando datos del dashboard:', e);
             alert('❌ Error al cargar el Dashboard:\n\n' + e.message);
         }

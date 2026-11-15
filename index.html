@@ -601,20 +601,25 @@
             <h1 style="color:#059669; margin:0;">🛡️ Panel de Cuidado</h1>
             <p style="color:#64748b; margin-top:5px;" id="saludoCuidador">Cargando...</p>
         </div>
-        <!-- Botón de login de nube (solo aparece si no hay sesión) -->
+        <!-- 1. Contenedor de Login (aparece solo si hace falta) -->
         <div id="loginNubeContainer" style="display:none; text-align:center; margin:20px 0;">
-            <p style="color:#6b7280; margin-bottom:15px;">Para ver los datos de tu familiar, iniciá sesión en la nube:</p>
-            <button id="btnLoginNube" style="background:#7c3aed; color:white; border:none; padding:15px 30px; border-radius:12px; font-size:1.1rem; font-weight:bold; cursor:pointer; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-                ☁️ Iniciar sesión en la nube
-            </button>
-            <button id="btnCambiarCuenta" style="display:block; background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer; font-size:0.9rem; text-decoration:underline; width:100%;">
-                🔄 Cerrar sesión y cambiar de cuenta
+            <p style="color:#6b7280; margin-bottom:15px;">Para ver los datos de tu familiar, iniciá sesión:</p>
+            <button id="btnMostrarLogin" style="background:#7c3aed; color:white; border:none; padding:15px 30px; border-radius:12px; font-size:1.1rem; font-weight:bold; cursor:pointer; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                ☁️ Iniciar sesión
             </button>
             <div id="formLoginNube" style="display:none; margin-top:20px; padding:20px; background:white; border-radius:12px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
-                <input id="loginEmail" type="email" placeholder="Email" style="width:100%; padding:12px; margin-bottom:10px; border:2px solid #ddd6fe; border-radius:8px; font-size:1rem;">
-                <input id="loginPass" type="password" placeholder="Contraseña" style="width:100%; padding:12px; margin-bottom:15px; border:2px solid #ddd6fe; border-radius:8px; font-size:1rem;">
+                <input id="loginEmail" type="email" placeholder="Email" style="width:100%; padding:12px; margin-bottom:10px; border:2px solid #ddd6fe; border-radius:8px; font-size:1rem; box-sizing:border-box;">
+                <input id="loginPass" type="password" placeholder="Contraseña" style="width:100%; padding:12px; margin-bottom:15px; border:2px solid #ddd6fe; border-radius:8px; font-size:1rem; box-sizing:border-box;">
                 <button id="btnEntrarNube" style="background:#059669; color:white; border:none; padding:12px 25px; border-radius:8px; font-size:1rem; font-weight:bold; cursor:pointer;">Entrar</button>
             </div>
+        </div>
+
+        <!-- 2. BOTÓN DE EMERGENCIA: SIEMPRE VISIBLE al final del dashboard -->
+        <div style="text-align:center; margin-top:40px; padding-top:20px; border-top:1px solid #e2e8f0;">
+            <p style="color:#94a3b8; font-size:0.9rem; margin-bottom:10px;">¿Iniciaste con la cuenta equivocada?</p>
+            <button id="btnForzarLogout" style="background:#ef4444; color:white; border:none; padding:12px 24px; border-radius:8px; font-size:1rem; font-weight:bold; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+                🚪 Cerrar sesión y volver a empezar
+            </button>
         </div>
 
         <!-- BLOQUE 1: Semáforo de Estado -->
@@ -2639,30 +2644,30 @@ async function generarCodigoCV() {
     }
     
     // =========================================================================
-    // LOGIN DESDE EL DASHBOARD (con botón Cambiar Cuenta)
+    // LÓGICA DEL LOGIN Y CIERRE DE SESIÓN (A prueba de fallos)
     // =========================================================================
     document.addEventListener('DOMContentLoaded', function() {
         const btnMostrar = document.getElementById('btnMostrarLogin');
         const formLogin = document.getElementById('formLoginNube');
         const btnEntrar = document.getElementById('btnEntrarNube');
         const loginContainer = document.getElementById('loginNubeContainer');
-        const btnCambiar = document.getElementById('btnCambiarCuenta');
+        const btnForzarLogout = document.getElementById('btnForzarLogout');
 
-        // Mostrar/ocultar el formulario
+        // 1. Mostrar el formulario al tocar "Iniciar sesión"
         if (btnMostrar && formLogin) {
             btnMostrar.addEventListener('click', function() {
                 formLogin.style.display = formLogin.style.display === 'none' ? 'block' : 'none';
             });
         }
 
-        // Botón Entrar
+        // 2. Procesar el login
         if (btnEntrar) {
             btnEntrar.addEventListener('click', async function() {
                 const email = document.getElementById('loginEmail').value.trim();
                 const pass = document.getElementById('loginPass').value;
                 
-                if (!email || !email.includes('@')) { alert('Email válido'); return; }
-                if (!pass) { alert('Contraseña'); return; }
+                if (!email || !email.includes('@')) { alert('Ingresá un email válido'); return; }
+                if (!pass) { alert('Ingresá la contraseña'); return; }
                 
                 try {
                     const { error } = await supaCV.auth.signInWithPassword({ email, password: pass });
@@ -2672,6 +2677,7 @@ async function generarCodigoCV() {
                     formLogin.style.display = 'none';
                     loginContainer.style.display = 'none';
                     
+                    // Recargar los datos del dashboard
                     await cargarDatosCuidador();
                 } catch (e) {
                     alert('❌ ' + (e.message || 'No se pudo entrar'));
@@ -2679,11 +2685,16 @@ async function generarCodigoCV() {
             });
         }
 
-        // Botón Cambiar Cuenta (cierra sesión y recarga)
-        if (btnCambiar) {
-            btnCambiar.addEventListener('click', async function() {
-                await supaCV.auth.signOut();
-                location.reload();
+        // 3. Botón de emergencia: Cierra sesión y recarga la página
+        if (btnForzarLogout) {
+            btnForzarLogout.addEventListener('click', async function() {
+                try {
+                    await supaCV.auth.signOut();
+                    alert('✅ Sesión cerrada. La página se va a recargar.');
+                    location.reload();
+                } catch (e) {
+                    location.reload(); // Fuerza la recarga igual si hay error
+                }
             });
         }
     });

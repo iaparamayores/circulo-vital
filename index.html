@@ -2349,7 +2349,7 @@ function limpiarCalc(){ const p=document.getElementById('calc-pantalla'); if(p) 
 function calcularResultado(){ try{ const p=document.getElementById('calc-pantalla'); if(!p) return; const i=p.value; if(!i) return; if(!/^[\d+\-*/.()\s]+$/.test(i)){p.value='Error';return;} p.value=new Function('return '+i)(); }catch(e){ const p=document.getElementById('calc-pantalla'); if(p) p.value='Error'; } }
 
 // ============================================
-// SISTEMA DE VINCULACIÓN
+// SISTEMA DE VINCULACIÓN (sin login del cuidador)
 // ============================================
 function probarVinculacion() {
     var codigoInput = document.getElementById('vinc-codigo');
@@ -2359,29 +2359,56 @@ function probarVinculacion() {
 
     if (!codigo || codigo.length !== 6) { nubeToastCV('Ingresá un código de 6 dígitos'); return; }
     if (!email || !email.includes('@')) { nubeToastCV('Ingresá un email válido'); return; }
-    if (typeof nubeOK_CV === 'undefined' || !nubeOK_CV) { nubeToastCV('Primero activá la nube'); return; }
-    if (typeof uidCV === 'undefined' || !uidCV) { nubeToastCV('Iniciá sesión primero'); return; }
+    if (typeof supaCV === 'undefined' || !supaCV) { nubeToastCV('El vigilante no está activo'); return; }
 
     (async function() {
         try {
-            var respuesta = await supaCV.from('codigos_vinculacion').select('*').eq('codigo', codigo).limit(1);
+            // 1. Buscar el código en codigos_vinculacion (no requiere login)
+            var respuesta = await supaCV
+                .from('codigos_vinculacion')
+                .select('*')
+                .eq('codigo', codigo)
+                .limit(1);
+
             if (respuesta.error) { nubeToastCV('Error: ' + respuesta.error.message); return; }
             if (!respuesta.data || respuesta.data.length === 0) { nubeToastCV('Código no encontrado'); return; }
+
             var datosCodigo = respuesta.data[0];
-            if (datosCodigo.usada === true) { nubeToastCV('Este código ya fue usado'); return; }
-            
-            var resultadoVinculo = await supaCV.from('vinculos_familiares').insert({
-                adulto_id: datosCodigo.adulto_id,
-                cuidador_id: uidCV,
-                nombre_adulto: datosCodigo.nombre_adulto || 'Usuario',
-                email_cuidador: email
-            });
-            if (resultadoVinculo.error) { nubeToastCV('Error al vincular: ' + resultadoVinculo.error.message); return; }
-            
-            nubeToastCV('✅ ¡Vinculado! Recibirás alertas en ' + email);
-            codigoInput.value = ''; emailInput.value = '';
-            document.getElementById('resultado-vinculo').innerHTML = '<p style="color:#059669; font-weight:bold; font-size:1.1rem;">✅ Vinculado correctamente</p>';
-        } catch (error) { nubeToastCV('Error: ' + error.message); }
+
+            // 2. Guardar el adulto_id en localStorage (así el cuidador sabe a quién cuida)
+            localStorage.setItem('cv_adulto_vinculado', datosCodigo.adulto_id);
+            localStorage.setItem('cv_adulto_nombre', datosCodigo.nombre_adulto || 'Usuario');
+            localStorage.setItem('cv_cuidador_email', email);
+
+            // 3. Marcar el código como usado
+            await supaCV
+                .from('codigos_vinculacion')
+                .update({ usada: true })
+                .eq('codigo', codigo);
+
+            // 4. (Opcional) Registrar el vínculo con el email del cuidador
+            try {
+                await supaCV.from('vinculos_familiares').insert({
+                    adulto_id: datosCodigo.adulto_id,
+                    cuidador_id: null,  // sin login, no hay uidCV
+                    nombre_adulto: datosCodigo.nombre_adulto || 'Usuario',
+                    email_cuidador: email
+                });
+            } catch (e) { console.log('[vinculo] opcional:', e.message); }
+
+            // 5. Mostrar éxito
+            nubeToastCV('✅ ¡Vinculado! Ahora podés ver el Dashboard de ' + (datosCodigo.nombre_adulto || 'tu familiar'));
+            codigoInput.value = '';
+            emailInput.value = '';
+            document.getElementById('resultado-vinculo').innerHTML = 
+                '<p style="color:#059669; font-weight:bold; font-size:1.1rem;">✅ Vinculado a ' + escapeHTML(datosCodigo.nombre_adulto || 'tu familiar') + '</p>';
+
+            // 6. Recargar el Dashboard
+            if (typeof cargarDatosCuidador === 'function') await cargarDatosCuidador();
+
+        } catch (error) { 
+            nubeToastCV('Error: ' + error.message); 
+        }
     })();
 }
     // ============================================

@@ -601,17 +601,28 @@
             <h1 style="color:#059669; margin:0;">🛡️ Panel de Cuidado</h1>
             <p style="color:#64748b; margin-top:5px;" id="saludoCuidador">Cargando...</p>
         </div>
-        <!-- 1. Contenedor de Login (aparece solo si hace falta) -->
-        <div id="loginNubeContainer" style="display:none; text-align:center; margin:20px 0;">
-            <p style="color:#6b7280; margin-bottom:15px;">Para ver los datos de tu familiar, iniciá sesión:</p>
-            <button id="btnMostrarLogin" style="background:#7c3aed; color:white; border:none; padding:15px 30px; border-radius:12px; font-size:1.1rem; font-weight:bold; cursor:pointer; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
-                ☁️ Iniciar sesión
+        <!-- FORMULARIO DE VINCULACIÓN DEL CUIDADOR (sin login) -->
+        <div id="loginNubeContainer" style="display:none; text-align:center; margin:20px 0; padding:20px; background:#f3f4f6; border-radius:16px;">
+            <p style="color:#374151; font-weight:bold; font-size:1.1rem; margin-bottom:5px;">🔗 Vinculate a tu familiar</p>
+            <p style="color:#6b7280; font-size:0.95rem; margin-bottom:15px;">Pedile a tu familiar que te pase el código de 6 dígitos que genera en Ajustes.</p>
+
+            <input id="dash-codigo" type="text" inputmode="numeric" maxlength="6" placeholder="Ej: 347630"
+                style="width:100%; padding:14px; margin-bottom:12px; border:2px solid #ddd6fe; border-radius:10px; font-size:1.3rem; text-align:center; letter-spacing:6px; box-sizing:border-box;">
+
+            <input id="dash-email" type="email" placeholder="tuemail@gmail.com"
+                style="width:100%; padding:12px; margin-bottom:15px; border:2px solid #ddd6fe; border-radius:10px; font-size:1rem; box-sizing:border-box;">
+
+            <button id="btnVincularDash" style="background:#059669; color:white; border:none; padding:15px 25px; border-radius:12px; font-size:1.15rem; font-weight:bold; cursor:pointer; width:100%; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                🔗 Vincular
             </button>
-            <div id="formLoginNube" style="display:none; margin-top:20px; padding:20px; background:white; border-radius:12px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
-                <input id="loginEmail" type="email" placeholder="Email" style="width:100%; padding:12px; margin-bottom:10px; border:2px solid #ddd6fe; border-radius:8px; font-size:1rem; box-sizing:border-box;">
-                <input id="loginPass" type="password" placeholder="Contraseña" style="width:100%; padding:12px; margin-bottom:15px; border:2px solid #ddd6fe; border-radius:8px; font-size:1rem; box-sizing:border-box;">
-                <button id="btnEntrarNube" style="background:#059669; color:white; border:none; padding:12px 25px; border-radius:8px; font-size:1rem; font-weight:bold; cursor:pointer;">Entrar</button>
-            </div>
+            <p id="resultadoVinculoDash" style="margin-top:12px; font-size:1rem;"></p>
+        </div>
+
+        <!-- BOTÓN DE CAMBIO DE FAMILIAR (si ya está vinculado y quiere cambiar) -->
+        <div id="cambiarFamiliarBox" style="display:none; text-align:center; margin-top:25px;">
+            <button id="btnCambiarFamiliar" style="background:none; border:none; color:#94a3b8; font-size:0.9rem; text-decoration:underline; cursor:pointer;">
+                🔄 Cambiar de familiar
+            </button>
         </div>
 
         <!-- 2. BOTÓN DE EMERGENCIA: SIEMPRE VISIBLE al final del dashboard -->
@@ -2642,67 +2653,79 @@ async function generarCodigoCV() {
     }
     
     // =========================================================================
-    // LÓGICA DEL LOGIN Y CIERRE DE SESIÓN (A prueba de fallos)
+    // VINCULACIÓN DEL CUIDADOR DESDE EL DASHBOARD (sin login)
     // =========================================================================
+    async function vincularDesdeDashboard() {
+        const codigo = document.getElementById('dash-codigo').value.trim();
+        const email = document.getElementById('dash-email').value.trim();
+        const resultado = document.getElementById('resultadoVinculoDash');
+
+        if (!codigo || codigo.length !== 6) { nubeToastCV('Ingresá un código de 6 dígitos'); return; }
+        if (!email || !email.includes('@')) { nubeToastCV('Ingresá un email válido'); return; }
+        if (!supaCV) { nubeToastCV('El vigilante no está activo'); return; }
+
+        try {
+            const { data, error } = await supaCV
+                .from('codigos_vinculacion')
+                .select('*')
+                .eq('codigo', codigo)
+                .limit(1);
+
+            if (error) { resultado.innerHTML = '<p style="color:#dc2626;">❌ ' + error.message + '</p>'; return; }
+            if (!data || data.length === 0) { resultado.innerHTML = '<p style="color:#dc2626;">❌ Código no encontrado</p>'; return; }
+
+            const datosCodigo = data[0];
+            if (datosCodigo.usada === true) {
+                resultado.innerHTML = '<p style="color:#dc2626;">⚠️ Este código ya fue usado. Pedile uno nuevo a tu familiar.</p>';
+                return;
+            }
+
+            // Guardar la vinculación en este celular
+            localStorage.setItem('cv_adulto_vinculado', datosCodigo.adulto_id);
+            localStorage.setItem('cv_adulto_nombre', datosCodigo.nombre_adulto || 'Usuario');
+            localStorage.setItem('cv_cuidador_email', email);
+
+            // Marcar el código como usado
+            await supaCV.from('codigos_vinculacion').update({ usada: true }).eq('codigo', codigo);
+
+            // Registrar el vínculo (opcional, para rutas de alerta)
+            try {
+                await supaCV.from('vinculos_familiares').insert({
+                    adulto_id: datosCodigo.adulto_id,
+                    cuidador_id: null,
+                    nombre_adulto: datosCodigo.nombre_adulto || 'Usuario',
+                    email_cuidador: email
+                });
+            } catch (e) { console.log('[vinculo] opcional:', e.message); }
+
+            resultado.innerHTML = '<p style="color:#059669; font-weight:bold;">✅ ¡Vinculado a ' + escapeHTML(datosCodigo.nombre_adulto || 'tu familiar') + '!</p>';
+            document.getElementById('dash-codigo').value = '';
+            document.getElementById('dash-email').value = '';
+
+            // Cargar el Dashboard con datos reales
+            await cargarDatosCuidador();
+
+        } catch (e) {
+            resultado.innerHTML = '<p style="color:#dc2626;">❌ ' + e.message + '</p>';
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        const btnMostrar = document.getElementById('btnMostrarLogin');
-        const formLogin = document.getElementById('formLoginNube');
-        const btnEntrar = document.getElementById('btnEntrarNube');
-        const loginContainer = document.getElementById('loginNubeContainer');
-        const btnForzarLogout = document.getElementById('btnForzarLogout');
+        const btnVincular = document.getElementById('btnVincularDash');
+        if (btnVincular) btnVincular.addEventListener('click', vincularDesdeDashboard);
 
-        // 1. Mostrar el formulario al tocar "Iniciar sesión"
-        if (btnMostrar && formLogin) {
-            btnMostrar.addEventListener('click', function() {
-                formLogin.style.display = formLogin.style.display === 'none' ? 'block' : 'none';
-            });
-        }
-
-        // 2. Procesar el login
-        if (btnEntrar) {
-            btnEntrar.addEventListener('click', async function() {
-                const email = document.getElementById('loginEmail').value.trim();
-                const pass = document.getElementById('loginPass').value;
-                
-                if (!email || !email.includes('@')) { alert('Ingresá un email válido'); return; }
-                if (!pass) { alert('Ingresá la contraseña'); return; }
-                
-                try {
-                    const { error } = await supaCV.auth.signInWithPassword({ email, password: pass });
-                    if (error) throw error;
-                    
-                    alert('✅ Conectado');
-                    formLogin.style.display = 'none';
-                    loginContainer.style.display = 'none';
-                    
-                    // Recargar los datos del dashboard
-                    await cargarDatosCuidador();
-                } catch (e) {
-                    alert('❌ ' + (e.message || 'No se pudo entrar'));
+        const btnCambiar = document.getElementById('btnCambiarFamiliar');
+        if (btnCambiar) {
+            btnCambiar.addEventListener('click', function() {
+                if (confirm('¿Desvincular a tu familiar actual?')) {
+                    localStorage.removeItem('cv_adulto_vinculado');
+                    localStorage.removeItem('cv_adulto_nombre');
+                    localStorage.removeItem('cv_cuidador_email');
+                    document.getElementById('cambiarFamiliarBox').style.display = 'none';
+                    cargarDatosCuidador();
                 }
             });
         }
-
-      // 3. Botón de emergencia: Cierra sesión, muestra login y recarga
-        if (btnForzarLogout) {
-            btnForzarLogout.addEventListener('click', async function() {
-                try {
-                    await supaCV.auth.signOut();
-                    
-                    // Mostrar el formulario de login automáticamente
-                    if (loginContainer) loginContainer.style.display = 'block';
-                    if (formLogin) formLogin.style.display = 'block';
-                    
-                    // Limpiar los campos
-                    document.getElementById('loginEmail').value = '';
-                    document.getElementById('loginPass').value = '';
-                    
-                    alert('✅ Sesión cerrada. Ahora ingresá el mail del cuidador.');
-                } catch (e) {
-                    location.reload();
-                }
-            });
-        }  
     });
     </script>
 </body>

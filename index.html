@@ -2581,6 +2581,7 @@ async function generarCodigoCV() {
                 document.getElementById('saludoCuidador').textContent = 'Todavía no te vinculaste. Ingresá el código de 6 dígitos.';
                 const loginContainer = document.getElementById('loginNubeContainer');
                 if (loginContainer) loginContainer.style.display = 'block';
+                document.getElementById('cambiarFamiliarBox').style.display = 'none';
                 return;
             }
 
@@ -2645,6 +2646,7 @@ async function generarCodigoCV() {
             }
 
             window._tomasHoy = tomas || [];
+            document.getElementById('cambiarFamiliarBox').style.display = 'block';
 
         } catch (e) { // <--- El catch cierra AQUÍ, perfectamente emparejado
             console.error('Error cargando datos del dashboard:', e);

@@ -2434,47 +2434,51 @@ function probarVinculacion() {
 // GENERAR CÓDIGO EN CÍRCULO VITAL
 // ============================================
 async function generarCodigoCV() {
-    if (typeof nubeOK_CV === 'undefined' || !nubeOK_CV || !uidCV || !supaCV) {
-        nubeToastCV('Primero activá la nube e iniciá sesión');
-        return;
-    }
-
-    try {
-        const { data: codigosExistentes, error: errorBusqueda } = await supaCV
-            .from('codigos_vinculacion')
-            .select('*')
-            .eq('adulto_id', uidCV)
-            .eq('usada', false)
-            .limit(1);
-
-        if (errorBusqueda) throw errorBusqueda;
-
-        let codigo;
-
-        if (codigosExistentes && codigosExistentes.length > 0) {
-            codigo = codigosExistentes[0].codigo;
-        } else {
-            codigo = Math.floor(100000 + Math.random() * 900000).toString();
-            
-            const { data, error } = await supaCV.from('codigos_vinculacion').insert({
-                codigo: codigo,
-                adulto_id: uidCV,
-                nombre_adulto: datosFicha.nombre || 'Usuario',
-                usada: false
-            }).select();
-            
-            if (error) throw error;
+        if (typeof nubeOK_CV === 'undefined' || !nubeOK_CV || !uidCV || !supaCV) {
+            nubeToastCV('Primero activá la nube e iniciá sesión');
+            return;
         }
 
-        document.getElementById('codigoTextoCV').textContent = codigo;
-        document.getElementById('codigoGeneradoCV').style.display = 'block';
-        nubeToastCV('✅ Código generado: ' + codigo);
+        try {
+            // 1. Buscar si ya hay un código activo
+            const { data: codigosExistentes, error: errorBusqueda } = await supaCV
+                .from('codigos_vinculacion')
+                .select('*')
+                .eq('adulto_id', uidCV)
+                .eq('usada', false)
+                .limit(1);
 
-    } catch (e) {
-        console.error('[Código CV] Error:', e);
-        nubeToastCV('❌ Error al generar código: ' + e.message);
+            if (errorBusqueda) throw errorBusqueda;
+
+            let codigo;
+
+            if (codigosExistentes && codigosExistentes.length > 0) {
+                // Ya existe: lo mostramos
+                codigo = codigosExistentes[0].codigo;
+                nubeToastCV('✅ Tu código es: ' + codigo);
+            } else {
+                // Generamos uno nuevo
+                codigo = Math.floor(100000 + Math.random() * 900000).toString();
+                const { error: errorInsert } = await supaCV.from('codigos_vinculacion').insert({
+                    codigo: codigo,
+                    adulto_id: uidCV,
+                    nombre_adulto: datosFicha.nombre || 'Usuario',
+                    usada: false
+                });
+                if (errorInsert) throw errorInsert;
+                nubeToastCV('✅ Código generado: ' + codigo);
+            }
+
+            // 2. Mostrar el código grande
+            document.getElementById('boxSinCodigo').style.display = 'none';
+            document.getElementById('boxCodigoActivo').style.display = 'block';
+            document.getElementById('codigoActivoTexto').textContent = codigo;
+
+        } catch (e) {
+            console.error('[Código CV] Error:', e);
+            nubeToastCV('❌ Error: ' + e.message);
+        }
     }
-}
     // =========================================================================
     // INTERRUPTOR DE ROL + DASHBOARD
     // =========================================================================
@@ -2733,6 +2737,35 @@ async function generarCodigoCV() {
                     cargarDatosCuidador();
                 }
             });
+        }
+    });
+    // =========================================================================
+    // BOTÓN GENERAR CÓDIGO + CARGAR AL ENTRAR A AJUSTES
+    // =========================================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnGenerar = document.getElementById('btnGenerarCodigo');
+        if (btnGenerar) {
+            btnGenerar.addEventListener('click', function() {
+                generarCodigoCV();
+            });
+        }
+
+        // Si ya hay sesión, verificar si existe código activo
+        if (typeof nubeOK_CV !== 'undefined' && nubeOK_CV && uidCV && supaCV) {
+            supaCV
+                .from('codigos_vinculacion')
+                .select('codigo')
+                .eq('adulto_id', uidCV)
+                .eq('usada', false)
+                .limit(1)
+                .then(resp => {
+                    if (resp.data && resp.data.length > 0) {
+                        document.getElementById('boxSinCodigo').style.display = 'none';
+                        document.getElementById('boxCodigoActivo').style.display = 'block';
+                        document.getElementById('codigoActivoTexto').textContent = resp.data[0].codigo;
+                    }
+                })
+                .catch(() => {});
         }
     });
     </script>

@@ -2767,6 +2767,101 @@ async function generarCodigoCV() {
                 .catch(() => {});
         }
     });
+    // =========================================================================
+    // BOTONES DEL DASHBOARD DEL CUIDADOR (conectados)
+    // =========================================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const adultoId = localStorage.getItem('cv_adulto_vinculado');
+
+        // 📞 Botón Llamar
+        const btnLlamar = document.getElementById('btnLlamar');
+        if (btnLlamar) {
+            btnLlamar.addEventListener('click', function() {
+                if (!adultoId) { alert('Primero vinculá a tu familiar'); return; }
+                
+                supaCV
+                    .from('config_circulo')
+                    .select('telefono_familiar, telefono_emergencia')
+                    .eq('user_id', adultoId)
+                    .limit(1)
+                    .then(({ data, error }) => {
+                        if (error || !data || data.length === 0) {
+                            alert('No hay teléfono registrado. El adulto debe configurarlo en Ajustes.');
+                            return;
+                        }
+                        const tel = data[0].telefono_familiar || data[0].telefono_emergencia;
+                        if (tel) {
+                            window.location.href = `tel:${tel}`;
+                        } else {
+                            alert('No hay número de teléfono registrado.');
+                        }
+                    });
+            });
+        }
+
+        // 🗺️ Botón Ver mapa en vivo
+        const btnMapa = document.getElementById('btnMapa');
+        if (btnMapa) {
+            btnMapa.addEventListener('click', function() {
+                if (!adultoId) { alert('Primero vinculá a tu familiar'); return; }
+                
+                supaCV
+                    .from('actividad_ruta')
+                    .select('latitud, longitud')
+                    .eq('user_id', adultoId)
+                    .order('creado_en', { ascending: false })
+                    .limit(1)
+                    .then(({ data, error }) => {
+                        if (error || !data || data.length === 0) {
+                            alert('No hay ubicación disponible');
+                            return;
+                        }
+                        const lat = data[0].latitud;
+                        const lng = data[0].longitud;
+                        window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, '_blank');
+                    });
+            });
+        }
+
+        // 📍 Tarjeta Ubicación (click para ver mapa)
+        const cardUbicacion = document.getElementById('cardUbicacion');
+        if (cardUbicacion) {
+            cardUbicacion.addEventListener('click', function() {
+                if (!adultoId) { alert('Primero vinculá a tu familiar'); return; }
+                
+                supaCV
+                    .from('actividad_ruta')
+                    .select('latitud, longitud, accion, creado_en')
+                    .eq('user_id', adultoId)
+                    .order('creado_en', { ascending: false })
+                    .limit(1)
+                    .then(({ data, error }) => {
+                        if (error || !data || data.length === 0) {
+                            alert('No hay ubicación registrada');
+                            return;
+                        }
+                        const lat = data[0].latitud;
+                        const lng = data[0].longitud;
+                        const accion = data[0].accion || 'Ubicación';
+                        const tiempo = Math.round((Date.now() - new Date(data[0].creado_en).getTime()) / 60000);
+                        const textoTiempo = tiempo < 1 ? 'Ahora mismo' : (tiempo < 60 ? `Hace ${tiempo} min` : `Hace ${Math.round(tiempo/60)} hs`);
+                        
+                        alert(`📍 ${accion}\n🕐 ${textoTiempo}\n\nAbrir en Google Maps?`);
+                        if (confirm('Abrir en Google Maps')) {
+                            window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
+                        }
+                    });
+            });
+        }
+
+        // ⚙️ Botón Ajustes del Cuidador
+        const btnAjustes = document.getElementById('btnAjustesCuidador');
+        if (btnAjustes) {
+            btnAjustes.addEventListener('click', function() {
+                alert('⚙️ Ajustes del Cuidador\n\nPróximamente podrás:\n- Cambiar tu email de alertas\n- Configurar horarios de silencio\n- Ver historial de alertas');
+            });
+        }
+    });
     </script>
 </body>
 </html>

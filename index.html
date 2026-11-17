@@ -2664,67 +2664,116 @@ async function generarCodigoCV() {
     }
     
     // =========================================================================
-    // VINCULACIÓN DEL CUIDADOR DESDE EL DASHBOARD (sin login)
+    // BLOQUE MAESTRO DEL DASHBOARD (LIMPIO Y SIN ERRORES)
     // =========================================================================
+
+    // 1. Función para vincularse con el código
     async function vincularDesdeDashboard() {
         const codigo = document.getElementById('dash-codigo').value.trim();
         const email = document.getElementById('dash-email').value.trim();
         const resultado = document.getElementById('resultadoVinculoDash');
 
-        if (!codigo || codigo.length !== 6) { nubeToastCV('Ingresá un código de 6 dígitos'); return; }
-        if (!email || !email.includes('@')) { nubeToastCV('Ingresá un email válido'); return; }
-        if (!supaCV) { nubeToastCV('El vigilante no está activo'); return; }
+        if (!codigo || codigo.length !== 6) { alert('Ingresá un código de 6 dígitos'); return; }
+        if (!email || !email.includes('@')) { alert('Ingresá un email válido'); return; }
+        if (!supaCV) { alert('El vigilante no está activo'); return; }
 
         try {
-            const { data, error } = await supaCV
-                .from('codigos_vinculacion')
-                .select('*')
-                .eq('codigo', codigo)
-                .limit(1);
-
-            if (error) { resultado.innerHTML = '<p style="color:#dc2626;">❌ ' + error.message + '</p>'; return; }
-            if (!data || data.length === 0) { resultado.innerHTML = '<p style="color:#dc2626;">❌ Código no encontrado</p>'; return; }
+            const { data, error } = await supaCV.from('codigos_vinculacion').select('*').eq('codigo', codigo).limit(1);
+            if (error || !data || data.length === 0) { resultado.innerHTML = '<p style="color:#dc2626;">❌ Código no encontrado</p>'; return; }
 
             const datosCodigo = data[0];
-            if (datosCodigo.usada === true) {
-                resultado.innerHTML = '<p style="color:#dc2626;">⚠️ Este código ya fue usado. Pedile uno nuevo a tu familiar.</p>';
-                return;
-            }
+            if (datosCodigo.usada === true) { resultado.innerHTML = '<p style="color:#dc2626;">⚠️ Este código ya fue usado</p>'; return; }
 
-            // Guardar la vinculación en este celular
             localStorage.setItem('cv_adulto_vinculado', datosCodigo.adulto_id);
             localStorage.setItem('cv_adulto_nombre', datosCodigo.nombre_adulto || 'Usuario');
             localStorage.setItem('cv_cuidador_email', email);
 
-            // Marcar el código como usado
             await supaCV.from('codigos_vinculacion').update({ usada: true }).eq('codigo', codigo);
 
-            // Registrar el vínculo (opcional, para rutas de alerta)
             try {
                 await supaCV.from('vinculos_familiares').insert({
-                    adulto_id: datosCodigo.adulto_id,
-                    cuidador_id: null,
-                    nombre_adulto: datosCodigo.nombre_adulto || 'Usuario',
-                    email_cuidador: email
+                    adulto_id: datosCodigo.adulto_id, cuidador_id: null,
+                    nombre_adulto: datosCodigo.nombre_adulto || 'Usuario', email_cuidador: email
                 });
-            } catch (e) { console.log('[vinculo] opcional:', e.message); }
+            } catch (e) { console.log('Vínculo opcional:', e.message); }
 
-            resultado.innerHTML = '<p style="color:#059669; font-weight:bold;">✅ ¡Vinculado a ' + escapeHTML(datosCodigo.nombre_adulto || 'tu familiar') + '!</p>';
+            resultado.innerHTML = '<p style="color:#059669; font-weight:bold;">✅ ¡Vinculado a ' + (datosCodigo.nombre_adulto || 'tu familiar') + '!</p>';
             document.getElementById('dash-codigo').value = '';
             document.getElementById('dash-email').value = '';
-
-            // Cargar el Dashboard con datos reales
+            
             await cargarDatosCuidador();
-
         } catch (e) {
             resultado.innerHTML = '<p style="color:#dc2626;">❌ ' + e.message + '</p>';
         }
     }
 
+    // 2. Función para cargar los datos en el Dashboard
+    async function cargarDatosCuidador() {
+        try {
+            const adultoId = localStorage.getItem('cv_adulto_vinculado');
+            const nombreAdulto = localStorage.getItem('cv_adulto_nombre') || 'tu familiar';
+
+            if (!adultoId) {
+                document.getElementById('saludoCuidador').textContent = 'Todavía no te vinculaste. Ingresá el código de 6 dígitos.';
+                const loginContainer = document.getElementById('loginNubeContainer');
+                if (loginContainer) loginContainer.style.display = 'block';
+                const cambiarBox = document.getElementById('cambiarFamiliarBox');
+                if (cambiarBox) cambiarBox.style.display = 'none';
+                return;
+            }
+
+            const loginContainerHide = document.getElementById('loginNubeContainer');
+            if (loginContainerHide) loginContainerHide.style.display = 'none';
+            const cambiarBoxShow = document.getElementById('cambiarFamiliarBox');
+            if (cambiarBoxShow) cambiarBoxShow.style.display = 'block';
+
+            const hora = new Date().getHours();
+            const saludo = hora < 12 ? 'Buenos días' : (hora < 20 ? 'Buenas tardes' : 'Buenas noches');
+            document.getElementById('saludoCuidador').textContent = `${saludo}. Son las ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}.`;
+
+            const hoy = new Date().toISOString().split('T')[0];
+            const { data: tomas } = await supaCV.from('tomas_circulo').select('nombre, hora, tomo, toma_id').eq('user_id', adultoId).eq('fecha', hoy);
+            const total = tomas ? tomas.length : 0;
+            const hechas = tomas ? tomas.filter(t => t.tomo === true).length : 0;
+            document.getElementById('datoMedicacion').textContent = `${hechas}/${total}`;
+
+            // Usamos ubicaciones_ruta con las columnas correctas: lat, lon, creada_en
+            const { data: ultima } = await supaCV.from('ubicaciones_ruta').select('lat, lon, precision, creada_en').eq('user_id', adultoId).order('creada_en', { ascending: false }).limit(1).maybeSingle();
+
+            if (ultima) {
+                document.getElementById('datoUbicacion').textContent = 'Casa';
+                const mins = Math.round((Date.now() - new Date(ultima.creada_en).getTime()) / 60000);
+                const tiempoEl = document.getElementById('tiempoUbicacion');
+                if (tiempoEl) tiempoEl.textContent = mins < 1 ? 'Ahora mismo' : (mins < 60 ? `Hace ${mins} min` : `Hace ${Math.round(mins/60)} hs`);
+            }
+
+            const bloqueEstado = document.getElementById('bloqueEstado');
+            if (total > 0 && hechas < total) {
+                bloqueEstado.style.background = '#fef3c7'; bloqueEstado.querySelector('div').textContent = '🟡';
+                bloqueEstado.querySelector('h2').textContent = 'Atención';
+                bloqueEstado.querySelector('p').textContent = `A ${nombreAdulto} le faltan ${total - hechas} medicación(es).`;
+            } else if (total === 0) {
+                bloqueEstado.style.background = '#f1f5f9'; bloqueEstado.querySelector('div').textContent = '⚪';
+                bloqueEstado.querySelector('h2').textContent = 'Sin datos hoy';
+                bloqueEstado.querySelector('p').textContent = `Aún no hay medicación registrada para ${nombreAdulto}.`;
+            } else {
+                bloqueEstado.style.background = '#dcfce7'; bloqueEstado.querySelector('div').textContent = '🟢';
+                bloqueEstado.querySelector('h2').textContent = 'Todo en orden';
+                bloqueEstado.querySelector('p').textContent = `${nombreAdulto} tomó toda su medicación.`;
+            }
+            window._tomasHoy = tomas || [];
+        } catch (e) {
+            console.error('Error cargando dashboard:', e);
+        }
+    }
+
+    // 3. Conectar TODOS los botones al cargar la página (UN SOLO BLOQUE)
     document.addEventListener('DOMContentLoaded', function() {
+        // A) Vincular
         const btnVincular = document.getElementById('btnVincularDash');
         if (btnVincular) btnVincular.addEventListener('click', vincularDesdeDashboard);
 
+        // B) Cambiar de familiar
         const btnCambiar = document.getElementById('btnCambiarFamiliar');
         if (btnCambiar) {
             btnCambiar.addEventListener('click', function() {
@@ -2732,121 +2781,80 @@ async function generarCodigoCV() {
                     localStorage.removeItem('cv_adulto_vinculado');
                     localStorage.removeItem('cv_adulto_nombre');
                     localStorage.removeItem('cv_cuidador_email');
-                    document.getElementById('cambiarFamiliarBox').style.display = 'none';
                     cargarDatosCuidador();
                 }
             });
         }
-    });
-    // =========================================================================
-    // BOTÓN GENERAR CÓDIGO + CARGAR AL ENTRAR A AJUSTES
-    // =========================================================================
-    document.addEventListener('DOMContentLoaded', function() {
-        const btnGenerar = document.getElementById('btnGenerarCodigo');
-        if (btnGenerar) {
-            btnGenerar.addEventListener('click', function() {
-                generarCodigoCV();
-            });
-        }
 
-        // Si ya hay sesión, verificar si existe código activo
-        if (typeof nubeOK_CV !== 'undefined' && nubeOK_CV && uidCV && supaCV) {
-            supaCV
-                .from('codigos_vinculacion')
-                .select('codigo')
-                .eq('adulto_id', uidCV)
-                .eq('usada', false)
-                .limit(1)
-                .then(resp => {
-                    if (resp.data && resp.data.length > 0) {
-                        document.getElementById('boxSinCodigo').style.display = 'none';
-                        document.getElementById('boxCodigoActivo').style.display = 'block';
-                        document.getElementById('codigoActivoTexto').textContent = resp.data[0].codigo;
-                    }
-                })
-                .catch(() => {});
-        }
-    });
-    // =========================================================================
-    // BOTONES DEL DASHBOARD DEL CUIDADOR (conectados)
-    // =========================================================================
-    document.addEventListener('DOMContentLoaded', function() {
-        const adultoId = localStorage.getItem('cv_adulto_vinculado');
-
-        // 📞 Botón Llamar
+        // C) Llamar
         const btnLlamar = document.getElementById('btnLlamar');
         if (btnLlamar) {
             btnLlamar.addEventListener('click', function() {
+                const adultoId = localStorage.getItem('cv_adulto_vinculado');
                 if (!adultoId) { alert('Primero vinculá a tu familiar'); return; }
-                
-                supaCV
-                    .from('config_circulo')
-                    .select('telefono_familiar, telefono_emergencia')
-                    .eq('user_id', adultoId)
-                    .limit(1)
-                    .then(({ data, error }) => {
-                        if (error || !data || data.length === 0) {
-                            alert('No hay teléfono registrado. El adulto debe configurarlo en Ajustes.');
-                            return;
-                        }
-                        const tel = data[0].telefono_familiar || data[0].telefono_emergencia;
-                        if (tel) {
-                            window.location.href = `tel:${tel}`;
-                        } else {
-                            alert('No hay número de teléfono registrado.');
-                        }
-                    });
+                supaCV.from('config_circulo').select('telefono_familiar, telefono_emergencia').eq('user_id', adultoId).limit(1).then(({ data, error }) => {
+                    if (error || !data || data.length === 0) { alert('No hay teléfono registrado'); return; }
+                    const tel = data[0].telefono_familiar || data[0].telefono_emergencia;
+                    if (tel) window.location.href = `tel:${tel}`;
+                    else alert('No hay número registrado');
+                });
             });
         }
 
-        // 🗺️ Botón Ver mapa en vivo
+        // D) Ver mapa en vivo
         const btnMapa = document.getElementById('btnMapa');
         if (btnMapa) {
             btnMapa.addEventListener('click', function() {
+                const adultoId = localStorage.getItem('cv_adulto_vinculado');
                 if (!adultoId) { alert('Primero vinculá a tu familiar'); return; }
-                
-                supaCV
-                    .from('actividad_ruta')
-                    .select('latitud, longitud')
-                    .eq('user_id', adultoId)
-                    .order('creado_en', { ascending: false })
-                    .limit(1)
-                    .then(({ data, error }) => {
-                        if (error || !data || data.length === 0) {
-                            alert('No hay ubicación disponible');
-                            return;
-                        }
-                        const lat = data[0].latitud;
-                        const lng = data[0].longitud;
-                        window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, '_blank');
-                    });
+                supaCV.from('ubicaciones_ruta').select('lat, lon').eq('user_id', adultoId).order('creada_en', { ascending: false }).limit(1).then(({ data, error }) => {
+                    if (error || !data || data.length === 0) { alert('No hay ubicación disponible'); return; }
+                    window.open(`https://www.google.com/maps/search/?api=1&query=${data[0].lat},${data[0].lon}`, '_blank');
+                });
             });
         }
 
-        // 4. Última ubicación (usando ubicaciones_ruta)
-const { data: ultima, error: uErr } = await supaCV
-    .from('ubicaciones_ruta')
-    .select('lat, lon, precision, creada_en')
-    .eq('user_id', adultoId)
-    .order('creada_en', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-if (!uErr && ultima) {
-    document.getElementById('datoUbicacion').textContent = 'Casa'; // O calcular según lat/lon
-    const mins = Math.round((Date.now() - new Date(ultima.creada_en).getTime()) / 60000);
-    const tiempoEl = document.getElementById('tiempoUbicacion');
-    if (tiempoEl) tiempoEl.textContent = mins < 1 ? 'Ahora mismo' : (mins < 60 ? `Hace ${mins} min` : `Hace ${Math.round(mins/60)} hs`);
-}
+        // E) Tarjeta Ubicación clickable
+        const cardUbicacion = document.getElementById('cardUbicacion');
+        if (cardUbicacion) {
+            cardUbicacion.addEventListener('click', function() {
+                const adultoId = localStorage.getItem('cv_adulto_vinculado');
+                if (!adultoId) { alert('Primero vinculá a tu familiar'); return; }
+                supaCV.from('ubicaciones_ruta').select('lat, lon, precision, creada_en').eq('user_id', adultoId).order('creada_en', { ascending: false }).limit(1).then(({ data, error }) => {
+                    if (error || !data || data.length === 0) { alert('No hay ubicación registrada'); return; }
+                    const tiempo = Math.round((Date.now() - new Date(data[0].creada_en).getTime()) / 60000);
+                    const texto = tiempo < 1 ? 'Ahora mismo' : (tiempo < 60 ? `Hace ${tiempo} min` : `Hace ${Math.round(tiempo/60)} hs`);
+                    alert(`📍 Última ubicación\n🕐 ${texto}\n🎯 Precisión: ${data[0].precision}m`);
+                    if (confirm('Abrir en Google Maps?')) window.open(`https://www.google.com/maps?q=${data[0].lat},${data[0].lon}`, '_blank');
+                });
             });
         }
 
-        // ⚙️ Botón Ajustes del Cuidador
+        // F) Ajustes del Cuidador
         const btnAjustes = document.getElementById('btnAjustesCuidador');
         if (btnAjustes) {
             btnAjustes.addEventListener('click', function() {
-                alert('⚙️ Ajustes del Cuidador\n\nPróximamente podrás:\n- Cambiar tu email de alertas\n- Configurar horarios de silencio\n- Ver historial de alertas');
+                alert('⚙️ Ajustes del Cuidador\n\nPróximamente:\n- Cambiar email de alertas\n- Horarios de silencio');
             });
+        }
+
+        // G) Generar Código (para el adulto en Ajustes)
+        const btnGenerar = document.getElementById('btnGenerarCodigo');
+        if (btnGenerar) btnGenerar.addEventListener('click', function() { generarCodigoCV(); });
+
+        // H) Cargar código activo al entrar (si es adulto)
+        if (typeof nubeOK_CV !== 'undefined' && nubeOK_CV && uidCV && supaCV) {
+            supaCV.from('codigos_vinculacion').select('codigo').eq('adulto_id', uidCV).eq('usada', false).limit(1).then(resp => {
+                if (resp.data && resp.data.length > 0) {
+                    const boxSin = document.getElementById('boxSinCodigo');
+                    const boxActivo = document.getElementById('boxCodigoActivo');
+                    if (boxSin) boxSin.style.display = 'none';
+                    if (boxActivo) {
+                        boxActivo.style.display = 'block';
+                        document.getElementById('codigoActivoTexto').textContent = resp.data[0].codigo;
+                    }
+                }
+            }).catch(() => {});
         }
     });
     </script>

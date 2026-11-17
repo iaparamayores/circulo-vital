@@ -658,14 +658,14 @@
                 <p style="font-size:0.75rem; color:#3b82f6; margin-top:8px;">👆 Tocá para ver detalle</p>
             </div>
             
-            <!-- Tarjeta Ubicación -->
-            <div style="background:white; border-radius:15px; padding:20px; text-align:center; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+            <!-- Tarjeta Ubicación (AHORA CLICKABLE) -->
+            <div id="cardUbicacion" style="background:white; border-radius:15px; padding:20px; text-align:center; box-shadow:0 2px 4px rgba(0,0,0,0.05); cursor:pointer; transition:all 0.3s;">
                 <div style="font-size:2rem;">📍</div>
                 <h3 style="margin:10px 0 5px; color:#334155;">Ubicación</h3>
                 <p style="font-size:1.2rem; font-weight:bold; color:#0369a1; margin:0;" id="datoUbicacion">Casa</p>
                 <p style="font-size:0.8rem; color:#94a3b8; margin-top:5px;" id="tiempoUbicacion">Hace 10 min</p>
+                <p style="font-size:0.75rem; color:#3b82f6; margin-top:8px;">👆 Tocá para ver en el mapa</p>
             </div>
-        </div>
 
         <!-- PANEL DESPLEGABLE DE MEDICACIÓN (aparece al tocar la tarjeta) -->
         <div id="panelDetalleMed" style="display:none; background:white; border-radius:15px; padding:20px; margin-bottom:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
@@ -675,16 +675,15 @@
             </div>
         </div>
 
-        <!-- BLOQUE 3: Botones de Acción -->
+        <!-- BLOQUE 3: Botones de Acción (con IDs para conectar) -->
         <div style="display:grid; gap:15px;">
-            <button style="background:#3b82f6; color:white; border:none; padding:20px; border-radius:15px; font-size:1.2rem; font-weight:bold; cursor:pointer; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+            <button id="btnLlamar" style="background:#3b82f6; color:white; border:none; padding:20px; border-radius:15px; font-size:1.2rem; font-weight:bold; cursor:pointer; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
                 📞 Llamar ahora
             </button>
-            <button style="background:#10b981; color:white; border:none; padding:20px; border-radius:15px; font-size:1.2rem; font-weight:bold; cursor:pointer; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+            <button id="btnMapa" style="background:#10b981; color:white; border:none; padding:20px; border-radius:15px; font-size:1.2rem; font-weight:bold; cursor:pointer; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
                 🗺️ Ver mapa en vivo
             </button>
         </div>
-
         <!-- Botón de ajustes (chiquito, abajo) -->
         <div style="text-align:center; margin-top:30px;">
             <button id="btnAjustesCuidador" style="background:none; border:none; color:#94a3b8; font-size:0.9rem; cursor:pointer;">

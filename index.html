@@ -2823,34 +2823,21 @@ async function generarCodigoCV() {
             });
         }
 
-        // 📍 Tarjeta Ubicación (click para ver mapa)
-        const cardUbicacion = document.getElementById('cardUbicacion');
-        if (cardUbicacion) {
-            cardUbicacion.addEventListener('click', function() {
-                if (!adultoId) { alert('Primero vinculá a tu familiar'); return; }
-                
-                supaCV
-                    .from('actividad_ruta')
-                    .select('latitud, longitud, accion, creado_en')
-                    .eq('user_id', adultoId)
-                    .order('creado_en', { ascending: false })
-                    .limit(1)
-                    .then(({ data, error }) => {
-                        if (error || !data || data.length === 0) {
-                            alert('No hay ubicación registrada');
-                            return;
-                        }
-                        const lat = data[0].latitud;
-                        const lng = data[0].longitud;
-                        const accion = data[0].accion || 'Ubicación';
-                        const tiempo = Math.round((Date.now() - new Date(data[0].creado_en).getTime()) / 60000);
-                        const textoTiempo = tiempo < 1 ? 'Ahora mismo' : (tiempo < 60 ? `Hace ${tiempo} min` : `Hace ${Math.round(tiempo/60)} hs`);
-                        
-                        alert(`📍 ${accion}\n🕐 ${textoTiempo}\n\nAbrir en Google Maps?`);
-                        if (confirm('Abrir en Google Maps')) {
-                            window.open(`https://www.google.com/maps?q=${lat},${lng}`, '_blank');
-                        }
-                    });
+        // 4. Última ubicación (usando ubicaciones_ruta)
+const { data: ultima, error: uErr } = await supaCV
+    .from('ubicaciones_ruta')
+    .select('lat, lon, precision, creada_en')
+    .eq('user_id', adultoId)
+    .order('creada_en', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+if (!uErr && ultima) {
+    document.getElementById('datoUbicacion').textContent = 'Casa'; // O calcular según lat/lon
+    const mins = Math.round((Date.now() - new Date(ultima.creada_en).getTime()) / 60000);
+    const tiempoEl = document.getElementById('tiempoUbicacion');
+    if (tiempoEl) tiempoEl.textContent = mins < 1 ? 'Ahora mismo' : (mins < 60 ? `Hace ${mins} min` : `Hace ${Math.round(mins/60)} hs`);
+}
             });
         }
 

@@ -2834,16 +2834,46 @@ async function generarCodigoCV() {
             });
         }
 
-        // D) Ver mapa en vivo
+        // D) Ver mapa en vivo (misma lógica que el botón Llamar)
         const btnMapa = document.getElementById('btnMapa');
         if (btnMapa) {
-            btnMapa.addEventListener('click', function() {
+            btnMapa.addEventListener('click', async function() {
                 const adultoId = localStorage.getItem('cv_adulto_vinculado');
-                if (!adultoId) { alert('Primero vinculá a tu familiar'); return; }
-                supaCV.from('ubicaciones_ruta').select('lat, lon').eq('user_id', adultoId).order('creada_en', { ascending: false }).limit(1).then(({ data, error }) => {
-                    if (error || !data || data.length === 0) { alert('No hay ubicación disponible'); return; }
-                    window.open(`https://www.google.com/maps/search/?api=1&query=${data[0].lat},${data[0].lon}`, '_blank');
-                });
+                
+                if (!adultoId) {
+                    alert('⚠️ Primero vinculá a tu familiar con el código de 6 dígitos.');
+                    return;
+                }
+                
+                try {
+                    const { data, error } = await supaCV
+                        .from('ubicaciones_ruta')
+                        .select('lat, lon, precision, creado_en')
+                        .eq('user_id', adultoId)
+                        .order('creado_en', { ascending: false })
+                        .limit(1);
+                    
+                    if (error) {
+                        alert('❌ Error de Supabase:\n' + error.message);
+                        return;
+                    }
+                    
+                    if (!data || data.length === 0) {
+                        alert('🔍 No hay ubicación registrada para este adulto.\n\nEl adulto debe abrir Ruta Segura y caminar un poco para generar registros.');
+                        return;
+                    }
+                    
+                    const lat = data[0].lat;
+                    const lon = data[0].lon;
+                    const tiempo = Math.round((Date.now() - new Date(data[0].creado_en).getTime()) / 60000);
+                    const texto = tiempo < 1 ? 'Ahora mismo' : (tiempo < 60 ? `Hace ${tiempo} min` : `Hace ${Math.round(tiempo/60)} hs`);
+                    
+                    if (confirm(`📍 Última ubicación\n🕐 ${texto}\n🎯 Precisión: ${data[0].precision}m\n\n¿Abrir en Google Maps?`)) {
+                        window.open(`https://www.google.com/maps?q=${lat},${lon}`, '_blank');
+                    }
+                } catch (e) {
+                    alert('❌ Error inesperado: ' + e.message);
+                }
             });
         }
 

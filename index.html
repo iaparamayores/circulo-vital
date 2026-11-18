@@ -2786,18 +2786,58 @@ async function generarCodigoCV() {
             });
         }
 
-        // C) Llamar
+        // C) Llamar al familiar (Leyendo a través del vínculo familiar)
         const btnLlamar = document.getElementById('btnLlamar');
         if (btnLlamar) {
-            btnLlamar.addEventListener('click', function() {
+            btnLlamar.addEventListener('click', async function() {
+                // 1. Obtenemos el ID del adulto desde el vínculo guardado en el celular del cuidador
                 const adultoId = localStorage.getItem('cv_adulto_vinculado');
-                if (!adultoId) { alert('Primero vinculá a tu familiar'); return; }
-                supaCV.from('config_circulo').select('telefono_familiar, telefono_emergencia').eq('user_id', adultoId).limit(1).then(({ data, error }) => {
-                    if (error || !data || data.length === 0) { alert('No hay teléfono registrado'); return; }
-                    const tel = data[0].telefono_familiar || data[0].telefono_emergencia;
-                    if (tel) window.location.href = `tel:${tel}`;
-                    else alert('No hay número registrado');
-                });
+                
+                if (!adultoId) { 
+                    alert('⚠️ Primero tenés que vincular a tu familiar con el código de 6 dígitos.'); 
+                    return; 
+                }
+                
+                try {
+                    // 2. Consultamos a través de vinculos_familiares, trayendo los datos de config_circulo (JOIN)
+                    const { data, error } = await supaCV
+                        .from('vinculos_familiares')
+                        .select(`
+                            nombre_adulto,
+                            config_circulo (telefono_familiar, telefono_emergencia, mail_familiar)
+                        `)
+                        .eq('adulto_id', adultoId)
+                        .limit(1);
+                    
+                    if (error) { 
+                        alert('❌ Error al leer el vínculo:\n' + error.message); 
+                        return; 
+                    }
+                    
+                    if (!data || data.length === 0) { 
+                        alert('⚠️ No se encontró el vínculo o los datos de contacto.\nAsegurate de que el adulto haya guardado su teléfono en la Ficha Médica.'); 
+                        return; 
+                    }
+                    
+                    // 3. Extraemos los datos del JOIN
+                    const config = data[0].config_circulo;
+                    const nombre = data[0].nombre_adulto || 'tu familiar';
+                    const tel = config ? (config.telefono_familiar || config.telefono_emergencia) : null;
+                    const email = config ? config.mail_familiar : null;
+                    
+                    // 4. Intentamos llamar
+                    if (tel) {
+                        window.location.href = `tel:${tel}`;
+                    } else if (email) {
+                        if (confirm(`No hay teléfono registrado para ${nombre}, pero sí este email:\n${email}\n\n¿Querés enviarle un email?`)) {
+                            window.location.href = `mailto:${email}?subject=Alerta Círculo Vital&body=Hola, te contacto desde la app.`;
+                        }
+                    } else {
+                        alert(`⚠️ ${nombre} no tiene teléfono ni email registrado en su configuración.`);
+                    }
+                } catch (e) {
+                    alert('❌ Error inesperado: ' + e.message);
+                }
             });
         }
 

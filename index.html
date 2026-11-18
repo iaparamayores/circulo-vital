@@ -2732,7 +2732,7 @@ async function generarCodigoCV() {
             const hoy = new Date().toISOString().split('T')[0];
             const { data: tomas } = await supaCV
     .from('tomas_circulo')
-    .select('nombre, tomo, toma_id, fecha, creado_en')  // ✅ columnas reales
+    .select('nombre, tomo, toma_id, fecha, creado_en')
     .eq('user_id', adultoId)
     .eq('fecha', hoy);
             const total = tomas ? tomas.length : 0;

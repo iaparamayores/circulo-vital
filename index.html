@@ -2870,7 +2870,7 @@ async function generarCodigoCV() {
                     const tiempo = Math.round((Date.now() - new Date(data[0].creado_en).getTime()) / 60000);
                     const texto = tiempo < 1 ? 'Ahora mismo' : (tiempo < 60 ? `Hace ${tiempo} min` : `Hace ${Math.round(tiempo/60)} hs`);
                     
-                    if (confirm(`📍 Última ubicación\n🕐 ${texto}.\n🎯 Precisión: ${Math.round(data[0].precision)}m\n\n¿Abrir en Google Maps?`)) {
+                    if (confirm(`📍 Última ubicación\n🕐 ${texto}\n.🎯 Precisión: ${Math.round(data[0].precision)}m\n\n¿Abrir en Google Maps?`)) {
                         window.open(`https://www.google.com/maps?q=${lat},${lon}`, '_blank');
                     }
                 } catch (e) {

@@ -2883,22 +2883,40 @@ async function generarCodigoCV() {
             });
         }
 
-        // E) Tarjeta Ubicación clickable
+        // E) Tarjeta Ubicación clickable (CORREGIDO)
         const cardUbicacion = document.getElementById('cardUbicacion');
         if (cardUbicacion) {
-            cardUbicacion.addEventListener('click', function() {
+            cardUbicacion.addEventListener('click', async function() {
                 const adultoId = localStorage.getItem('cv_adulto_vinculado');
                 if (!adultoId) { alert('Primero vinculá a tu familiar'); return; }
-                supaCV.from('ubicaciones_ruta').select('lat, lon, precision, creada_en').eq('user_id', adultoId).order('creada_en', { ascending: false }).limit(1).then(({ data, error }) => {
-                    if (error || !data || data.length === 0) { alert('No hay ubicación registrada'); return; }
-                    const tiempo = Math.round((Date.now() - new Date(data[0].creada_en).getTime()) / 60000);
+
+                try {
+                    const { data, error } = await supaCV
+                        .from('ubicaciones_ruta')
+                        .select('lat, lon, precision, creado_en')
+                        .eq('user_id', adultoId)
+                        .order('creado_en', { ascending: false })
+                        .limit(1);
+
+                    if (error || !data || data.length === 0) {
+                        alert('No hay ubicación registrada');
+                        return;
+                    }
+
+                    const tiempo = Math.round((Date.now() - new Date(data[0].creado_en).getTime()) / 60000);
                     const texto = tiempo < 1 ? 'Ahora mismo' : (tiempo < 60 ? `Hace ${tiempo} min` : `Hace ${Math.round(tiempo/60)} hs`);
-                    alert(`📍 Última ubicación\n🕐 ${texto}\n.🎯 Precisión: ${Math.round(data[0].precision)}m);
-                    if (confirm('Abrir en Google Maps?')) window.open(`https://www.google.com/maps?q=${data[0].lat},${data[0].lon}`, '_blank');
-                });
+                    const precision = Math.round(data[0].precision);
+
+                    alert(`📍 Última ubicación\n🕐 ${texto}\n🎯 Precisión: ${precision}m`);
+
+                    if (confirm('¿Abrir en Google Maps?')) {
+                        window.open(`https://www.google.com/maps?q=${data[0].lat},${data[0].lon}`, '_blank');
+                    }
+                } catch (e) {
+                    alert('❌ Error: ' + e.message);
+                }
             });
         }
-
         // F) Ajustes del Cuidador
         const btnAjustes = document.getElementById('btnAjustesCuidador');
         if (btnAjustes) {

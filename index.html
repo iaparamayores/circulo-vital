@@ -2744,7 +2744,7 @@ async function generarCodigoCV() {
 
             if (ultima) {
                 document.getElementById('datoUbicacion').textContent = 'Casa';
-                const mins = Math.round((Date.now() - new Date(ultima.creada_en).getTime()) / 60000);
+                const mins = Math.round((Date.now() - new Date(ultima.creado_en).getTime()) / 60000);
                 const tiempoEl = document.getElementById('tiempoUbicacion');
                 if (tiempoEl) tiempoEl.textContent = mins < 1 ? 'Ahora mismo' : (mins < 60 ? `Hace ${mins} min` : `Hace ${Math.round(mins/60)} hs`);
             }

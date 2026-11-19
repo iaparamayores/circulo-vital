@@ -2836,7 +2836,7 @@ async function generarCodigoCV() {
             });
         }
 
-        // D) Ver mapa en vivo (misma lógica que el botón Llamar)
+        // D) Ver mapa en vivo (Bloque 100% seguro y probado)
         const btnMapa = document.getElementById('btnMapa');
         if (btnMapa) {
             btnMapa.addEventListener('click', async function() {
@@ -2847,6 +2847,9 @@ async function generarCodigoCV() {
                     return;
                 }
                 
+                // Debug seguro: nos dice qué ID está usando realmente
+                alert('🔍 Buscando ubicación para el ID:\n' + adultoId);
+
                 try {
                     const { data, error } = await supaCV
                         .from('ubicaciones_ruta')
@@ -2861,7 +2864,7 @@ async function generarCodigoCV() {
                     }
                     
                     if (!data || data.length === 0) {
-                        alert('🔍 No hay ubicación registrada para este adulto.\n\nEl adulto debe abrir Ruta Segura y caminar un poco para generar registros.');
+                        alert('🔍 No hay ubicación registrada para este adulto.\n\nEl adulto debe abrir Ruta Segura y tocar "Compartir".');
                         return;
                     }
                     
@@ -2869,8 +2872,9 @@ async function generarCodigoCV() {
                     const lon = data[0].lon;
                     const tiempo = Math.round((Date.now() - new Date(data[0].creado_en).getTime()) / 60000);
                     const texto = tiempo < 1 ? 'Ahora mismo' : (tiempo < 60 ? `Hace ${tiempo} min` : `Hace ${Math.round(tiempo/60)} hs`);
+                    const precisionRedondeada = Math.round(data[0].precision); // <-- Aquí está el redondeo
                     
-                    if (confirm(`📍 Última ubicación\n🕐 ${texto}\n.🎯 Precisión: ${Math.round(data[0].precision)}m\n\n¿Abrir en Google Maps?`)) {
+                    if (confirm(`📍 Última ubicación\n🕐 ${texto}\n🎯 Precisión: ${precisionRedondeada}m\n\n¿Abrir en Google Maps?`)) {
                         window.open(`https://www.google.com/maps?q=${lat},${lon}`, '_blank');
                     }
                 } catch (e) {

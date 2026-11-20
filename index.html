@@ -1579,10 +1579,21 @@ function marcarToma(id,nombre){
 async function nubeSubirToma(tomaId, nombre, tomo){
   if(!nubeOK_CV || !uidCV || !supaCV) return;
   try{
-    await supaCV.from('tomas_circulo').insert({ user_id: uidCV, toma_id: String(tomaId), nombre: nombre||'', tomo: tomo });
-  }catch(e){ console.log('[nube cv] subir toma falló', e); }
+    const h = hoyStr();
+    const { error } = await supaCV.from('tomas_circulo').insert({ 
+      user_id: uidCV, 
+      fecha: h,                    // ← ESTO FALTABA
+      toma_id: parseInt(tomaId),   // ← número, no string
+      nombre: nombre || '', 
+      tomo: tomo,
+      creado_en: new Date().toISOString()
+    });
+    if (error) console.log('[nube cv] Error al subir toma:', error);
+    else console.log('[nube cv] ✅ Toma subida OK');
+  } catch(e){
+    console.log('[nube cv] falló:', e);
+  }
 }
-
 function marcarNoToma(id, nombre){
   const h=hoyStr();
   noTomas[`${h}_${id}`]=true;

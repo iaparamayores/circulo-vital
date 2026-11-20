@@ -3096,14 +3096,19 @@ document.addEventListener('DOMContentLoaded', function() {
             }).catch(() => {});
         }
     });
-    function salirAppCuidador() {
-  if (confirm('¿Seguro que querés desvincularte y salir de la app?')) {
-    localStorage.removeItem('cv_adulto_vinculado');
-    localStorage.removeItem('cv_adulto_nombre');
-    localStorage.removeItem('cv_cuidador_email');
-    window.location.reload(); // Recarga y vuelve a la pantalla de inicio
-  }
+    function cerrarDashboardCuidador() {
+    // 1. Ocultamos el dashboard del cuidador
+    document.getElementById('dashboardCuidador').style.display = 'none';
+    
+    // 2. Mostramos la vista del adulto (o el menú de roles, según tu diseño)
+    document.getElementById('vistaAdulto').style.display = 'block';
+    
+    // 3. Opcional: si querés que vuelva al menú de "Soy adulto / Soy cuidador", descomentá la línea de abajo:
+    // document.getElementById('modalRol').style.display = 'flex';
+    
+    // ¡IMPORTANTE! No tocamos el localStorage, así el vínculo se mantiene.
 }
+
     </script>
 </body>
 </html>

@@ -3108,6 +3108,75 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // ¡IMPORTANTE! No tocamos el localStorage, así el vínculo se mantiene.
 }
+    // Función directa para activar Push desde el Dashboard del Cuidador
+async function activarPushCuidador() {
+    try {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) { 
+            alert('❌ Este navegador no soporta notificaciones push.'); 
+            return; 
+        }
+        
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') { 
+            alert('❌ Necesitás dar permiso al navegador para recibir alertas.'); 
+            return; 
+        }
+        
+        const reg = await navigator.serviceWorker.ready;
+        // Usamos tu misma Edge Function que ya funciona
+        const r = await fetch('https://vqezdcdalprvjdtdrqzx.supabase.co/functions/v1/push-init');
+        const j = await r.json();
+        if (!j.publicKey) { alert('❌ No se pudo obtener la clave pública.'); return; }
+        
+        // Función auxiliar para convertir la clave (la misma que ya tenés)
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+            return outputArray;
+        }
+
+        const vieja = await reg.pushManager.getSubscription();
+        if (vieja) { await vieja.unsubscribe(); }
+        
+        const sub = await reg.pushManager.subscribe({ 
+            userVisibleOnly: true, 
+            applicationServerKey: urlBase64ToUint8Array(j.publicKey) 
+        });
+        
+        const json = sub.toJSON();
+        const adultoId = localStorage.getItem('cv_adulto_vinculado') || 'cuidador_temp';
+        
+        // Guardamos en Supabase (usamos supaCV que ya tenés inicializado)
+        const { error } = await supaCV.from('push_subs').insert({ 
+            endpoint: json.endpoint, 
+            p256dh: json.keys.p256dh, 
+            auth: json.keys.auth, 
+            user_id: adultoId, 
+            rol: 'cuidador',
+            premium_fin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        });
+        
+        if (error) throw error;
+        
+        alert('✅ ¡ALERTAS ACTIVADAS!\nRecibirás notificaciones en este celular cuando tu familiar necesite atención.');
+        
+        // Guardamos localmente para no mostrar el botón de nuevo
+        localStorage.setItem('cv_cuidador_push_activado', 'true');
+        localStorage.setItem('cv_premium_fin', new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+        
+        // Actualizamos la pantalla
+        const btn = document.getElementById('btnActivarPushCuidador');
+        if (btn) btn.style.display = 'none';
+        const estado = document.getElementById('estadoPushCuidador');
+        if (estado) estado.style.display = 'block';
+        
+    } catch(e) { 
+        alert('❌ Error al activar alertas: ' + e.message); 
+    }
+}
 
     </script>
 </body>

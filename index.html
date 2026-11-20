@@ -89,7 +89,9 @@
         .overlay-screen.activa { display: flex; }
 
         .agenda-card { background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid #4dabf7; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
-        .med-card { background: #fff; padding: 10px 12px; border-radius: 12px; margin-bottom: 8px; border-left: 5px solid #0ca678; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); flex-wrap: wrap; gap: 6px; }
+        .med-card {
+  min-height: 80px; /* Mantiene el espacio aunque esté vacía */
+}
         .expense-card { background: #fff; padding: 12px; border-radius: 10px; margin-bottom: 8px; border-left: 5px solid #f59e0b; display: flex; justify-content: space-between; align-items: center; }
         .btn-action { background: #0ca678; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; text-decoration: none; }
         .btn-delete { background: #fee2e2; color: #dc2626; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; }

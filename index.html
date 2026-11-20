@@ -750,6 +750,14 @@ footer {
         <!-- Botón de ajustes (chiquito, abajo) -->
         <div style="text-align:center; margin-top:30px;">
             <button id="btnAjustesCuidador" style="background:none; border:none; color:#94a3b8; font-size:0.9rem; cursor:pointer;">
+                <!-- BOTÓN PARA ACTIVAR NOTIFICACIONES EN EL CELULAR DEL CUIDADOR -->
+<div style="text-align:center; margin-top:20px; padding:15px; background:#f0fdf4; border-radius:12px; border:1px solid #bbf7d0;">
+    <p style="font-size:0.9rem; color:#166534; margin-bottom:10px; font-weight:bold;">🔔 ¿Querés recibir alertas en este celular?</p>
+    <button id="btnActivarPushCuidador" style="background:#7c3aed; color:white; border:none; padding:12px 20px; border-radius:8px; font-size:1rem; font-weight:bold; cursor:pointer; width:100%;">
+        Activar Alertas Push
+    </button>
+    <p id="estadoPushCuidador" style="font-size:0.8rem; color:#6b7280; margin-top:8px; display:none;">✅ Alertas activadas</p>
+</div>
                 ⚙️ Ajustes del Cuidador
             </button>
         </div>
@@ -2987,6 +2995,87 @@ async function generarCodigoCV() {
                 alert('⚙️ Ajustes del Cuidador\n\nPróximamente:\n- Cambiar email de alertas\n- Horarios de silencio');
             });
         }
+        // =========================================================================
+// NOTIFICACIONES PUSH PARA EL CUIDADOR
+// =========================================================================
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+    return outputArray;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const btnPushCuidador = document.getElementById('btnActivarPushCuidador');
+    if (!btnPushCuidador) return;
+
+    // Si ya está activado, ocultamos el botón y mostramos el estado
+    if (localStorage.getItem('cv_cuidador_push_activado') === 'true') {
+        btnPushCuidador.style.display = 'none';
+        document.getElementById('estadoPushCuidador').style.display = 'block';
+    }
+
+    btnPushCuidador.addEventListener('click', async function() {
+        try {
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) { 
+                alert('❌ Este navegador no soporta notificaciones push.'); 
+                return; 
+            }
+            
+            const perm = await Notification.requestPermission();
+            if (perm !== 'granted') { 
+                alert('❌ Necesitás dar permiso para recibir alertas.'); 
+                return; 
+            }
+            
+            const reg = await navigator.serviceWorker.ready;
+            // Usamos la misma Edge Function que ya funciona en Ruta
+            const r = await fetch('https://vqezdcdalprvjdtdrqzx.supabase.co/functions/v1/push-init');
+            const j = await r.json();
+            if (!j.publicKey) { 
+                alert('❌ No se pudo obtener la clave pública del servidor.'); 
+                return; 
+            }
+            
+            // Desuscribir anterior si existe para evitar duplicados
+            const vieja = await reg.pushManager.getSubscription();
+            if (vieja) { await vieja.unsubscribe(); }
+            
+            const sub = await reg.pushManager.subscribe({ 
+                userVisibleOnly: true, 
+                applicationServerKey: urlBase64ToUint8Array(j.publicKey) 
+            });
+            
+            const json = sub.toJSON();
+            const cuidadorEmail = localStorage.getItem('cv_cuidador_email') || 'cuidador@local';
+            
+            // Guardamos la suscripción asociada al email del cuidador (o al adulto_id vinculado)
+            const adultoId = localStorage.getItem('cv_adulto_vinculado');
+            
+            const { error } = await supaCV.from('push_subs').insert({ 
+                endpoint: json.endpoint, 
+                p256dh: json.keys.p256dh, 
+                auth: json.keys.auth, 
+                user_id: adultoId || cuidadorEmail, // Vinculamos al adulto que cuida
+                rol: 'cuidador',
+                premium_fin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            });
+            
+            if (error) throw error;
+            
+            alert('✅ ¡ALERTAS ACTIVADAS!\nAhora recibirás notificaciones en este celular cuando tu familiar necesite atención.');
+            localStorage.setItem('cv_cuidador_push_activado', 'true');
+            
+            btnPushCuidador.style.display = 'none';
+            document.getElementById('estadoPushCuidador').style.display = 'block';
+            
+        } catch(e) { 
+            alert('❌ Error al activar alertas: ' + e.message); 
+        }
+    });
+});
 
         // G) Generar Código (para el adulto en Ajustes)
         const btnGenerar = document.getElementById('btnGenerarCodigo');

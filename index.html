@@ -686,6 +686,9 @@
                 🗺️ Ver mapa en vivo
             </button>
         </div>
+            <button onclick="salirAppCuidador()" style="background:#dc2626; color:white; padding:12px; border-radius:8px; border:none; font-weight:bold; width:100%; margin-top:20px; font-size:1rem;">
+  🚪 Salir y Desvincular
+</button>
         <!-- Botón de ajustes (chiquito, abajo) -->
         <div style="text-align:center; margin-top:30px;">
             <button id="btnAjustesCuidador" style="background:none; border:none; color:#94a3b8; font-size:0.9rem; cursor:pointer;">
@@ -2952,6 +2955,14 @@ async function generarCodigoCV() {
             }).catch(() => {});
         }
     });
+    function salirAppCuidador() {
+  if (confirm('¿Seguro que querés desvincularte y salir de la app?')) {
+    localStorage.removeItem('cv_adulto_vinculado');
+    localStorage.removeItem('cv_adulto_nombre');
+    localStorage.removeItem('cv_cuidador_email');
+    window.location.reload(); // Recarga y vuelve a la pantalla de inicio
+  }
+}
     </script>
 </body>
 </html>

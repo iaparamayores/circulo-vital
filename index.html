@@ -15,7 +15,59 @@
     <style>
         :root { --primary: #059669; --bg-light: #f0fdf4; --text-dark: #1f2937; --danger: #dc2626; --budget-color: #2563eb; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-        body { background-color: var(--bg-light); color: var(--text-dark); display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
+        /* 1. Tu body está bien, solo aseguramos que no tenga márgenes extraños */
+body {
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden; /* Mantenemos tu diseño sin scroll general */
+    margin: 0;
+}
+
+/* 2. LA CLAVE: Forzamos al contenedor principal a ocupar TODO el espacio disponible */
+#vistaAdulto {
+    flex: 1; /* Esto empuja el footer hacia abajo SIEMPRE */
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Evita bugs de desbordamiento en navegadores móviles */
+}
+
+/* 3. La pantalla de inicio también debe estirarse para llenar #vistaAdulto */
+#pantalla-inicio {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+/* 4. El main debe ocupar el resto. Si por casualidad el contenido es muy alto, 
+      hace scroll SOLO adentro, sin mover el footer ni romper el diseño */
+#pantalla-inicio main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; 
+    -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+}
+
+/* 5. El footer ya no se moverá de su lugar */
+footer {
+    flex-shrink: 0; /* Ya lo tenías, lo reafirmamos: nunca se encoje */
+    text-align: center;
+    padding: 0.5rem;
+    background-color: #111827;
+    color: #9ca3af;
+    font-size: 0.7rem;
+    border-top: 1px solid var(--primary);
+}
+
+/* 6. EL SAFETY NET: Mantiene el espacio de las med-cards aunque estén vacías */
+#lista-salud {
+    min-height: 220px; /* Ajustá este valor si querés más o menos espacio reservado */
+}
 
         #modo-reloj {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;

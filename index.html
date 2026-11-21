@@ -3123,6 +3123,8 @@ async function activarPushCuidador() {
             alert('❌ Este navegador no soporta notificaciones push.'); 
             return; 
         }
+await supaCV.from('push_subs').delete().eq('endpoint', json.endpoint);
+await new Promise(r => setTimeout(r, 300));
         
         const perm = await Notification.requestPermission();
         if (perm !== 'granted') { 

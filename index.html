@@ -3185,6 +3185,14 @@ async function activarPushCuidador() {
         alert('❌ Error al activar alertas: ' + e.message); 
     }
 }
+    function verVencimientoPush() {
+    const fin = localStorage.getItem('cv_premium_fin') || localStorage.getItem('rs_premium_fin');
+    if (fin) {
+        alert('📅 Tu suscripción Push vence el: ' + fin);
+    } else {
+        alert('⚠️ No hay fecha guardada. Activá las notificaciones primero.');
+    }
+}
 
     </script>
 </body>

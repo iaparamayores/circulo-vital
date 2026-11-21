@@ -3105,16 +3105,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     function cerrarDashboardCuidador() {
-    // 1. Ocultamos el dashboard del cuidador
     document.getElementById('dashboardCuidador').style.display = 'none';
-    
-    // 2. Mostramos la vista del adulto (o el menú de roles, según tu diseño)
-    document.getElementById('vistaAdulto').style.display = 'block';
-    
-    // 3. Opcional: si querés que vuelva al menú de "Soy adulto / Soy cuidador", descomentá la línea de abajo:
-    // document.getElementById('modalRol').style.display = 'flex';
-    
-    // ¡IMPORTANTE! No tocamos el localStorage, así el vínculo se mantiene.
+    document.getElementById('vistaAdulto').style.display = 'none';
+    const modal = document.getElementById('modalRol');
+    if (modal) modal.style.display = 'flex';
 }
     // Función directa para activar Push desde el Dashboard del Cuidador
 async function activarPushCuidador() {

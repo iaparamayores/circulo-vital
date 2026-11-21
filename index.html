@@ -3107,9 +3107,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     function cerrarDashboardCuidador() {
     document.getElementById('dashboardCuidador').style.display = 'none';
-    document.getElementById('vistaAdulto').style.display = 'none';
+    document.getElementById('vistaAdulto').style.display = 'block'; // mostrar para que el modalRol de adentro sea visible
     const modal = document.getElementById('modalRol');
-    if (modal) modal.style.display = 'flex';
+    if (modal) modal.style.display = 'flex'; // el modal cubre todo con fondo negro 80%
 }
     // Función directa para activar Push desde el Dashboard del Cuidador
 async function activarPushCuidador() {

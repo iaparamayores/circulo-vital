@@ -429,9 +429,9 @@ footer {
         <div class="section-card" style="box-shadow:none; padding:0; margin-bottom:1.5rem;">
             <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">🎉 Celebraciones</h3>
             <div class="form-group">
-                <label>Nombre (ej: Nieta Sofía)</label>
+                <label>Nombre (ej: Nieta Sofía)</label>ñ
                 <input type="text" id="cel-nombre">
-            </div>
+            </div>m
             <div style="display:flex; gap:0.5rem;">
                 <div class="form-group" style="flex:1;">
                     <label>Día</label>
@@ -551,6 +551,16 @@ footer {
     <div id="resultado-vinculo" style="margin-top:1rem; text-align:center;"></div>
 </div>
 <!-- FIN: Bloque de Vinculación -->
+        <!-- PUERTA TRASERA: VOLVER A CUIDADOR (Solo útil si probás en el mismo celular) -->
+<div class="section-card" style="box-shadow:none; padding:0; margin-top:1.5rem; border-top:2px solid #e5e7eb;">
+    <h3 style="font-size:1rem; margin-bottom:0.75rem; color:#f59e0b;">🛡️ Acceso Rápido</h3>
+    <p style="font-size:0.85rem; color:#6b7280; margin-bottom:0.75rem;">
+        Si estás usando el celular del cuidador y caíste aquí por error, tocá para volver.
+    </p>
+    <button class="btn-submit" style="background-color:#f59e0b;" onclick="entrarComoCuidador()">
+        Entrar al Panel del Cuidador
+    </button>
+</div>
 
             <div class="section-card" style="box-shadow:none; padding:0;">
             <h3 style="font-size:1rem; margin-bottom:0.75rem; color:var(--primary);">💾 Copia de Seguridad</h3>
@@ -3106,10 +3116,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     function cerrarDashboardCuidador() {
-    document.getElementById('dashboardCuidador').style.display = 'none';
-    document.getElementById('vistaAdulto').style.display = 'block'; // mostrar para que el modalRol de adentro sea visible
-    const modal = document.getElementById('modalRol');
-    if (modal) modal.style.display = 'flex'; // el modal cubre todo con fondo negro 80%
+    // Recargar la página es la forma más limpia de "Salir" en una PWA.
+    // Vuelve a mostrar la pantalla de inicio (elegir rol) 
+    // y mantiene 100% intacto el vínculo y las notificaciones push.
+    window.location.reload();
 }
     // Función directa para activar Push desde el Dashboard del Cuidador
 async function activarPushCuidador() {
@@ -3185,6 +3195,16 @@ async function activarPushCuidador() {
         alert('📅 Tu suscripción Push vence el: ' + fin);
     } else {
         alert('⚠️ No hay fecha guardada. Activá las notificaciones primero.');
+    }
+}
+    // Función para cambiar de la vista Adulto a la vista Cuidador sin desvincular
+function entrarComoCuidador() {
+    document.getElementById('vistaAdulto').style.display = 'none';
+    document.getElementById('dashboardCuidador').style.display = 'block';
+    
+    // Si tenés una función que carga los datos del cuidador, la ejecutamos
+    if (typeof cargarDatosCuidador === 'function') {
+        cargarDatosCuidador();
     }
 }
 

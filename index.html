@@ -2016,52 +2016,63 @@ function cancelarPresionSOS() {
 async function ejecutarSOS() {
     console.log('[SOS] EJECUTANDO ALERTA SOS...');
     
+    // 1. Cerrar modal inmediatamente
+    var modal = document.getElementById('modal-sos-countdown');
+    if (modal) modal.style.display = 'none';
+    
+    // 2. Vibrar el celular (patrón: vibrar, pausa, vibrar, pausa, vibrar largo)
+    if (navigator.vibrate) {
+        navigator.vibrate([500, 200, 500, 200, 1000]);
+    }
+    
+    // 3. Sonido y Voz (envueltos en try/catch para que no rompan todo si faltan)
     try {
-        var modal = document.getElementById('modal-sos-countdown');
-        if (modal) {
-            modal.classList.remove('show');
+        if (typeof sonidoChicharra === 'function' && typeof obtenerAudio === 'function') {
+            sonidoChicharra(obtenerAudio());
         }
-        
-        console.log('[SOS] 1. Sonido y voz...');
-        sonidoChicharra(obtenerAudio());
-        decir("Alerta de emergencia enviada a tus familiares");
-        
-        console.log('[SOS] 2. Notificación local...');
+        if (typeof decir === 'function') {
+            decir("Alerta de emergencia enviada a tus familiares");
+        }
+    } catch(e) { 
+        console.log('[SOS] Audio no disponible:', e); 
+    }
+    
+    // 4. ¡ABRIR WHATSAPP ANTES DE CUALQUIER 'AWAIT'! (Para evitar el bloqueo de popups)
+    if (typeof datosFicha !== 'undefined' && datosFicha && datosFicha.familiar) {
+        var m = encodeURIComponent('¡ALERTA SOS! Se presionó el botón de emergencia en Círculo Vital. Necesito ayuda urgente.');
+        // Usamos un pequeño timeout para asegurar que la UI se actualizó antes de cambiar de pantalla
+        setTimeout(() => {
+            window.location.href = 'https://wa.me/' + datosFicha.familiar + '?text=' + m;
+        }, 300);
+    } else {
+        console.log('[SOS] No hay número de familiar cargado en la Ficha Médica.');
+        mostrarToast("⚠️ Cargá un contacto en Ficha Médica para WhatsApp");
+    }
+    
+    // 5. Notificación local y Toast
+    if (typeof notificar === 'function') {
         notificar('🆘 SOS', 'Se envió la alerta a tus cuidadores');
-        
-        console.log('[SOS] 3. Enviando Push...');
-        try {
-            await enviarPushACuidadores('🚨 ALERTA SOS', 'Tu familiar presionó el botón de emergencia en Círculo Vital.');
-            console.log('[SOS] Push enviado');
-        } catch (e) {
-            console.error('[SOS] Error enviando push:', e);
-        }
-        
-        console.log('[SOS] 4. Enviando Email...');
-        try {
-            if (datosFicha.email || (typeof nubeOK_CV !== 'undefined' && nubeOK_CV)) {
+    }
+    mostrarToast('🚨 ¡Alerta SOS enviada!');
+    
+    // 6. Push (Ahora sí, en segundo plano, no bloquea la pantalla)
+    try {
+        await enviarAlertaPush('sos', '🚨 ¡ALERTA SOS! Tu familiar necesita ayuda inmediata. Revisá la app.');
+        console.log('[SOS] Push enviado');
+    } catch (e) { 
+        console.error('[SOS] Error enviando push:', e); 
+    }
+    
+    // 7. Email (En segundo plano)
+    try {
+        if (typeof datosFicha !== 'undefined' && datosFicha && datosFicha.email) {
+            if (typeof enviarAlertaFamiliar === 'function') {
                 await enviarAlertaFamiliar([{ nombre: '🆘 BOTÓN SOS PRESIONADO', hora: '--' }], true);
                 console.log('[SOS] Email enviado');
             }
-        } catch (e) {
-            console.error('[SOS] Error enviando email:', e);
         }
-        
-        console.log('[SOS] 5. WhatsApp...');
-        if (datosFicha.familiar) {
-            var m = encodeURIComponent('¡ALERTA SOS! Se presionó el botón de emergencia en Círculo Vital. Necesito ayuda urgente.');
-            window.open('https://wa.me/' + datosFicha.familiar + '?text=' + m, '_blank');
-        } else {
-            mostrarToast("Cargá un contacto en Ficha Médica");
-            abrirPantalla('pantalla-ficha');
-        }
-        
-        console.log('[SOS] ✅ ALERTA COMPLETADA');
-        mostrarToast('🚨 ¡Alerta SOS enviada!');
-        
-    } catch (e) {
-        console.error('[SOS] ERROR CRÍTICO:', e);
-        mostrarToast('❌ Error al enviar SOS: ' + e.message);
+    } catch (e) { 
+        console.error('[SOS] Error enviando email:', e); 
     }
 }
     

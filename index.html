@@ -3218,6 +3218,19 @@ function entrarComoCuidador() {
 function cerrarDashboardCuidador() {
     window.location.reload();
 }
+    // Al cargar la página, verificamos si debemos mostrar el selector de roles
+window.addEventListener('DOMContentLoaded', function() {
+    if (localStorage.getItem('cv_forzar_modal_rol') === 'true') {
+        localStorage.removeItem('cv_forzar_modal_rol'); // Limpiamos la nota
+        
+        // Ocultamos ambas pantallas y mostramos solo el selector
+        document.getElementById('vistaAdulto').style.display = 'none';
+        document.getElementById('dashboardCuidador').style.display = 'none';
+        
+        const modal = document.getElementById('modalRol');
+        if (modal) modal.style.display = 'flex';
+    }
+});
 
     </script>
 </body>

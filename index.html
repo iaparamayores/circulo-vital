@@ -2013,67 +2013,34 @@ function cancelarPresionSOS() {
     mostrarToast('Acción cancelada. Todo bien.');
 }
 
-async function ejecutarSOS() {
-    console.log('[SOS] EJECUTANDO ALERTA SOS...');
+function ejecutarSOS() {
+    console.log('[SOS] Ejecutando alerta...');
     
-    // 1. Cerrar modal inmediatamente
-    var modal = document.getElementById('modal-sos-countdown');
-    if (modal) modal.style.display = 'none';
-    
-    // 2. Vibrar el celular (patrón: vibrar, pausa, vibrar, pausa, vibrar largo)
-    if (navigator.vibrate) {
-        navigator.vibrate([500, 200, 500, 200, 1000]);
-    }
-    
-    // 3. Sonido y Voz (envueltos en try/catch para que no rompan todo si faltan)
-    try {
-        if (typeof sonidoChicharra === 'function' && typeof obtenerAudio === 'function') {
-            sonidoChicharra(obtenerAudio());
-        }
-        if (typeof decir === 'function') {
-            decir("Alerta de emergencia enviada a tus familiares");
-        }
-    } catch(e) { 
-        console.log('[SOS] Audio no disponible:', e); 
-    }
-    
-    // 4. ¡ABRIR WHATSAPP ANTES DE CUALQUIER 'AWAIT'! (Para evitar el bloqueo de popups)
-    if (typeof datosFicha !== 'undefined' && datosFicha && datosFicha.familiar) {
-        var m = encodeURIComponent('¡ALERTA SOS! Se presionó el botón de emergencia en Círculo Vital. Necesito ayuda urgente.');
-        // Usamos un pequeño timeout para asegurar que la UI se actualizó antes de cambiar de pantalla
-        setTimeout(() => {
-            window.location.href = 'https://wa.me/' + datosFicha.familiar + '?text=' + m;
-        }, 300);
-    } else {
-        console.log('[SOS] No hay número de familiar cargado en la Ficha Médica.');
-        mostrarToast("⚠️ Cargá un contacto en Ficha Médica para WhatsApp");
-    }
-    
-    // 5. Notificación local y Toast
-    if (typeof notificar === 'function') {
-        notificar('🆘 SOS', 'Se envió la alerta a tus cuidadores');
-    }
+    // 1. FEEDBACK LOCAL INMEDIATO (Lo que ya funcionaba perfecto)
+    sonidoChicharra(obtenerAudio()); 
+    decir("SOS activado, ayuda en camino");
+    notificar('🆘 SOS', 'Se activó la alerta de emergencia');
     mostrarToast('🚨 ¡Alerta SOS enviada!');
-    
-    // 6. Push (Ahora sí, en segundo plano, no bloquea la pantalla)
-    try {
-        await enviarAlertaPush('sos', '🚨 ¡ALERTA SOS! Tu familiar necesita ayuda inmediata. Revisá la app.');
-        console.log('[SOS] Push enviado');
-    } catch (e) { 
-        console.error('[SOS] Error enviando push:', e); 
+
+    // 2. NUEVO: Disparar la Push al cuidador (se envía en segundo plano, no bloquea)
+    if (typeof enviarAlertaPush === 'function') {
+        enviarAlertaPush('sos', '🚨 ¡ALERTA SOS! Tu familiar necesita ayuda inmediata. Revisá la app.');
+    }
+
+    // 3. RESPALDO: Email y WhatsApp (Lo que ya funcionaba perfecto)
+    if (datosFicha.email) {
+        enviarAlertaFamiliar([{nombre:'🆘 BOTÓN SOS PRESIONADO', hora:'--'}], true);
     }
     
-    // 7. Email (En segundo plano)
-    try {
-        if (typeof datosFicha !== 'undefined' && datosFicha && datosFicha.email) {
-            if (typeof enviarAlertaFamiliar === 'function') {
-                await enviarAlertaFamiliar([{ nombre: '🆘 BOTÓN SOS PRESIONADO', hora: '--' }], true);
-                console.log('[SOS] Email enviado');
-            }
-        }
-    } catch (e) { 
-        console.error('[SOS] Error enviando email:', e); 
+    if (datosFicha.familiar) { 
+        const m = encodeURIComponent(`¡ALERTA SOS! Se presionó el botón de emergencia en Círculo Vital. Necesito ayuda urgente.`); 
+        window.open(`https://wa.me/${datosFicha.familiar}?text=${m}`, '_blank'); 
+    } else { 
+        mostrarToast("⚠️ Cargá un contacto en Ficha Médica"); 
+        abrirPantalla('pantalla-ficha'); 
     }
+    
+    console.log('[SOS] Proceso completado');
 }
     
     

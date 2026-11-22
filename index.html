@@ -2013,34 +2013,42 @@ function cancelarPresionSOS() {
     mostrarToast('Acción cancelada. Todo bien.');
 }
 
-function ejecutarSOS() {
-    console.log('[SOS] Ejecutando alerta...');
+async function ejecutarSOS() {
+    console.log('[SOS] Iniciando alerta...');
     
-    // 1. FEEDBACK LOCAL INMEDIATO (Lo que ya funcionaba perfecto)
+    // 1. FEEDBACK INMEDIATO (No usa red, es instantáneo)
     sonidoChicharra(obtenerAudio()); 
     decir("SOS activado, ayuda en camino");
     notificar('🆘 SOS', 'Se activó la alerta de emergencia');
-    mostrarToast('🚨 ¡Alerta SOS enviada!');
+    mostrarToast('🚨 ¡Alerta SOS enviada! Procesando...');
 
-    // 2. NUEVO: Disparar la Push al cuidador (se envía en segundo plano, no bloquea)
+    // 2. DISPARAR PUSH (Fire-and-forget, con catch para que no rompa nada si falla)
     if (typeof enviarAlertaPush === 'function') {
-        enviarAlertaPush('sos', '🚨 ¡ALERTA SOS! Tu familiar necesita ayuda inmediata. Revisá la app.');
+        console.log('[SOS] Despachando Push...');
+        enviarAlertaPush('sos', '🚨 ¡ALERTA SOS! Tu familiar necesita ayuda inmediata.').catch(e => console.error('Push falló:', e));
     }
 
-    // 3. RESPALDO: Email y WhatsApp (Lo que ya funcionaba perfecto)
-    if (datosFicha.email) {
-        enviarAlertaFamiliar([{nombre:'🆘 BOTÓN SOS PRESIONADO', hora:'--'}], true);
+    // 3. DISPARAR EMAIL (Fire-and-forget)
+    if (datosFicha && datosFicha.email) {
+        console.log('[SOS] Despachando Email a:', datosFicha.email);
+        if (typeof enviarAlertaFamiliar === 'function') {
+            enviarAlertaFamiliar([{nombre:'🆘 BOTÓN SOS PRESIONADO', hora:'--'}], true).catch(e => console.error('Email falló:', e));
+        }
+    } else {
+        console.log('[SOS] ⚠️ No hay email cargado en Ficha Médica');
     }
-    
-    if (datosFicha.familiar) { 
-        const m = encodeURIComponent(`¡ALERTA SOS! Se presionó el botón de emergencia en Círculo Vital. Necesito ayuda urgente.`); 
-        window.open(`https://wa.me/${datosFicha.familiar}?text=${m}`, '_blank'); 
-    } else { 
-        mostrarToast("⚠️ Cargá un contacto en Ficha Médica"); 
-        abrirPantalla('pantalla-ficha'); 
-    }
-    
-    console.log('[SOS] Proceso completado');
+
+    // 4. LA CLAVE: Esperar 800ms para que el navegador envíe las redes ANTES de abrir WhatsApp
+    setTimeout(() => {
+        console.log('[SOS] Abriendo WhatsApp...');
+        if (datosFicha && datosFicha.familiar) { 
+            const m = encodeURIComponent(`¡ALERTA SOS! Se presionó el botón de emergencia en Círculo Vital. Necesito ayuda urgente.`); 
+            window.open(`https://wa.me/${datosFicha.familiar}?text=${m}`, '_blank'); 
+        } else { 
+            mostrarToast("⚠️ Cargá un contacto en Ficha Médica"); 
+            abrirPantalla('pantalla-ficha'); 
+        }
+    }, 800); // <-- 800 milisegundos de ventaja para la red
 }
     
     

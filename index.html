@@ -3113,9 +3113,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     function cerrarDashboardCuidador() {
-    // Recargar la página es la forma más limpia de "Salir" en una PWA.
-    // Vuelve a mostrar la pantalla de inicio (elegir rol) 
-    // y mantiene 100% intacto el vínculo y las notificaciones push.
+    // Dejamos una nota para que al recargar muestre el selector de roles
+    localStorage.setItem('cv_forzar_modal_rol', 'true');
     window.location.reload();
 }
     // Función directa para activar Push desde el Dashboard del Cuidador

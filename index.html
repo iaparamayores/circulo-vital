@@ -2189,14 +2189,21 @@ async function forzarTestPush() {
         });
         msgEl.textContent += '\n   ✅ Subscription creada\n';
         
-        msgEl.textContent += '\n5. Guardando en Supabase...';
-        const { error: saveError } = await supaCV.from('push_subs').upsert({
+        msgEl.textContent += '\n5. Limpiando suscripciones viejas y guardando como USUARIO...';
+        
+        // 1. Primero borramos cualquier suscripción previa de este adulto para evitar duplicados
+        await supaCV.from('push_subs').delete().eq('user_id', uidCV);
+        await new Promise(r => setTimeout(r, 400)); // Pequeña pausa para asegurar que el delete se procesó
+
+        // 2. Insertamos la suscripción limpia y con el rol correcto
+        const { error: saveError } = await supaCV.from('push_subs').insert({
             user_id: uidCV,
             endpoint: subscription.endpoint,
             p256dh: subscription.getKey('p256dh') ? btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('p256dh')))) : null,
-            auth: subscription.getKey('auth') ? btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth')))) : null
-        }, { onConflict: 'user_id' });
-        
+            auth: subscription.getKey('auth') ? btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth')))) : null,
+            rol: 'usuario', // ✅ CLAVE: Forzamos que el adulto SIEMPRE sea 'usuario'
+            premium_fin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // ✅ Fecha de vencimiento
+        });
         if (saveError) { 
             msgEl.textContent += `\n    ERROR AL GUARDAR: ${saveError.message}\n`;
             msgEl.textContent += `   Detalle: ${JSON.stringify(saveError)}\n`;

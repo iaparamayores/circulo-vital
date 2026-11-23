@@ -3126,10 +3126,34 @@ document.addEventListener('DOMContentLoaded', function() {
             const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
             const rawData = atob(base64);
             const outputArray = new Uint8Array(rawData.length);
+async function activarPushCuidador() {
+    try {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) { 
+            alert('❌ Este navegador no soporta notificaciones push.'); 
+            return; 
+        }
+
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') { 
+            alert('❌ Necesitás dar permiso al navegador para recibir alertas.'); 
+            return; 
+        }
+
+        const reg = await navigator.serviceWorker.ready;
+        const r = await fetch('https://vqezdcdalprvjdtdrqzx.supabase.co/functions/v1/push-init');
+        const j = await r.json();
+        if (!j.publicKey) { alert('❌ No se pudo obtener la clave pública.'); return; }
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
             for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
             return outputArray;
         }
 
+        // Desuscribir cualquier suscripción previa del navegador
         const vieja = await reg.pushManager.getSubscription();
         if (vieja) { await vieja.unsubscribe(); }
 
@@ -3140,19 +3164,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const json = sub.toJSON();
 
-        // ✅ CLAVE: El cuidador usa SU PROPIO ID, no el del adulto
+        // ✅ ID propio del cuidador
         const cuidadorId = localStorage.getItem('cv_cuidador_id') || '20e1fe19-6f27-4019-9026-567f633151b7';
 
-        // Borrar suscripción previa de ESTE endpoint para evitar duplicados
-        await supaCV.from('push_subs').delete().eq('endpoint', json.endpoint);
-        await new Promise(r => setTimeout(r, 300));
+        // ✅ CLAVE: Borrar TODAS las suscripciones previas de ESTE cuidador (por user_id, no por endpoint)
+        await supaCV.from('push_subs').delete().eq('user_id', cuidadorId);
+        await new Promise(r => setTimeout(r, 400));
 
-        // ✅ Insertar con el ID del cuidador y rol 'cuidador'
+        // Insertar la nueva suscripción limpia
         const { error } = await supaCV.from('push_subs').insert({ 
             endpoint: json.endpoint, 
             p256dh: json.keys.p256dh, 
             auth: json.keys.auth, 
-            user_id: cuidadorId,  // ← ACÁ usa cuidadorId, no adultoId
+            user_id: cuidadorId,
             rol: 'cuidador',
             premium_fin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
         });

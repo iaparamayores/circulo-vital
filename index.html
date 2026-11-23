@@ -3145,13 +3145,15 @@ async function activarPushCuidador() {
         await supaCV.from('push_subs').delete().eq('endpoint', json.endpoint);
         await new Promise(r => setTimeout(r, 300));
 
-        const adultoId = localStorage.getItem('cv_adulto_vinculado') || 'cuidador_temp';
+        // Buscamos el ID real del cuidador. 
+// Si ya lo guardamos en el celular, lo usamos. Si no, usamos el que sabemos que es el tuyo para probar.
+const cuidadorId = localStorage.getItem('cv_cuidador_id') || '20e1fe19-6f27-4019-9026-567f633151b7';
 
         const { error } = await supaCV.from('push_subs').insert({ 
             endpoint: json.endpoint, 
             p256dh: json.keys.p256dh, 
             auth: json.keys.auth, 
-            user_id: adultoId, 
+            user_id: cuidadorld, 
             rol: 'cuidador',
             premium_fin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
         });
@@ -3221,3 +3223,4 @@ window.addEventListener('DOMContentLoaded', function() {
     </script>
 </body>
 </html>
+

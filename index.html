@@ -3103,29 +3103,6 @@ document.addEventListener('DOMContentLoaded', function() {
     localStorage.setItem('cv_forzar_modal_rol', 'true');
     window.location.reload();
 }
-    async function activarPushCuidador() {
-    try {
-        if (!('serviceWorker' in navigator) || !('PushManager' in window)) { 
-            alert('❌ Este navegador no soporta notificaciones push.'); 
-            return; 
-        }
-
-        const perm = await Notification.requestPermission();
-        if (perm !== 'granted') { 
-            alert('❌ Necesitás dar permiso al navegador para recibir alertas.'); 
-            return; 
-        }
-
-        const reg = await navigator.serviceWorker.ready;
-        const r = await fetch('https://vqezdcdalprvjdtdrqzx.supabase.co/functions/v1/push-init');
-        const j = await r.json();
-        if (!j.publicKey) { alert('❌ No se pudo obtener la clave pública.'); return; }
-
-        function urlBase64ToUint8Array(base64String) {
-            const padding = '='.repeat((4 - base64String.length % 4) % 4);
-            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-            const rawData = atob(base64);
-            const outputArray = new Uint8Array(rawData.length);
 async function activarPushCuidador() {
     try {
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) { 

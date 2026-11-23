@@ -3103,8 +3103,7 @@ document.addEventListener('DOMContentLoaded', function() {
     localStorage.setItem('cv_forzar_modal_rol', 'true');
     window.location.reload();
 }
-    // Función directa para activar Push desde el Dashboard del Cuidador
-async function activarPushCuidador() {
+    async function activarPushCuidador() {
     try {
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) { 
             alert('❌ Este navegador no soporta notificaciones push.'); 
@@ -3139,21 +3138,21 @@ async function activarPushCuidador() {
             applicationServerKey: urlBase64ToUint8Array(j.publicKey) 
         });
 
-        const json = sub.toJSON();  // ← ACÁ NACE json
+        const json = sub.toJSON();
 
-        // ← RECIÉN ACÁ el delete (ya existe json)
+        // ✅ CLAVE: El cuidador usa SU PROPIO ID, no el del adulto
+        const cuidadorId = localStorage.getItem('cv_cuidador_id') || '20e1fe19-6f27-4019-9026-567f633151b7';
+
+        // Borrar suscripción previa de ESTE endpoint para evitar duplicados
         await supaCV.from('push_subs').delete().eq('endpoint', json.endpoint);
         await new Promise(r => setTimeout(r, 300));
 
-        // Buscamos el ID real del cuidador. 
-// Si ya lo guardamos en el celular, lo usamos. Si no, usamos el que sabemos que es el tuyo para probar.
-const cuidadorId = localStorage.getItem('cv_cuidador_id') || '20e1fe19-6f27-4019-9026-567f633151b7';
-
+        // ✅ Insertar con el ID del cuidador y rol 'cuidador'
         const { error } = await supaCV.from('push_subs').insert({ 
             endpoint: json.endpoint, 
             p256dh: json.keys.p256dh, 
             auth: json.keys.auth, 
-            user_id: cuidadorld, 
+            user_id: cuidadorId,  // ← ACÁ usa cuidadorId, no adultoId
             rol: 'cuidador',
             premium_fin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
         });
@@ -3223,4 +3222,5 @@ window.addEventListener('DOMContentLoaded', function() {
     </script>
 </body>
 </html>
+
 

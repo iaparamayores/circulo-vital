@@ -506,9 +506,9 @@ footer {
             <p style="font-size:0.85rem; color:#4b5563; margin-bottom:0.75rem; padding:0 1rem;">
                 Para que este celular vibre y suene cuando haya una emergencia, activá las notificaciones:
             </p>
-            <button id="btn-activar-push" class="btn-submit" style="background-color:#7c3aed; width:90%; margin:0 auto;" onclick="forzarSuscripcionPush()">
-                🔔 Activar Notificaciones Push
-            </button>
+            <button id="btn-activar-push" class="btn-submit" style="background-color:#7c3aed;" onclick="reActivarPushAdulto()">
+    🔔 Activar / Renovar Notificaciones
+</button>
             <p id="estado-push" style="font-size:0.8rem; color:#6b7280; margin-top:0.5rem;"></p>
         </div>
         <!-- FIN: Botón Activar Push -->
@@ -3226,6 +3226,50 @@ window.addEventListener('DOMContentLoaded', function() {
         if (modal) modal.style.display = 'flex';
     }
 });
+    // Fuerza la suscripción del ADULTO con rol='usuario', aunque el botón diga "activado"
+async function reActivarPushAdulto() {
+    try {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) { 
+            alert('❌ Este navegador no soporta push.'); return; 
+        }
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') { alert('❌ Permiso denegado.'); return; }
+
+        const reg = await navigator.serviceWorker.ready;
+        const vieja = await reg.pushManager.getSubscription();
+        if (vieja) { await vieja.unsubscribe(); }
+
+        // Leer la clave VAPID directo de la base (igual que forzarTestPush)
+        const { data: keys, error } = await supaCV.from('vapid_keys').select('public_raw').order('id', { ascending: true }).limit(1);
+        if (error || !keys || !keys.length) { alert('❌ No hay clave VAPID: ' + (error && error.message)); return; }
+
+        function urlBase64ToUint8Array(b64) {
+            const p = '='.repeat((4 - b64.length % 4) % 4);
+            const s = (b64 + p).replace(/-/g, '+').replace(/_/g, '/');
+            const d = atob(s); const a = new Uint8Array(d.length);
+            for (let i = 0; i < d.length; i++) a[i] = d.charCodeAt(i);
+            return a;
+        }
+
+        const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(keys[0].public_raw) });
+        const ep = sub.endpoint;
+        const p256 = sub.getKey('p256dh') ? btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('p256dh')))) : null;
+        const auth = sub.getKey('auth') ? btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('auth')))) : null;
+
+        // Borrar lo viejo del adulto y re-insertar con rol USUARIO
+        await supaCV.from('push_subs').delete().eq('user_id', uidCV);
+        await new Promise(r => setTimeout(r, 400));
+
+        const { error: insErr } = await supaCV.from('push_subs').insert({
+            user_id: uidCV, endpoint: ep, p256dh: p256, auth: auth,
+            rol: 'usuario',
+            premium_fin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        });
+        if (insErr) throw insErr;
+
+        alert('✅ Adulto suscripto como USUARIO.\nID: ' + uidCV);
+    } catch (e) { alert('❌ ' + e.message); }
+}
 
     </script>
 </body>

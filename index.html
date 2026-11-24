@@ -3241,6 +3241,35 @@ async function reActivarPushAdulto() {
         alert('✅ Adulto suscripto como USUARIO.\nID: ' + uidCV);
     } catch (e) { alert('❌ ' + e.message); }
 }
+    async function enviarAlertaPush(tipo, mensaje, lat = null, lon = null) {
+    try {
+        const adulto_id = localStorage.getItem('cv_adulto_vinculado') || (typeof uidCV !== 'undefined' ? uidCV : 'desconocido');
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        const sender_endpoint = sub ? sub.endpoint : '';
+
+        const payload = {
+            adulto_id: adulto_id,
+            sender_endpoint: sender_endpoint,
+            lat: lat,
+            lon: lon,
+            tipo: tipo,
+            mensaje: mensaje
+        };
+
+        // ✅ ATENCIÓN: Ahora llama a 'push-send-cv'
+        const response = await fetch('https://vqezdcdalprvjdtdrqzx.supabase.co/functions/v1/push-send-cv', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': 'sb_publishable_5RI8bz70kqj7H2TIX6H8uQ_LlZnQtKO' },
+            body: JSON.stringify(payload)
+        });
+
+        return await response.json();
+    } catch (e) {
+        console.error('❌ Error al enviar push:', e);
+    }
+}
+
 
     </script>
 </body>

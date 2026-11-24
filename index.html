@@ -3063,8 +3063,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Si ya está activado, ocultamos el botón y mostramos el estado
     if (localStorage.getItem('cv_cuidador_push_activado') === 'true') {
-        btnPushCuidador.style.display = 'none';
-        document.getElementById('estadoPushCuidador').style.display = 'block';
+        btnPushCuidador.style.display = 'none';        document.getElementById('estadoPushCuidador').style.display = 'block';
     }
 
     btnPushCuidador.addEventListener('click', async function() {

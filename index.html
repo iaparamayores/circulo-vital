@@ -2236,63 +2236,119 @@ async function forzarTestPush() {
             .select('*')
             .order('id', { ascending: true })
             .limit(1);
-        
-        msgEl.textContent += `   - Status: ${status} ${statusText}\n`;
-        msgEl.textContent += `   - Count: ${count}\n`;
-        msgEl.textContent += `   - Error: ${keyError ? JSON.stringify(keyError) : 'Ninguno'}\n`;
-        msgEl.textContent += `   - Data: ${JSON.stringify(keys)}\n`;
-        
-        if (keyError) { 
-            msgEl.textContent += `\n❌ ERROR DE CONSULTA: ${keyError.message}\n`;
-            msgEl.textContent += `   Detalle: ${JSON.stringify(keyError)}\n`;
-            return; 
-        }
-        if (!keys || keys.length === 0) { 
-            msgEl.textContent += '\n❌ ERROR: La consulta no devolvió filas\n';
-            msgEl.textContent += '   Posible causa: RLS bloquea la lectura\n';
-            msgEl.textContent += '   Solución: Ejecutar ALTER TABLE vapid_keys DISABLE ROW LEVEL SECURITY;\n';
-            return; 
-        }
-        
-        msgEl.textContent += '   ✅ Clave obtenida\n';
-        
-        msgEl.textContent += '\n4. Suscribiendo al Push Manager...';
-        const applicationServerKey = urlBase64ToUint8Array(keys[0].public_raw);
-        const registration = await navigator.serviceWorker.ready;
-        const subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: applicationServerKey
-        });
-        msgEl.textContent += '\n   ✅ Subscription creada\n';
-        
-        msgEl.textContent += '\n5. Limpiando suscripciones viejas y guardando como USUARIO...';
-        
-        // 1. Primero borramos cualquier suscripción previa de este adulto para evitar duplicados
-        await supaCV.from('push_subs').delete().eq('user_id', uidCV);
-        await new Promise(r => setTimeout(r, 400)); // Pequeña pausa para asegurar que el delete se procesó
+// ============================================
+// 1. VERIFICAR ESTADO PUSH (Fuente de verdad: Supabase)
+// ============================================
+async function verificarEstadoPush() {
+    const btn = document.getElementById('btn-activar-push');
+    const estadoEl = document.getElementById('estado-push');
+    if (!btn || !estadoEl) return;
 
-        // 2. Insertamos la suscripción limpia y con el rol correcto
-        const { error: saveError } = await supaCV.from('push_subs').insert({
-            user_id: uidCV,
-            endpoint: subscription.endpoint,
-            p256dh: subscription.getKey('p256dh') ? btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('p256dh')))) : null,
-            auth: subscription.getKey('auth') ? btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth')))) : null,
-            rol: 'usuario', // ✅ CLAVE: Forzamos que el adulto SIEMPRE sea 'usuario'
-            premium_fin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // ✅ Fecha de vencimiento
-        });
-        if (saveError) { 
-            msgEl.textContent += `\n    ERROR AL GUARDAR: ${saveError.message}\n`;
-            msgEl.textContent += `   Detalle: ${JSON.stringify(saveError)}\n`;
+    if (typeof supaCV === 'undefined' || !uidCV) return;
+
+    try {
+        const { data, error } = await supaCV
+            .from('push_subs')
+            .select('rol, premium_fin')
+            .eq('user_id', uidCV)
+            .eq('rol', 'usuario')
+            .maybeSingle();
+
+        if (error) throw error;
+
+        if (data) {
+            // ✅ Si existe la fila del adulto, está activo (es ilimitado)
+            btn.textContent = '✅ Notificaciones Activadas';
+            btn.style.backgroundColor = '#059669';
+            btn.disabled = true;
+            btn.style.opacity = '0.8';
+            estadoEl.textContent = 'Tu celular ya está listo para recibir alertas.';
+            estadoEl.style.color = '#059669';
         } else {
-            msgEl.textContent += '\n   ✅ ¡GUARDADO EXITOSO!\n\n';
-            msgEl.textContent += ' ¡Andá a Supabase y refrescá push_subs!';
+            // No hay fila → botón morado, listo para activar
+            btn.textContent = '🔔 Activar Notificaciones Push';
+            btn.style.backgroundColor = '#7c3aed';
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            estadoEl.textContent = '';
         }
-        
     } catch (e) {
-        msgEl.textContent += `\n\n❌ ERROR CRÍTICO: ${e.message}\n${e.stack}`;
+        console.error('Error verificando push:', e);
     }
 }
 
+// ============================================
+// 2. ACTIVAR PUSH USUARIO (Adulto - Ilimitado)
+// ============================================
+async function activarPushUsuario() {
+    const btn = document.getElementById('btn-activar-push');
+    const estadoEl = document.getElementById('estado-push');
+    if (estadoEl) { estadoEl.textContent = '⏳ Activando...'; estadoEl.style.color = '#4b5563'; }
+
+    try {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            throw new Error('Este navegador no soporta push');
+        }
+
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') {
+            if (estadoEl) { estadoEl.textContent = '⚠️ Permiso denegado. Revisá Ajustes del celular.'; estadoEl.style.color = '#dc2626'; }
+            return;
+        }
+
+        const reg = await navigator.serviceWorker.ready;
+        const vieja = await reg.pushManager.getSubscription();
+        if (vieja) await vieja.unsubscribe();
+
+        const { data: keys, error } = await supaCV.from('vapid_keys').select('public_raw').order('id', { ascending: true }).limit(1);
+        if (error || !keys || !keys.length) throw new Error('No hay clave VAPID');
+
+        function urlBase64ToUint8Array(b64) {
+            const p = '='.repeat((4 - b64.length % 4) % 4);
+            const s = (b64 + p).replace(/-/g, '+').replace(/_/g, '/');
+            const d = atob(s); const a = new Uint8Array(d.length);
+            for (let i = 0; i < d.length; i++) a[i] = d.charCodeAt(i);
+            return a;
+        }
+
+        const sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(keys[0].public_raw)
+        });
+
+        const ep = sub.endpoint;
+        const p256 = sub.getKey('p256dh') ? btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('p256dh')))) : null;
+        const auth = sub.getKey('auth') ? btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('auth')))) : null;
+
+        // 1. Borrar suscripción previa de este adulto
+        await supaCV.from('push_subs').delete().eq('user_id', uidCV);
+        await new Promise(r => setTimeout(r, 400));
+
+        // 2. Insertar con rol 'usuario' y fecha ILIMITADA
+        const { error: insErr } = await supaCV.from('push_subs').insert({
+            user_id: uidCV, 
+            endpoint: ep, 
+            p256dh: p256, 
+            auth: auth,
+            rol: 'usuario',
+            premium_fin: '2099-12-31' // ✅ CORREGIDO: Ilimitado para el adulto
+        });
+        if (insErr) throw insErr;
+
+        // 3. Dejar el botón verde y fijo
+        btn.textContent = '✅ Notificaciones Activadas';
+        btn.style.backgroundColor = '#059669';
+        btn.disabled = true;
+        btn.style.opacity = '0.8';
+        estadoEl.textContent = 'Tu celular ya está listo para recibir alertas.';
+        estadoEl.style.color = '#059669';
+        if (typeof nubeToastCV === 'function') nubeToastCV('¡Notificaciones activadas!');
+
+    } catch (e) {
+        console.error(e);
+        if (estadoEl) { estadoEl.textContent = '❌ ' + e.message; estadoEl.style.color = '#dc2626'; }
+    }
+}
 // ============================================
 // NUBE CÍRCULO VITAL (COMPLETA Y CORREGIDA)
 // ============================================

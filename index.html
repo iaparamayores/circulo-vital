@@ -2976,9 +2976,12 @@ async function generarCodigoCV() {
                 alert('⚙️ Ajustes del Cuidador\n\nPróximamente:\n- Cambiar email de alertas\n- Horarios de silencio');
             });
         }
-        // =========================================================================
-// NOTIFICACIONES PUSH PARA EL CUIDADOR
+        
+            // =========================================================================
+// SISTEMA DE NOTIFICACIONES PUSH (LIMPIO Y DEFINITIVO)
 // =========================================================================
+
+// 1. Helper para convertir clave VAPID
 function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -2988,127 +2991,96 @@ function urlBase64ToUint8Array(base64String) {
     return outputArray;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    const btnPushCuidador = document.getElementById('btnActivarPushCuidador');
-    if (!btnPushCuidador) return;
+// 2. VERIFICAR ESTADO PUSH (Adulto - Fuente de verdad: Supabase)
+async function verificarEstadoPush() {
+    const btn = document.getElementById('btn-activar-push');
+    const estadoEl = document.getElementById('estado-push');
+    if (!btn || !estadoEl || typeof supaCV === 'undefined' || !uidCV) return;
 
-    // Si ya está activado, ocultamos el botón y mostramos el estado
-    if (localStorage.getItem('cv_cuidador_push_activado') === 'true') {
-        btnPushCuidador.style.display = 'none';        document.getElementById('estadoPushCuidador').style.display = 'block';
-    }
+    try {
+        const { data, error } = await supaCV.from('push_subs').select('rol, premium_fin').eq('user_id', uidCV).eq('rol', 'usuario').maybeSingle();
+        if (error) throw error;
 
-    btnPushCuidador.addEventListener('click', async function() {
-        try {
-            if (!('serviceWorker' in navigator) || !('PushManager' in window)) { 
-                alert('❌ Este navegador no soporta notificaciones push.'); 
-                return; 
-            }
-            
-            const perm = await Notification.requestPermission();
-            if (perm !== 'granted') { 
-                alert('❌ Necesitás dar permiso para recibir alertas.'); 
-                return; 
-            }
-            
-            const reg = await navigator.serviceWorker.ready;
-            // Usamos la misma Edge Function que ya funciona en Ruta
-            const r = await fetch('https://vqezdcdalprvjdtdrqzx.supabase.co/functions/v1/push-init');
-            const j = await r.json();
-            if (!j.publicKey) { 
-                alert('❌ No se pudo obtener la clave pública del servidor.'); 
-                return; 
-            }
-            
-            // Desuscribir anterior si existe para evitar duplicados
-            const vieja = await reg.pushManager.getSubscription();
-            if (vieja) { await vieja.unsubscribe(); }
-            
-            const sub = await reg.pushManager.subscribe({ 
-                userVisibleOnly: true, 
-                applicationServerKey: urlBase64ToUint8Array(j.publicKey) 
-            });
-            
-            const json = sub.toJSON();
-            const cuidadorEmail = localStorage.getItem('cv_cuidador_email') || 'cuidador@local';
-            
-            // Guardamos la suscripción asociada al email del cuidador (o al adulto_id vinculado)
-            const adultoId = localStorage.getItem('cv_adulto_vinculado');
-            
-            const { error } = await supaCV.from('push_subs').insert({ 
-                endpoint: json.endpoint, 
-                p256dh: json.keys.p256dh, 
-                auth: json.keys.auth, 
-                user_id: adultoId || cuidadorEmail, // Vinculamos al adulto que cuida
-                rol: 'cuidador',
-                premium_fin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-            });
-            
-            if (error) throw error;
-            
-            alert('✅ ¡ALERTAS ACTIVADAS!\nAhora recibirás notificaciones en este celular cuando tu familiar necesite atención.');
-            localStorage.setItem('cv_cuidador_push_activado', 'true');
-            
-            btnPushCuidador.style.display = 'none';
-            document.getElementById('estadoPushCuidador').style.display = 'block';
-            
-        } catch(e) { 
-            alert('❌ Error al activar alertas: ' + e.message); 
+        if (data) {
+            btn.textContent = '✅ Notificaciones Activadas';
+            btn.style.backgroundColor = '#059669';
+            btn.disabled = true;
+            btn.style.opacity = '0.8';
+            estadoEl.textContent = 'Tu celular ya está listo para recibir alertas.';
+            estadoEl.style.color = '#059669';
+        } else {
+            btn.textContent = '🔔 Activar Notificaciones Push';
+            btn.style.backgroundColor = '#7c3aed';
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            estadoEl.textContent = '';
         }
-    });
-});
-
-        // G) Generar Código (para el adulto en Ajustes)
-        const btnGenerar = document.getElementById('btnGenerarCodigo');
-        if (btnGenerar) btnGenerar.addEventListener('click', function() { generarCodigoCV(); });
-
-        // H) Cargar código activo al entrar (si es adulto)
-        if (typeof nubeOK_CV !== 'undefined' && nubeOK_CV && uidCV && supaCV) {
-            supaCV.from('codigos_vinculacion').select('codigo').eq('adulto_id', uidCV).eq('usada', false).limit(1).then(resp => {
-                if (resp.data && resp.data.length > 0) {
-                    const boxSin = document.getElementById('boxSinCodigo');
-                    const boxActivo = document.getElementById('boxCodigoActivo');
-                    if (boxSin) boxSin.style.display = 'none';
-                    if (boxActivo) {
-                        boxActivo.style.display = 'block';
-                        document.getElementById('codigoActivoTexto').textContent = resp.data[0].codigo;
-                    }
-                }
-            }).catch(() => {});
-        }
-    });
-    function cerrarDashboardCuidador() {
-    // Dejamos una nota para que al recargar muestre el selector de roles
-    localStorage.setItem('cv_forzar_modal_rol', 'true');
-    window.location.reload();
+    } catch (e) { console.error('Error verificando push:', e); }
 }
+
+// 3. ACTIVAR PUSH USUARIO (Adulto - Ilimitado)
+async function activarPushUsuario() {
+    const btn = document.getElementById('btn-activar-push');
+    const estadoEl = document.getElementById('estado-push');
+    if (estadoEl) { estadoEl.textContent = '⏳ Activando...'; estadoEl.style.color = '#4b5563'; }
+
+    try {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) throw new Error('Navegador no soporta push');
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') {
+            if (estadoEl) { estadoEl.textContent = '⚠️ Permiso denegado.'; estadoEl.style.color = '#dc2626'; }
+            return;
+        }
+
+        const reg = await navigator.serviceWorker.ready;
+        const vieja = await reg.pushManager.getSubscription();
+        if (vieja) await vieja.unsubscribe();
+
+        const { data: keys, error } = await supaCV.from('vapid_keys').select('public_raw').order('id', { ascending: true }).limit(1);
+        if (error || !keys || !keys.length) throw new Error('No hay clave VAPID');
+
+        const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(keys[0].public_raw) });
+        const ep = sub.endpoint;
+        const p256 = sub.getKey('p256dh') ? btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('p256dh')))) : null;
+        const auth = sub.getKey('auth') ? btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('auth')))) : null;
+
+        await supaCV.from('push_subs').delete().eq('user_id', uidCV);
+        await new Promise(r => setTimeout(r, 400));
+
+        const { error: insErr } = await supaCV.from('push_subs').insert({
+            user_id: uidCV, endpoint: ep, p256dh: p256, auth: auth,
+            rol: 'usuario',
+            premium_fin: '2099-12-31' // ✅ ILIMITADO PARA EL ADULTO
+        });
+        if (insErr) throw insErr;
+
+        btn.textContent = '✅ Notificaciones Activadas';
+        btn.style.backgroundColor = '#059669';
+        btn.disabled = true;
+        btn.style.opacity = '0.8';
+        estadoEl.textContent = 'Tu celular ya está listo para recibir alertas.';
+        estadoEl.style.color = '#059669';
+        if (typeof nubeToastCV === 'function') nubeToastCV('¡Notificaciones activadas!');
+    } catch (e) {
+        console.error(e);
+        if (estadoEl) { estadoEl.textContent = '❌ ' + e.message; estadoEl.style.color = '#dc2626'; }
+    }
+}
+
+// 4. ACTIVAR PUSH CUIDADOR (14 días, ID propio)
 async function activarPushCuidador() {
     try {
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) { 
-            alert('❌ Este navegador no soporta notificaciones push.'); 
-            return; 
+            alert('❌ Este navegador no soporta notificaciones push.'); return; 
         }
-
         const perm = await Notification.requestPermission();
-        if (perm !== 'granted') { 
-            alert('❌ Necesitás dar permiso al navegador para recibir alertas.'); 
-            return; 
-        }
+        if (perm !== 'granted') { alert('❌ Necesitás dar permiso al navegador.'); return; }
 
         const reg = await navigator.serviceWorker.ready;
         const r = await fetch('https://vqezdcdalprvjdtdrqzx.supabase.co/functions/v1/push-init');
         const j = await r.json();
         if (!j.publicKey) { alert('❌ No se pudo obtener la clave pública.'); return; }
 
-        function urlBase64ToUint8Array(base64String) {
-            const padding = '='.repeat((4 - base64String.length % 4) % 4);
-            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-            const rawData = atob(base64);
-            const outputArray = new Uint8Array(rawData.length);
-            for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
-            return outputArray;
-        }
-
-        // Desuscribir cualquier suscripción previa del navegador
         const vieja = await reg.pushManager.getSubscription();
         if (vieja) { await vieja.unsubscribe(); }
 
@@ -3116,132 +3088,38 @@ async function activarPushCuidador() {
             userVisibleOnly: true, 
             applicationServerKey: urlBase64ToUint8Array(j.publicKey) 
         });
-
         const json = sub.toJSON();
 
-        // ✅ ID propio del cuidador
+        // ✅ ID propio del cuidador (no el del adulto)
         const cuidadorId = localStorage.getItem('cv_cuidador_id') || '20e1fe19-6f27-4019-9026-567f633151b7';
 
-        // ✅ CLAVE: Borrar TODAS las suscripciones previas de ESTE cuidador (por user_id, no por endpoint)
+        // Borrar suscripciones previas de ESTE cuidador
         await supaCV.from('push_subs').delete().eq('user_id', cuidadorId);
         await new Promise(r => setTimeout(r, 400));
 
-        // Insertar la nueva suscripción limpia
         const { error } = await supaCV.from('push_subs').insert({ 
             endpoint: json.endpoint, 
             p256dh: json.keys.p256dh, 
             auth: json.keys.auth, 
-            user_id: cuidadorId,
+            user_id: cuidadorId, // ✅ USA SU PROPIO ID
             rol: 'cuidador',
-            premium_fin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            premium_fin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // ✅ 14 DÍAS
         });
-
         if (error) throw error;
 
         alert('✅ ¡ALERTAS ACTIVADAS!\nRecibirás notificaciones en este celular.');
         localStorage.setItem('cv_cuidador_push_activado', 'true');
-        localStorage.setItem('cv_premium_fin', new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
-
+        
         const btn = document.getElementById('btnActivarPushCuidador');
         if (btn) btn.style.display = 'none';
         const estado = document.getElementById('estadoPushCuidador');
         if (estado) estado.style.display = 'block';
 
-    } catch(e) { 
-        alert('❌ Error al activar alertas: ' + e.message); 
-    }
-}
-    function verVencimientoPush() {
-    const fin = localStorage.getItem('cv_premium_fin') || localStorage.getItem('rs_premium_fin');
-    if (fin) {
-        alert('📅 Tu suscripción Push vence el: ' + fin);
-    } else {
-        alert('⚠️ No hay fecha guardada. Activá las notificaciones primero.');
-    }
-}
-    // Función para cambiar de la vista Adulto a la vista Cuidador sin desvincular
-function entrarComoCuidador() {
-    document.getElementById('vistaAdulto').style.display = 'none';
-    document.getElementById('dashboardCuidador').style.display = 'block';
-    
-    // Si tenés una función que carga los datos del cuidador, la ejecutamos
-    if (typeof cargarDatosCuidador === 'function') {
-        cargarDatosCuidador();
-    }
-}
-    // Función para volver al panel del cuidador desde los ajustes del adulto
-function entrarComoCuidador() {
-    document.getElementById('vistaAdulto').style.display = 'none';
-    document.getElementById('dashboardCuidador').style.display = 'block';
-    
-    // Si tenés la función que carga los datos, la ejecutamos
-    if (typeof cargarDatosCuidador === 'function') {
-        cargarDatosCuidador();
-    }
+    } catch(e) { alert('❌ Error al activar alertas: ' + e.message); }
 }
 
-// Función para salir limpiamente (recarga la página y muestra el selector de rol)
-function cerrarDashboardCuidador() {
-    window.location.reload();
-}
-    // Al cargar la página, verificamos si debemos mostrar el selector de roles
-window.addEventListener('DOMContentLoaded', function() {
-    if (localStorage.getItem('cv_forzar_modal_rol') === 'true') {
-        localStorage.removeItem('cv_forzar_modal_rol'); // Limpiamos la nota
-        
-        // Ocultamos ambas pantallas y mostramos solo el selector
-        document.getElementById('vistaAdulto').style.display = 'none';
-        document.getElementById('dashboardCuidador').style.display = 'none';
-        
-        const modal = document.getElementById('modalRol');
-        if (modal) modal.style.display = 'flex';
-    }
-});
-    // Fuerza la suscripción del ADULTO con rol='usuario', aunque el botón diga "activado"
-async function reActivarPushAdulto() {
-    try {
-        if (!('serviceWorker' in navigator) || !('PushManager' in window)) { 
-            alert('❌ Este navegador no soporta push.'); return; 
-        }
-        const perm = await Notification.requestPermission();
-        if (perm !== 'granted') { alert('❌ Permiso denegado.'); return; }
-
-        const reg = await navigator.serviceWorker.ready;
-        const vieja = await reg.pushManager.getSubscription();
-        if (vieja) { await vieja.unsubscribe(); }
-
-        // Leer la clave VAPID directo de la base (igual que forzarTestPush)
-        const { data: keys, error } = await supaCV.from('vapid_keys').select('public_raw').order('id', { ascending: true }).limit(1);
-        if (error || !keys || !keys.length) { alert('❌ No hay clave VAPID: ' + (error && error.message)); return; }
-
-        function urlBase64ToUint8Array(b64) {
-            const p = '='.repeat((4 - b64.length % 4) % 4);
-            const s = (b64 + p).replace(/-/g, '+').replace(/_/g, '/');
-            const d = atob(s); const a = new Uint8Array(d.length);
-            for (let i = 0; i < d.length; i++) a[i] = d.charCodeAt(i);
-            return a;
-        }
-
-        const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(keys[0].public_raw) });
-        const ep = sub.endpoint;
-        const p256 = sub.getKey('p256dh') ? btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('p256dh')))) : null;
-        const auth = sub.getKey('auth') ? btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('auth')))) : null;
-
-        // Borrar lo viejo del adulto y re-insertar con rol USUARIO
-        await supaCV.from('push_subs').delete().eq('user_id', uidCV);
-        await new Promise(r => setTimeout(r, 400));
-
-        const { error: insErr } = await supaCV.from('push_subs').insert({
-            user_id: uidCV, endpoint: ep, p256dh: p256, auth: auth,
-            rol: 'usuario',
-            premium_fin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        });
-        if (insErr) throw insErr;
-
-        alert('✅ Adulto suscripto como USUARIO.\nID: ' + uidCV);
-    } catch (e) { alert('❌ ' + e.message); }
-}
-    async function enviarAlertaPush(tipo, mensaje, lat = null, lon = null) {
+// 5. ENVIAR ALERTA PUSH (Universal, apunta a push-send-cv)
+async function enviarAlertaPush(tipo, mensaje, lat = null, lon = null) {
     try {
         const adulto_id = localStorage.getItem('cv_adulto_vinculado') || (typeof uidCV !== 'undefined' ? uidCV : 'desconocido');
         const reg = await navigator.serviceWorker.ready;
@@ -3251,26 +3129,47 @@ async function reActivarPushAdulto() {
         const payload = {
             adulto_id: adulto_id,
             sender_endpoint: sender_endpoint,
-            lat: lat,
-            lon: lon,
-            tipo: tipo,
-            mensaje: mensaje
+            lat: lat, lon: lon, tipo: tipo, mensaje: mensaje
         };
 
-        // ✅ ATENCIÓN: Ahora llama a 'push-send-cv'
         const response = await fetch('https://vqezdcdalprvjdtdrqzx.supabase.co/functions/v1/push-send-cv', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'apikey': 'sb_publishable_5RI8bz70kqj7H2TIX6H8uQ_LlZnQtKO' },
             body: JSON.stringify(payload)
         });
-
         return await response.json();
-    } catch (e) {
-        console.error('❌ Error al enviar push:', e);
-    }
+    } catch (e) { console.error('❌ Error al enviar push:', e); }
 }
 
+// 6. NAVEGACIÓN Y ESTADO INICIAL
+function entrarComoCuidador() {
+    document.getElementById('vistaAdulto').style.display = 'none';
+    document.getElementById('dashboardCuidador').style.display = 'block';
+    if (typeof cargarDatosCuidador === 'function') cargarDatosCuidador();
+}
 
+function cerrarDashboardCuidador() {
+    localStorage.setItem('cv_forzar_modal_rol', 'true');
+    window.location.reload();
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+    if (localStorage.getItem('cv_forzar_modal_rol') === 'true') {
+        localStorage.removeItem('cv_forzar_modal_rol');
+        document.getElementById('vistaAdulto').style.display = 'none';
+        document.getElementById('dashboardCuidador').style.display = 'none';
+        const modal = document.getElementById('modalRol');
+        if (modal) modal.style.display = 'flex';
+    }
+    // Verificar estado del adulto al cargar si estamos en esa vista
+    if (typeof uidCV !== 'undefined' && uidCV) {
+        verificarEstadoPush();
+    }
+});
+            
+
+        
+    
     </script>
 </body>
 </html>

@@ -2078,35 +2078,70 @@ async function enviarPushACuidadores(titulo, mensaje) {
 // ============================================
 // SUSCRIPCIÓN A PUSH NOTIFICATIONS (Cuidador)
 // ============================================
-async function suscribirseAPushCirculo() {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') return;
+async function activarPushUsuario() {
+    const btn = document.getElementById('btn-activar-push');
+    const estadoEl = document.getElementById('estado-push');
+    if (estadoEl) { estadoEl.textContent = '⏳ Activando...'; estadoEl.style.color = '#4b5563'; }
+
     try {
-        const { data: keys } = await supaCV.from('vapid_keys').select('public_raw').order('id', { ascending: true }).limit(1);
-        if (!keys || keys.length === 0) return;
-        const applicationServerKey = urlBase64ToUint8Array(keys[0].public_raw);
-        const registration = await navigator.serviceWorker.ready;
-        const subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: applicationServerKey });
-        const { error } = await supaCV.from('push_subs').upsert({
-            user_id: uidCV,
-            endpoint: subscription.endpoint,
-            p256dh: subscription.getKey('p256dh') ? btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('p256dh')))) : null,
-            auth: subscription.getKey('auth') ? btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth')))) : null
-        }, { onConflict: 'user_id' });
-        if (!error) console.log('[Push] Suscripción guardada para:', uidCV);
-    } catch (e) { console.error('[Push] Error:', e); }
-}
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            throw new Error('Este navegador no soporta push');
+        }
 
-function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
-    return outputArray;
-}
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') {
+            if (estadoEl) { estadoEl.textContent = '⚠️ Permiso denegado. Revisá Ajustes del celular.'; estadoEl.style.color = '#dc2626'; }
+            return;
+        }
 
+        const reg = await navigator.serviceWorker.ready;
+        const vieja = await reg.pushManager.getSubscription();
+        if (vieja) await vieja.unsubscribe();
+
+        const { data: keys, error } = await supaCV.from('vapid_keys').select('public_raw').order('id', { ascending: true }).limit(1);
+        if (error || !keys || !keys.length) throw new Error('No hay clave VAPID');
+
+        function urlBase64ToUint8Array(b64) {
+            const p = '='.repeat((4 - b64.length % 4) % 4);
+            const s = (b64 + p).replace(/-/g, '+').replace(/_/g, '/');
+            const d = atob(s); const a = new Uint8Array(d.length);
+            for (let i = 0; i < d.length; i++) a[i] = d.charCodeAt(i);
+            return a;
+        }
+
+        const sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(keys[0].public_raw)
+        });
+
+        const ep = sub.endpoint;
+        const p256 = sub.getKey('p256dh') ? btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('p256dh')))) : null;
+        const auth = sub.getKey('auth') ? btoa(String.fromCharCode.apply(null, new Uint8Array(sub.getKey('auth')))) : null;
+
+        await supaCV.from('push_subs').delete().eq('user_id', uidCV);
+        await new Promise(r => setTimeout(r, 400));
+
+        const { error: insErr } = await supaCV.from('push_subs').insert({
+            user_id: uidCV, endpoint: ep, p256dh: p256, auth: auth,
+            rol: 'usuario',
+            premium_fin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        });
+        if (insErr) throw insErr;
+
+        // ✅ Queda verde y fijo
+        btn.textContent = '✅ Notificaciones Activadas';
+        btn.style.backgroundColor = '#059669';
+        btn.disabled = true;
+        btn.style.opacity = '0.8';
+        estadoEl.textContent = 'Tu celular ya está listo para recibir alertas.';
+        estadoEl.style.color = '#059669';
+        if (typeof nubeToastCV === 'function') nubeToastCV('¡Notificaciones activadas!');
+
+    } catch (e) {
+        console.error(e);
+        if (estadoEl) { estadoEl.textContent = '❌ ' + e.message; estadoEl.style.color = '#dc2626'; }
+    }
+}
 async function forzarSuscripcionPush() {
     const btn = document.getElementById('btn-activar-push');
     const estadoEl = document.getElementById('estado-push');

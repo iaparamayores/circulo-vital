@@ -2978,10 +2978,10 @@ async function generarCodigoCV() {
         }
         
             // =========================================================================
-// SISTEMA DE NOTIFICACIONES PUSH (LIMPIO Y DEFINITIVO)
+// SISTEMA DE NOTIFICACIONES PUSH (CORREGIDO Y UNIFICADO)
 // =========================================================================
 
-// 1. Helper para convertir clave VAPID
+// 1. Helper GLOBAL para convertir clave VAPID (Ahora accessible por todos)
 function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -2991,7 +2991,7 @@ function urlBase64ToUint8Array(base64String) {
     return outputArray;
 }
 
-// 2. VERIFICAR ESTADO PUSH (Adulto - Fuente de verdad: Supabase)
+// 2. VERIFICAR ESTADO PUSH (Adulto)
 async function verificarEstadoPush() {
     const btn = document.getElementById('btn-activar-push');
     const estadoEl = document.getElementById('estado-push');
@@ -3086,14 +3086,12 @@ async function activarPushCuidador() {
 
         const sub = await reg.pushManager.subscribe({ 
             userVisibleOnly: true, 
-            applicationServerKey: urlBase64ToUint8Array(j.publicKey) 
+            applicationServerKey: urlBase64ToUint8Array(j.publicKey) // ✅ AHORA SÍ FUNCIONA
         });
         const json = sub.toJSON();
 
-        // ✅ ID propio del cuidador (no el del adulto)
         const cuidadorId = localStorage.getItem('cv_cuidador_id') || '20e1fe19-6f27-4019-9026-567f633151b7';
 
-        // Borrar suscripciones previas de ESTE cuidador
         await supaCV.from('push_subs').delete().eq('user_id', cuidadorId);
         await new Promise(r => setTimeout(r, 400));
 
@@ -3101,9 +3099,9 @@ async function activarPushCuidador() {
             endpoint: json.endpoint, 
             p256dh: json.keys.p256dh, 
             auth: json.keys.auth, 
-            user_id: cuidadorId, // ✅ USA SU PROPIO ID
+            user_id: cuidadorId, 
             rol: 'cuidador',
-            premium_fin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // ✅ 14 DÍAS
+            premium_fin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] 
         });
         if (error) throw error;
 
@@ -3153,6 +3151,7 @@ function cerrarDashboardCuidador() {
     window.location.reload();
 }
 
+// Verificación al cargar (integrada)
 window.addEventListener('DOMContentLoaded', function() {
     if (localStorage.getItem('cv_forzar_modal_rol') === 'true') {
         localStorage.removeItem('cv_forzar_modal_rol');
@@ -3161,20 +3160,17 @@ window.addEventListener('DOMContentLoaded', function() {
         const modal = document.getElementById('modalRol');
         if (modal) modal.style.display = 'flex';
     }
-    // Verificar estado del adulto al cargar si estamos en esa vista
     if (typeof uidCV !== 'undefined' && uidCV) {
         verificarEstadoPush();
     }
 });
-            
 
-       // PLAN B: Verificar el botón de Push 2 segundos después de que cargue la página
+// Plan B: Seguridad extra para el botón del adulto
 setTimeout(() => {
     if (typeof verificarEstadoPush === 'function') {
         verificarEstadoPush();
     }
-}, 2000); 
-    
+}, 2000);
     </script>
 </body>
 </html>

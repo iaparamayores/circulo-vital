@@ -3168,7 +3168,12 @@ window.addEventListener('DOMContentLoaded', function() {
 });
             
 
-        
+       // PLAN B: Verificar el botón de Push 2 segundos después de que cargue la página
+setTimeout(() => {
+    if (typeof verificarEstadoPush === 'function') {
+        verificarEstadoPush();
+    }
+}, 2000); 
     
     </script>
 </body>

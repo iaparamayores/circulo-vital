@@ -1,8 +1,8 @@
 // ============================================
-// SERVICE WORKER — CÍRCULO VITAL
+// SERVICE WORKER — CÍRCULO VITAL v11
 // ============================================
 
-const VERSION = 'v10';
+const VERSION = 'v11';
 const CACHE_NAME = `circulo-vital-${VERSION}`;
 const BASE_PATH = '/circulo-vital';
 
@@ -14,9 +14,8 @@ const APP_SHELL = [
   `${BASE_PATH}/icon-512.png`
 ];
 
-// 1. INSTALACIÓN
 self.addEventListener('install', event => {
-  console.log('[SW] Instalando v10');
+  console.log('[SW] Instalando v11');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(APP_SHELL))
@@ -25,17 +24,15 @@ self.addEventListener('install', event => {
   );
 });
 
-// 2. ACTIVACIÓN
 self.addEventListener('activate', event => {
-  console.log('[SW] Activando v10');
+  console.log('[SW] Activando v11');
   event.waitUntil(
-    caches.keys().then(names => 
+    caches.keys().then(names =>
       Promise.all(names.filter(n => n !== CACHE_NAME).map(n => caches.delete(n)))
     ).then(() => self.clients.claim())
   );
 });
 
-// 3. FETCH
 self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET' || !req.url.startsWith('http')) return;
@@ -69,47 +66,65 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// 4. PUSH - ¡Aquí está la magia!
+// ============================================
+// PUSH — con vibración FUERTE para SOS (como Ruta)
+// ============================================
 self.addEventListener('push', function(event) {
   console.log('[SW] Push recibido:', event.data ? event.data.text() : 'sin datos');
-  
-  if (event.data) {
+
+  event.waitUntil((async () => {
+    let data = {};
     try {
-      const data = event.data.json();
-      const options = {
-        body: data.body || 'Tienes una nueva notificación',
-        icon: `${BASE_PATH}/icon-192.png`,
-        badge: `${BASE_PATH}/icon-192.png`,
-        vibrate: [200, 100, 200, 100, 200],
-        tag: 'circulo-vital-alerta',
-        requireInteraction: true,
-        sound: 'default'
-      };
-      event.waitUntil(
-        self.registration.showNotification(data.title || '🚨 Círculo Vital', options)
-      );
+      data = event.data ? event.data.json() : {};
     } catch (e) {
-      console.error('[SW] Error parseando push:', e);
-      event.waitUntil(
-        self.registration.showNotification('🚨 Círculo Vital', {
-          body: 'Alerta de emergencia',
-          icon: `${BASE_PATH}/icon-192.png`,
-          vibrate: [200, 100, 200]
-        })
-      );
+      data = { title: '🚨 Círculo Vital', body: 'Alerta de emergencia' };
     }
-  }
+
+    const tipo = (data.data && data.data.tipo) || 'general';
+
+    // Vibración según gravedad (igual que Ruta)
+    let vibrate = [500, 200, 500];
+    if (tipo === 'sos') vibrate = [1000, 500, 1000, 500, 1000, 500, 1000];
+
+    // URL para el click: abre la app en modo emergencia cuidador
+    let url = `${BASE_PATH}/`;
+    if (tipo === 'sos') {
+      const lat = data.data && data.data.lat ? data.data.lat : '';
+      const lon = data.data && data.data.lon ? data.data.lon : '';
+      url = `${BASE_PATH}/?sos=1&lat=${lat}&lon=${lon}`;
+    }
+
+    await self.registration.showNotification(data.title || '🚨 Círculo Vital', {
+      body: data.body || 'Tienes una nueva alerta',
+      icon: `${BASE_PATH}/icon-192.png`,
+      badge: `${BASE_PATH}/icon-192.png`,
+      tag: tipo === 'sos' ? 'cv-sos' : 'cv-alerta',
+      renotify: true,
+      requireInteraction: true,
+      vibrate: vibrate,
+      data: { url: url, tipo: tipo, lat: data.data ? data.data.lat : null, lon: data.data ? data.data.lon : null }
+    });
+  })());
 });
 
-// 5. CLICK EN NOTIFICACIÓN
+// ============================================
+// CLICK — abre la app en pantalla de EMERGENCIA
+// ============================================
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
-  event.waitUntil(
-    clients.matchAll({ type: 'window' }).then(clientList => {
-      for (let c of clientList) {
-        if (c.url.includes('circulo-vital') && 'focus' in c) return c.focus();
+  const url = event.notification.data ? event.notification.data.url : `${BASE_PATH}/`;
+
+  event.waitUntil((async () => {
+    const clientes = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const c of clientes) {
+      if (c.url.includes('circulo-vital') && 'focus' in c) {
+        await c.focus();
+        if (event.notification.data && event.notification.data.tipo === 'sos') {
+          c.postMessage({ tipo: 'cv-sos', lat: event.notification.data.lat, lon: event.notification.data.lon });
+        }
+        return;
       }
-      return clients.openWindow(`${BASE_PATH}/`);
-    })
-  );
+    }
+    await clients.openWindow(url);
+  })());
 });

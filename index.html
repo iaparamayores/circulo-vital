@@ -2052,30 +2052,6 @@ async function ejecutarSOS() {
     }, 800); // <-- 800 milisegundos de ventaja para la red
     */
 }
-    
-    
-// ENVÍO DE PUSH A CUIDADORES VINCULADOS
-// ============================================
-async function enviarPushACuidadores(titulo, mensaje) {
-    if (typeof nubeOK_CV === 'undefined' || !nubeOK_CV || !uidCV || typeof supaCV === 'undefined') {
-        console.log('[Push] No hay conexión a la nube o usuario no logueado');
-        return;
-    }
-    try {
-        const { data: vinculos, error } = await supaCV.from('vinculos_familiares').select('cuidador_id').eq('adulto_id', uidCV);
-        if (error || !vinculos || vinculos.length === 0) {
-            console.log('[Push] No hay cuidadores vinculados para enviar push');
-            return;
-        }
-        const targetUsers = vinculos.map(v => v.cuidador_id);
-        const response = await fetch('https://vqezdcdalprvjdtdrqzx.supabase.co/functions/v1/push-send', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPA_KEY_CV}`, 'apikey': SUPA_KEY_CV },
-            body: JSON.stringify({ target_users: targetUsers, title: titulo, body: mensaje })
-        });
-        console.log('[Push] Resultado:', await response.json());
-    } catch (e) { console.error('[Push] Error al enviar:', e); }
-}
 
 
 // ============================================

@@ -3050,7 +3050,7 @@ async function enviarAlertaPush(tipo, mensaje, lat = null, lon = null) {
         const sub = await reg.pushManager.getSubscription();
         const sender_endpoint = sub ? sub.endpoint : '';
         const payload = { adulto_id, sender_endpoint, lat, lon, tipo, mensaje };
-        const response = await fetch('https://vqezdcdalprvjdtdrqzx.supabase.co/functions/v1/push-send-cv', {
+        const response = await fetch('https://vqezdcdalprvjdtdrqzx.supabase.co/functions/v1/push_send_cv', {
             method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': 'sb_publishable_5RI8bz70kqj7H2TIX6H8uQ_LlZnQtKO' }, body: JSON.stringify(payload)
         });
         return await response.json();

@@ -3080,6 +3080,83 @@ window.addEventListener('DOMContentLoaded', function() {
 });
 
 setTimeout(() => { if (typeof verificarEstadoPush === 'function') { verificarEstadoPush(); } }, 2000);
+// ============================================
+// PANTALLA DE EMERGENCIA (cuando el cuidador toca la notificación SOS)
+// ============================================
+function mostrarPantallaEmergenciaCV(lat, lon) {
+    // Forzar vista de cuidador
+    localStorage.setItem('cv_rol', 'cuidador');
+    const vistaAdulto = document.getElementById('vistaAdulto');
+    const dash = document.getElementById('dashboardCuidador');
+    if (vistaAdulto) vistaAdulto.style.display = 'none';
+    if (dash) dash.style.display = 'none';
+
+    const nombre = localStorage.getItem('cv_adulto_nombre') || 'tu familiar';
+
+    // Crear pantalla de emergencia si no existe
+    let pantalla = document.getElementById('pantalla-emergencia-cv');
+    if (!pantalla) {
+        pantalla = document.createElement('div');
+        pantalla.id = 'pantalla-emergencia-cv';
+        pantalla.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#dc2626;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;text-align:center;color:white;';
+        document.body.appendChild(pantalla);
+    }
+
+    const btnMapa = (lat && lon)
+        ? `<a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" style="display:block;width:90%;padding:1.2rem;background:white;color:#dc2626;border-radius:1rem;font-size:1.3rem;font-weight:800;text-decoration:none;margin-top:1rem;">🗺️ Ver ubicación</a>`
+        : `<p style="font-size:0.9rem;opacity:0.8;margin-top:1rem;">(Sin ubicación registrada)</p>`;
+
+    pantalla.innerHTML = `
+        <div style="font-size:4rem;">🚨</div>
+        <h2 style="font-size:1.8rem;margin:1rem 0 0.5rem;">¡EMERGENCIA!</h2>
+        <p style="font-size:1.2rem;margin-bottom:2rem;"><strong>${nombre}</strong> presionó el botón SOS</p>
+        <a id="btn-llamar-emergencia" href="#" style="display:block;width:90%;padding:1.2rem;background:#059669;color:white;border-radius:1rem;font-size:1.4rem;font-weight:800;text-decoration:none;">📞 Llamar ahora</a>
+        ${btnMapa}
+        <button onclick="cerrarEmergenciaCV()" style="margin-top:2rem;background:none;border:2px solid white;color:white;padding:0.8rem 2rem;border-radius:1rem;font-size:1rem;cursor:pointer;">Volver al panel</button>
+    `;
+
+    // Buscar el teléfono del adulto vinculado
+    const adultoId = localStorage.getItem('cv_adulto_vinculado');
+    if (adultoId && typeof supaCV !== 'undefined') {
+        supaCV.from('config_circulo').select('telefono_familiar, telefono_emergencia').eq('user_id', adultoId).limit(1).then(({ data }) => {
+            const tel = data && data[0] ? (data[0].telefono_familiar || data[0].telefono_emergencia) : null;
+            const btn = document.getElementById('btn-llamar-emergencia');
+            if (btn && tel) btn.href = `tel:${tel}`;
+            else if (btn) btn.onclick = (e) => { e.preventDefault(); alert('⚠️ El adulto no cargó teléfono en su Ficha Médica'); };
+        });
+    }
+
+    if (navigator.vibrate) navigator.vibrate([1000, 500, 1000, 500, 1000]);
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('🚨 EMERGENCIA', { body: `${nombre} necesita ayuda`, icon: './icon-192.png' });
+    }
+}
+
+function cerrarEmergenciaCV() {
+    const p = document.getElementById('pantalla-emergencia-cv');
+    if (p) p.remove();
+    const dash = document.getElementById('dashboardCuidador');
+    if (dash) dash.style.display = 'block';
+    if (typeof cargarDatosCuidador === 'function') cargarDatosCuidador();
+}
+
+// Detectar el click en la notificación (URL con ?sos=1)
+window.addEventListener('load', () => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('sos') === '1') {
+        setTimeout(() => mostrarPantallaEmergenciaCV(params.get('lat'), params.get('lon')), 1500);
+    }
+});
+
+// Detectar si la app ya estaba abierta y recibe el mensaje del SW
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', event => {
+        if (event.data && event.data.tipo === 'cv-sos') {
+            mostrarPantallaEmergenciaCV(event.data.lat, event.data.lon);
+        }
+    });
+}
+    
 </script>
 </body>
 </html>

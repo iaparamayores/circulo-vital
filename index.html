@@ -3081,10 +3081,9 @@ window.addEventListener('DOMContentLoaded', function() {
 
 setTimeout(() => { if (typeof verificarEstadoPush === 'function') { verificarEstadoPush(); } }, 2000);
 // ============================================
-// PANTALLA DE EMERGENCIA (cuando el cuidador toca la notificación SOS)
+// PANTALLA DE EMERGENCIA (Cuidador)
 // ============================================
 function mostrarPantallaEmergenciaCV(lat, lon) {
-    // Forzar vista de cuidador
     localStorage.setItem('cv_rol', 'cuidador');
     const vistaAdulto = document.getElementById('vistaAdulto');
     const dash = document.getElementById('dashboardCuidador');
@@ -3092,8 +3091,6 @@ function mostrarPantallaEmergenciaCV(lat, lon) {
     if (dash) dash.style.display = 'none';
 
     const nombre = localStorage.getItem('cv_adulto_nombre') || 'tu familiar';
-
-    // Crear pantalla de emergencia si no existe
     let pantalla = document.getElementById('pantalla-emergencia-cv');
     if (!pantalla) {
         pantalla = document.createElement('div');
@@ -3115,7 +3112,6 @@ function mostrarPantallaEmergenciaCV(lat, lon) {
         <button onclick="cerrarEmergenciaCV()" style="margin-top:2rem;background:none;border:2px solid white;color:white;padding:0.8rem 2rem;border-radius:1rem;font-size:1rem;cursor:pointer;">Volver al panel</button>
     `;
 
-    // Buscar el teléfono del adulto vinculado
     const adultoId = localStorage.getItem('cv_adulto_vinculado');
     if (adultoId && typeof supaCV !== 'undefined') {
         supaCV.from('config_circulo').select('telefono_familiar, telefono_emergencia').eq('user_id', adultoId).limit(1).then(({ data }) => {
@@ -3127,9 +3123,6 @@ function mostrarPantallaEmergenciaCV(lat, lon) {
     }
 
     if (navigator.vibrate) navigator.vibrate([1000, 500, 1000, 500, 1000]);
-    if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('🚨 EMERGENCIA', { body: `${nombre} necesita ayuda`, icon: './icon-192.png' });
-    }
 }
 
 function cerrarEmergenciaCV() {
@@ -3140,15 +3133,7 @@ function cerrarEmergenciaCV() {
     if (typeof cargarDatosCuidador === 'function') cargarDatosCuidador();
 }
 
-// Detectar el click en la notificación (URL con ?sos=1)
-window.addEventListener('load', () => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('sos') === '1') {
-        setTimeout(() => mostrarPantallaEmergenciaCV(params.get('lat'), params.get('lon')), 1500);
-    }
-});
-
-// Detectar si la app ya estaba abierta y recibe el mensaje del SW
+// Escuchar mensajes del Service Worker
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', event => {
         if (event.data && event.data.tipo === 'cv-sos') {
@@ -3156,7 +3141,6 @@ if ('serviceWorker' in navigator) {
         }
     });
 }
-    
 </script>
 </body>
 </html>
